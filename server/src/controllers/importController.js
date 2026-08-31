@@ -1,6 +1,10 @@
 import { previewImport, commitImport } from '../services/importService.js';
 import { listAdapters } from '../utils/csvAdapters.js';
 import ImportJob from '../models/ImportJob.js';
+import {
+  importPreviewSchema,
+  importCommitSchema,
+} from '../schemas/settings.schema.js';
 
 export async function getAdapters(req, res) {
   res.json(listAdapters());
@@ -11,8 +15,9 @@ export async function postPreview(req, res) {
     res.status(400);
     throw new Error('No CSV file uploaded (field name must be "file")');
   }
-  const { broker } = req.body;
-  const preview = await previewImport(req.file.buffer, broker);
+  // Validate request body
+  const validated = importPreviewSchema.parse(req.body);
+  const preview = await previewImport(req.file.buffer, validated.broker);
   res.json(preview);
 }
 
@@ -21,24 +26,17 @@ export async function postCommit(req, res) {
     res.status(400);
     throw new Error('No CSV file uploaded (field name must be "file")');
   }
-  const { accountId, broker } = req.body;
-  if (!accountId) {
-    res.status(400);
-    throw new Error('accountId is required');
-  }
+  // Validate request body
+  const validated = importCommitSchema.parse(req.body);
+
   let mapping = {};
-  if (req.body.mapping) {
-    try {
-      mapping = JSON.parse(req.body.mapping);
-    } catch {
-      res.status(400);
-      throw new Error('mapping must be valid JSON');
-    }
+  if (validated.mapping) {
+    mapping = validated.mapping;
   }
 
   const job = await commitImport({
-    accountId,
-    broker: broker || 'generic',
+    accountId: validated.accountId,
+    broker: validated.broker || 'generic',
     mapping,
     buffer: req.file.buffer,
     originalFilename: req.file.originalname,
@@ -61,4 +59,10 @@ export async function listImportJobs(req, res) {
   res.json(jobs);
 }
 
-export default { getAdapters, postPreview, postCommit, getImportJob, listImportJobs };
+export default {
+  getAdapters,
+  postPreview,
+  postCommit,
+  getImportJob,
+  listImportJobs,
+};
