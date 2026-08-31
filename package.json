@@ -1,0 +1,22 @@
+{
+  "name": "tortoise-scroll",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local-first personal trading journal (TradeZella-style) with AI trading partner",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev": "concurrently -k -n SERVER,CLIENT -c green,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build:client": "npm run build --prefix client",
+    "test:client": "npm test --prefix client",
+    "test:server": "npm test --prefix server",
+    "smoke": "npm run smoke --prefix server",
+    "e2e:install": "npm install --prefix e2e && npm run install-browsers --prefix e2e",
+    "e2e": "npm test --prefix e2e",
+    "e2e:headed": "npm run test:headed --prefix e2e"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
