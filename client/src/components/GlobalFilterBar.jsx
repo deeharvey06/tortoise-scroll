@@ -27,7 +27,7 @@ const PRESET_LABELS = {
 const DIRECTIONS = ['long', 'short'];
 const SESSIONS = ['pre-market', 'open', 'mid-day', 'power-hour', 'after-hours', 'unspecified'];
 
-export default function GlobalFilterBar() {
+export default function GlobalFilterBar({ compact = false }) {
   const filters = useFilterStore();
   const [anchorEl, setAnchorEl] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -49,13 +49,14 @@ export default function GlobalFilterBar() {
   const open = Boolean(anchorEl);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
       <TextField
         select
         size="small"
         value={filters.datePreset}
         onChange={(e) => filters.setDatePreset(e.target.value)}
-        sx={{ minWidth: 150 }}
+        inputProps={{ 'aria-label': 'Date range' }}
+        sx={{ minWidth: compact ? 132 : 150 }}
       >
         {DATE_PRESETS.map((p) => (
           <MenuItem key={p} value={p}>
@@ -64,7 +65,7 @@ export default function GlobalFilterBar() {
         ))}
       </TextField>
 
-      {filters.datePreset === 'custom' && (
+      {filters.datePreset === 'custom' && !compact && (
         <>
           <TextField
             type="date"
@@ -96,7 +97,7 @@ export default function GlobalFilterBar() {
         Filters{activeCount > 0 ? ` (${activeCount})` : ''}
       </Button>
 
-      {activeCount > 0 && (
+      {activeCount > 0 && !compact && (
         <Button size="small" color="inherit" onClick={filters.reset} startIcon={<CloseIcon fontSize="small" />}>
           Clear
         </Button>
@@ -108,7 +109,23 @@ export default function GlobalFilterBar() {
         onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >
-        <Stack spacing={1.5} sx={{ p: 2, width: 260 }}>
+        <Stack spacing={3} sx={{ p: 4, width: compact ? 'min(320px, calc(100vw - 32px))' : 280 }}>
+          {compact && filters.datePreset === 'custom' && (
+            <Stack direction="row" spacing={2}>
+              <TextField
+                type="date" size="small" label="From" InputLabelProps={{ shrink: true }}
+                value={filters.customFrom || ''}
+                onChange={(e) => filters.setCustomRange(e.target.value, filters.customTo)}
+                fullWidth
+              />
+              <TextField
+                type="date" size="small" label="To" InputLabelProps={{ shrink: true }}
+                value={filters.customTo || ''}
+                onChange={(e) => filters.setCustomRange(filters.customFrom, e.target.value)}
+                fullWidth
+              />
+            </Stack>
+          )}
           <TextField
             select
             size="small"
@@ -163,11 +180,17 @@ export default function GlobalFilterBar() {
               </MenuItem>
             ))}
           </TextField>
+
+          {compact && activeCount > 0 && (
+            <Button size="small" color="inherit" onClick={() => { filters.reset(); setAnchorEl(null); }} startIcon={<CloseIcon fontSize="small" />}>
+              Clear filters
+            </Button>
+          )}
         </Stack>
       </Popover>
 
-      {activeCount > 0 && (
-        <Stack direction="row" spacing={0.5}>
+      {activeCount > 0 && !compact && (
+        <Stack direction="row" spacing={1} sx={{ minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {filters.accountId && <Chip size="small" label={accounts.find((a) => a._id === filters.accountId)?.name || 'account'} onDelete={() => filters.setAccountId('')} />}
           {filters.symbol && <Chip size="small" label={filters.symbol} onDelete={() => filters.setSymbol('')} />}
           {filters.setup && <Chip size="small" label={filters.setup} onDelete={() => filters.setSetup('')} />}

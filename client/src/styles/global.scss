@@ -1,5 +1,5 @@
 :root {
-  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --font-mono: var(--ts-font-numeric, "IBM Plex Mono", "SFMono-Regular", Consolas, monospace);
 }
 
 * {
@@ -14,7 +14,13 @@ html, body, #root {
 /* Numeric/data columns use the mono face so figures align in tables */
 .mono-data {
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.financial-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
 }
 
 ::-webkit-scrollbar {
@@ -25,9 +31,9 @@ html, body, #root {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #232936;
-  border-radius: 5px;
+  background: var(--ts-border-default);
+  border-radius: var(--ts-radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2e3646;
+  background: var(--ts-border-strong);
 }
