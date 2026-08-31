@@ -15,8 +15,8 @@ import useAuthStore from '../../store/useAuthStore';
 export default function LoginPage() {
   const navigate = useNavigate();
   const setSession = useAuthStore((state) => state.setSession);
-  const [username, setUsername] = useState('demo');
-  const [password, setPassword] = useState('demo123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -92,8 +92,6 @@ export default function LoginPage() {
 
             <Typography variant='caption' color='text.secondary'>
               Demo account: demo / demo123
-              <br />
-              Root account: root / root123
             </Typography>
           </Stack>
         </CardContent>
