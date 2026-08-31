@@ -5,12 +5,12 @@ import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import Popover from '@mui/material/Popover';
 import Stack from '@mui/material/Stack';
-import Chip from '@mui/material/Chip';
 import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 import CloseIcon from '@mui/icons-material/CloseOutlined';
 
 import useFilterStore, { DATE_PRESETS } from '../store/useFilterStore';
 import * as tradeApi from '../services/tradeService';
+import Tag from './ui/Tag';
 
 const PRESET_LABELS = {
   today: 'Today',
@@ -191,11 +191,11 @@ export default function GlobalFilterBar({ compact = false }) {
 
       {activeCount > 0 && !compact && (
         <Stack direction="row" spacing={1} sx={{ minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {filters.accountId && <Chip size="small" label={accounts.find((a) => a._id === filters.accountId)?.name || 'account'} onDelete={() => filters.setAccountId('')} />}
-          {filters.symbol && <Chip size="small" label={filters.symbol} onDelete={() => filters.setSymbol('')} />}
-          {filters.setup && <Chip size="small" label={filters.setup} onDelete={() => filters.setSetup('')} />}
-          {filters.direction && <Chip size="small" label={filters.direction} onDelete={() => filters.setDirection('')} />}
-          {filters.session && <Chip size="small" label={filters.session} onDelete={() => filters.setSession('')} />}
+          {filters.accountId && <Tag label={accounts.find((a) => a._id === filters.accountId)?.name || 'account'} onDelete={() => filters.setAccountId('')} />}
+          {filters.symbol && <Tag label={filters.symbol} onDelete={() => filters.setSymbol('')} />}
+          {filters.setup && <Tag label={filters.setup} onDelete={() => filters.setSetup('')} />}
+          {filters.direction && <Tag label={filters.direction} onDelete={() => filters.setDirection('')} />}
+          {filters.session && <Tag label={filters.session} onDelete={() => filters.setSession('')} />}
         </Stack>
       )}
     </Box>

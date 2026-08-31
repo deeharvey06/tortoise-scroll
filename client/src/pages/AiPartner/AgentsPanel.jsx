@@ -49,7 +49,7 @@ function NarrativeOrList({ result }) {
   return (
     <Box>
       {result.narrative && (
-        <Paper variant="outlined" sx={{ p: 1.5, mb: 1.5, backgroundColor: 'rgba(76,141,255,0.06)' }}>
+        <Paper variant="outlined" sx={{ p: 1.5, mb: 1.5, backgroundColor: 'action.hover' }}>
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
             {result.narrative}
           </Typography>

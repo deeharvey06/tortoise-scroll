@@ -26,6 +26,7 @@ import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import { format } from 'date-fns';
 
 import * as journalApi from '../../services/journalService';
+import { ConfirmationDialog } from '../../components/ui';
 
 const TYPES = [
   { value: 'pre-market', label: 'Pre-Market Plan' },
@@ -365,18 +366,14 @@ export default function JournalPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Delete entry?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">This permanently deletes this journal entry. This cannot be undone.</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        title="Delete entry?"
+        description="This permanently deletes this journal entry. This cannot be undone."
+        confirmLabel="Delete entry"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </Box>
   );
 }

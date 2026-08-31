@@ -22,6 +22,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternateOutlined
 
 import * as strategyApi from '../../services/strategyService';
 import KpiCard from '../../components/KpiCard';
+import { ConfirmationDialog } from '../../components/ui';
 
 const FIELDS = [
   ['name', 'Name', false],
@@ -318,21 +319,14 @@ export default function StrategiesPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Delete strategy?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            This permanently deletes "{deleteTarget?.name}". If any trades are assigned to it, deletion will be
-            blocked until you reassign them.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        title="Delete strategy?"
+        description={`This permanently deletes "${deleteTarget?.name || ''}". If trades are assigned to it, deletion will be blocked until they are reassigned.`}
+        confirmLabel="Delete strategy"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </Box>
   );
 }

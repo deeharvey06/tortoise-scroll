@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
 import {
   ResponsiveContainer,
   LineChart,
@@ -24,6 +22,7 @@ import * as analyticsApi from '../../services/analyticsService';
 import { useFilterParams } from '../../store/useFilterStore';
 import { palette } from '../../theme/theme';
 import KpiCard from '../../components/KpiCard';
+import { EmptyState, ErrorState, LoadingState, Panel, SectionHeader } from '../../components/ui';
 
 function fmtMoney(v) {
   if (v === null || v === undefined) return null;
@@ -51,20 +50,14 @@ function slugify(label) {
 
 function ChartSection({ title, children, empty }) {
   return (
-    <Paper sx={{ p: 2, height: '100%' }} data-testid={`chart-${slugify(title)}`}>
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {title}
-      </Typography>
+    <Panel sx={{ height: '100%' }} data-testid={`chart-${slugify(title)}`}>
+      <SectionHeader title={title} component="h2" />
       {empty ? (
-        <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            No closed trades in this range.
-          </Typography>
-        </Box>
+        <EmptyState compact title="No closed trades" description="Adjust the current range or filters to populate this chart." sx={{ height: 220 }} />
       ) : (
         children
       )}
-    </Paper>
+    </Panel>
   );
 }
 
@@ -89,15 +82,9 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(params)]);
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress size={28} />
-      </Box>
-    );
-  }
+  if (loading) return <LoadingState label="Loading dashboard…" />;
 
-  if (error) return <Alert severity="error">{error}</Alert>;
+  if (error) return <ErrorState message={error} />;
   if (!data) return null;
 
   const { summary } = data;

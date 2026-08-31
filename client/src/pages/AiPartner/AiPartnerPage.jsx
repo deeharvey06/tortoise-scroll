@@ -352,7 +352,7 @@ export default function AiPartnerPage() {
                     sx={{
                       p: 1.5,
                       maxWidth: '75%',
-                      backgroundColor: m.role === 'user' ? 'rgba(76, 141, 255, 0.12)' : 'background.paper',
+                      backgroundColor: m.role === 'user' ? 'action.selected' : 'background.paper',
                       whiteSpace: 'pre-wrap',
                     }}
                   >

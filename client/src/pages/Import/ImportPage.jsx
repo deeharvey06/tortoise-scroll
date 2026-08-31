@@ -190,7 +190,7 @@ export default function ImportPage() {
               borderRadius: 1,
               p: 5,
               textAlign: 'center',
-              backgroundColor: dragOver ? 'rgba(76, 141, 255, 0.06)' : 'transparent',
+              backgroundColor: dragOver ? 'action.hover' : 'transparent',
             }}
           >
             <UploadFileIcon sx={{ fontSize: 36, color: 'text.secondary', mb: 1 }} />

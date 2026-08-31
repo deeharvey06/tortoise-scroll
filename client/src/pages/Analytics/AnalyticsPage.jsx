@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
 import TableBody from '@mui/material/TableBody';
@@ -13,23 +10,14 @@ import TableCell from '@mui/material/TableCell';
 
 import * as analyticsApi from '../../services/analyticsService';
 import { useFilterParams } from '../../store/useFilterStore';
-
-function fmtMoney(v) {
-  if (v === null || v === undefined) return '—';
-  const sign = v < 0 ? '-' : '';
-  return `${sign}$${Math.abs(v).toFixed(2)}`;
-}
+import { EmptyState, ErrorState, LoadingState, Panel, ProfitLossValue, RMultiple, SectionHeader } from '../../components/ui';
 
 function BreakdownTable({ title, rows }) {
   return (
-    <Paper sx={{ p: 2, height: '100%' }}>
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {title}
-      </Typography>
+    <Panel sx={{ height: '100%' }}>
+      <SectionHeader title={title} component="h2" />
       {rows.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          No closed trades in this range.
-        </Typography>
+        <EmptyState compact title="No closed trades" description="Adjust the selected range or filters to expand this analysis." />
       ) : (
         <Table size="small">
           <TableHead>
@@ -53,24 +41,20 @@ function BreakdownTable({ title, rows }) {
                   {r.winRate !== null ? `${r.winRate}%` : '—'}
                 </TableCell>
                 <TableCell align="right" className="mono-data">
-                  {r.avgR !== null ? `${r.avgR.toFixed(2)}R` : '—'}
+                  <RMultiple value={r.avgR} colorByValue={false} />
                 </TableCell>
                 <TableCell align="right" className="mono-data">
                   {r.profitFactor !== null ? r.profitFactor.toFixed(2) : '—'}
                 </TableCell>
-                <TableCell
-                  align="right"
-                  className="mono-data"
-                  sx={{ color: r.netPnL >= 0 ? 'success.main' : 'error.main', fontWeight: 600 }}
-                >
-                  {fmtMoney(r.netPnL)}
+                <TableCell align="right">
+                  <ProfitLossValue value={r.netPnL} />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
-    </Paper>
+    </Panel>
   );
 }
 
@@ -95,15 +79,9 @@ export default function AnalyticsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(params)]);
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress size={28} />
-      </Box>
-    );
-  }
+  if (loading) return <LoadingState label="Loading analytics…" />;
 
-  if (error) return <Alert severity="error">{error}</Alert>;
+  if (error) return <ErrorState message={error} />;
   if (!data) return null;
 
   return (

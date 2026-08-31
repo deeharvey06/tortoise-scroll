@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -13,22 +12,18 @@ import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import IconButton from '@mui/material/IconButton';
 import Checkbox from '@mui/material/Checkbox';
-import Chip from '@mui/material/Chip';
 import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
-import InputAdornment from '@mui/material/InputAdornment';
 import Toolbar from '@mui/material/Toolbar';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/CheckCircleOutline';
 import CloseIcon from '@mui/icons-material/HighlightOffOutlined';
-import SearchIcon from '@mui/icons-material/SearchOutlined';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import LabelIcon from '@mui/icons-material/LabelOutlined';
 import Tooltip from '@mui/material/Tooltip';
@@ -37,12 +32,10 @@ import { format } from 'date-fns';
 import * as tradeApi from '../../services/tradeService';
 import useFilterStore, { resolveDateRange } from '../../store/useFilterStore';
 import TradeFormDialog from './TradeFormDialog';
-
-function formatCurrency(value) {
-  if (value === null || value === undefined) return '—';
-  const sign = value < 0 ? '-' : '';
-  return `${sign}$${Math.abs(value).toFixed(2)}`;
-}
+import {
+  ConfirmationDialog, EmptyState, ErrorState, LoadingState, Panel,
+  ProfitLossValue, RMultiple, SearchField, Tag, TradeDirection,
+} from '../../components/ui';
 
 function formatDuration(seconds) {
   if (seconds === null || seconds === undefined) return '—';
@@ -370,11 +363,7 @@ export default function TradesPage() {
         </Box>
       </Box>
 
-      {error && (
-        <Alert severity='error' onClose={() => setError(null)} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {error && <ErrorState compact message={error} onClose={() => setError(null)} sx={{ mb: 4 }} />}
       {toast && (
         <Alert severity='success' onClose={() => setToast(null)} sx={{ mb: 2 }}>
           {toast}
@@ -388,27 +377,20 @@ export default function TradesPage() {
         </Alert>
       )}
 
-      <TextField
-        size='small'
+      <SearchField
         inputRef={searchInputRef}
+        label='Search trades'
         placeholder='Search symbol, setup, tags, notes…  (/)'
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
-        sx={{ mb: 2, width: 340 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position='start'>
-              <SearchIcon fontSize='small' />
-            </InputAdornment>
-          ),
-        }}
+        sx={{ mb: 4, width: { xs: '100%', sm: 340 } }}
       />
 
-      <Paper>
+      <Panel padding={0}>
         {selected.length > 0 && (
           <Toolbar
             sx={{
-              bgcolor: 'rgba(76, 141, 255, 0.08)',
+              bgcolor: 'action.selected',
               minHeight: '48px !important',
             }}
           >
@@ -466,7 +448,7 @@ export default function TradesPage() {
               {loading && (
                 <TableRow>
                   <TableCell colSpan={15} align='center' sx={{ py: 4 }}>
-                    <CircularProgress size={22} />
+                    <LoadingState compact label='Loading trades…' />
                   </TableCell>
                 </TableRow>
               )}
@@ -474,13 +456,11 @@ export default function TradesPage() {
               {!loading && trades.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={15} align='center' sx={{ py: 4 }}>
-                    <Typography color='text.secondary' variant='body2'>
-                      {search
-                        ? 'No trades match your search.'
-                        : hasAccounts
-                          ? 'No trades yet. Click "New trade" to log your first one.'
-                          : 'Create an account first.'}
-                    </Typography>
+                    <EmptyState
+                      compact
+                      title={search ? 'No matching trades' : hasAccounts ? 'No trades recorded' : 'Create an account first'}
+                      description={search ? 'Adjust your search or clear it to see more trades.' : hasAccounts ? 'Use New trade to record your first execution.' : 'An account is required before trades can be recorded.'}
+                    />
                   </TableCell>
                 </TableRow>
               )}
@@ -517,12 +497,7 @@ export default function TradesPage() {
                       {t.symbol}
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        size='small'
-                        label={t.direction}
-                        color={t.direction === 'long' ? 'success' : 'error'}
-                        variant='outlined'
-                      />
+                      <TradeDirection direction={t.direction} />
                     </TableCell>
                     <TableCell align='right' className='mono-data'>
                       {t.quantity}
@@ -535,35 +510,11 @@ export default function TradesPage() {
                         ? t.exitPrice.toFixed(2)
                         : '—'}
                     </TableCell>
-                    <TableCell
-                      align='right'
-                      className='mono-data'
-                      sx={{
-                        color:
-                          t.netPnL > 0
-                            ? 'success.main'
-                            : t.netPnL < 0
-                              ? 'error.main'
-                              : 'text.primary',
-                      }}
-                    >
-                      {formatCurrency(t.netPnL)}
+                    <TableCell align='right'>
+                      <ProfitLossValue value={t.netPnL} />
                     </TableCell>
-                    <TableCell
-                      align='right'
-                      className='mono-data'
-                      sx={{
-                        color:
-                          t.rMultiple > 0
-                            ? 'success.main'
-                            : t.rMultiple < 0
-                              ? 'error.main'
-                              : 'text.primary',
-                      }}
-                    >
-                      {t.rMultiple !== null && t.rMultiple !== undefined
-                        ? `${t.rMultiple.toFixed(2)}R`
-                        : '—'}
+                    <TableCell align='right'>
+                      <RMultiple value={t.rMultiple} />
                     </TableCell>
                     <TableCell>{t.setup || '—'}</TableCell>
                     <TableCell>{t.session}</TableCell>
@@ -572,10 +523,9 @@ export default function TradesPage() {
                     </TableCell>
                     <TableCell>
                       {(t.tags || []).slice(0, 3).map((tag) => (
-                        <Chip
+                        <Tag
                           key={tag}
                           label={tag}
-                          size='small'
                           sx={{ mr: 0.5, mb: 0.5 }}
                         />
                       ))}
@@ -632,7 +582,7 @@ export default function TradesPage() {
             loadTrades(1, parseInt(e.target.value, 10), search)
           }
         />
-      </Paper>
+      </Panel>
 
       <TradeFormDialog
         open={formOpen}
@@ -642,37 +592,23 @@ export default function TradesPage() {
         initialTrade={editingTrade}
       />
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Delete trade?</DialogTitle>
-        <DialogContent>
-          <Typography variant='body2'>
-            This permanently deletes the {deleteTarget?.symbol} trade from{' '}
-            {deleteTarget ? format(new Date(deleteTarget.entryTime), 'PP') : ''}
-            . This cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color='error' variant='contained' onClick={confirmDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        title='Delete trade?'
+        description={`This permanently deletes the ${deleteTarget?.symbol || ''} trade${deleteTarget ? ` from ${format(new Date(deleteTarget.entryTime), 'PP')}` : ''}. This cannot be undone.`}
+        confirmLabel='Delete trade'
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
 
-      <Dialog open={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)}>
-        <DialogTitle>Delete {selected.length} trades?</DialogTitle>
-        <DialogContent>
-          <Typography variant='body2'>
-            This permanently deletes the selected trades. This cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setBulkDeleteOpen(false)}>Cancel</Button>
-          <Button color='error' variant='contained' onClick={runBulkDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selected.length} trades?`}
+        description='This permanently deletes the selected trades. This cannot be undone.'
+        confirmLabel='Delete trades'
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={runBulkDelete}
+      />
 
       <Dialog open={bulkTagOpen} onClose={() => setBulkTagOpen(false)}>
         <DialogTitle>Add tags to {selected.length} trades</DialogTitle>

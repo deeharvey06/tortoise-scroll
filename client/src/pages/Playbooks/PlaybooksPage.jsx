@@ -24,6 +24,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternateOutlined
 
 import * as playbookApi from '../../services/playbookService';
 import KpiCard from '../../components/KpiCard';
+import { ConfirmationDialog } from '../../components/ui';
 
 const FIELDS = [
   ['setupName', 'Setup name', false],
@@ -357,21 +358,14 @@ export default function PlaybooksPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Delete playbook?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            This permanently deletes "{deleteTarget?.setupName}". If any trades are assigned to it, deletion will be
-            blocked until you reassign them.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        title="Delete playbook?"
+        description={`This permanently deletes "${deleteTarget?.setupName || ''}". If trades are assigned to it, deletion will be blocked until they are reassigned.`}
+        confirmLabel="Delete playbook"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </Box>
   );
 }

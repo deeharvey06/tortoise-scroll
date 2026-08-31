@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -12,6 +11,7 @@ import { checkHealth } from '../services/api';
 import useAuthStore from '../store/useAuthStore';
 import GlobalFilterBar from '../components/GlobalFilterBar';
 import ThemeModeSelector from '../components/ThemeModeSelector';
+import StatusBadge from '../components/ui/StatusBadge';
 import { getRouteTitle } from './navigation';
 
 export default function Topbar({ mobile = false, onOpenNavigation }) {
@@ -54,11 +54,9 @@ export default function Topbar({ mobile = false, onOpenNavigation }) {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
           <Tooltip title={statusLabel}>
-            <Chip
-              size="small"
+            <StatusBadge
               label={mobile ? '' : statusLabel}
-              color={status === 'online' ? 'success' : status === 'offline' ? 'error' : 'default'}
-              variant="outlined"
+              tone={status === 'online' ? 'positive' : status === 'offline' ? 'negative' : 'neutral'}
               sx={{
                 minWidth: mobile ? 24 : undefined,
                 '& .MuiChip-label': { display: mobile ? 'none' : 'block' },

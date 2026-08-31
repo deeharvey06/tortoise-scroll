@@ -30,6 +30,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import * as backtestApi from '../../services/backtestService';
 import { palette } from '../../theme/theme';
 import KpiCard from '../../components/KpiCard';
+import { ConfirmationDialog } from '../../components/ui';
 
 const emptyForm = {
   name: '',
@@ -322,18 +323,14 @@ export default function BacktestingPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Delete backtest?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">This permanently deletes "{deleteTarget?.name}".</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        title="Delete backtest?"
+        description={`This permanently deletes "${deleteTarget?.name || ''}". This cannot be undone.`}
+        confirmLabel="Delete backtest"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
 
       <Dialog open={!!resultView} onClose={() => setResultView(null)} maxWidth="sm" fullWidth>
         <DialogTitle>{resultView?.config.name} — result</DialogTitle>
