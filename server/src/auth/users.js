@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import 'dotenv/config';
 
 const DEFAULT_USERS = {
   demo: {
