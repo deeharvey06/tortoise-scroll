@@ -10,6 +10,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
+import TableSortLabel from '@mui/material/TableSortLabel';
 import IconButton from '@mui/material/IconButton';
 import Checkbox from '@mui/material/Checkbox';
 import Alert from '@mui/material/Alert';
@@ -19,6 +20,9 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import Toolbar from '@mui/material/Toolbar';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemText from '@mui/material/ListItemText';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,16 +30,36 @@ import CheckIcon from '@mui/icons-material/CheckCircleOutline';
 import CloseIcon from '@mui/icons-material/HighlightOffOutlined';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import LabelIcon from '@mui/icons-material/LabelOutlined';
+import ViewColumnIcon from '@mui/icons-material/ViewColumnOutlined';
 import Tooltip from '@mui/material/Tooltip';
 import { format } from 'date-fns';
 
 import * as tradeApi from '../../services/tradeService';
 import useFilterStore, { resolveDateRange } from '../../store/useFilterStore';
 import TradeFormDialog from './TradeFormDialog';
+import PageHeader from '../../components/PageHeader';
 import {
   ConfirmationDialog, EmptyState, ErrorState, LoadingState, Panel,
   ProfitLossValue, RMultiple, SearchField, Tag, TradeDirection,
 } from '../../components/ui';
+
+const TRADE_COLUMNS = [
+  { id: 'entryTime', label: 'Date', sortable: true, required: true },
+  { id: 'symbol', label: 'Symbol', sortable: true, required: true },
+  { id: 'direction', label: 'Direction', sortable: true },
+  { id: 'quantity', label: 'Qty', sortable: true, numeric: true },
+  { id: 'entryPrice', label: 'Entry', sortable: true, numeric: true },
+  { id: 'exitPrice', label: 'Exit', sortable: true, numeric: true },
+  { id: 'netPnL', label: 'Net P&L', sortable: true, numeric: true, required: true },
+  { id: 'rMultiple', label: 'R', sortable: true, numeric: true },
+  { id: 'setup', label: 'Setup', sortable: true },
+  { id: 'session', label: 'Session', sortable: true },
+  { id: 'holdingTimeSeconds', label: 'Duration', sortable: true, numeric: true },
+  { id: 'tags', label: 'Tags' },
+  { id: 'followedPlan', label: 'Plan', sortable: true },
+];
+
+const DEFAULT_VISIBLE_COLUMNS = TRADE_COLUMNS.map((column) => column.id);
 
 function formatDuration(seconds) {
   if (seconds === null || seconds === undefined) return '—';
@@ -79,9 +103,20 @@ export default function TradesPage() {
   const [bulkTagOpen, setBulkTagOpen] = useState(false);
   const [bulkTagValue, setBulkTagValue] = useState('');
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('entryTime');
+  const [sortDir, setSortDir] = useState('desc');
+  const [columnMenuAnchor, setColumnMenuAnchor] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('tortoise-scroll-trade-columns'));
+      return Array.isArray(stored) ? stored : DEFAULT_VISIBLE_COLUMNS;
+    } catch {
+      return DEFAULT_VISIBLE_COLUMNS;
+    }
+  });
 
   const loadTrades = useCallback(
-    async (page = 1, limit = 25, searchTerm = '') => {
+    async (page = 1, limit = 25, searchTerm = '', nextSortBy = sortBy, nextSortDir = sortDir) => {
       setLoading(true);
       setError(null);
       try {
@@ -107,8 +142,8 @@ export default function TradesPage() {
           dateTo: range.dateTo
             ? new Date(range.dateTo).toISOString()
             : undefined,
-          sortBy: 'entryTime',
-          sortDir: 'desc',
+          sortBy: nextSortBy,
+          sortDir: nextSortDir,
         });
         setTrades(data.items);
         setPagination(data.pagination);
@@ -134,8 +169,30 @@ export default function TradesPage() {
       filters.strategy,
       filters.symbol,
       filters.tags,
+      sortBy,
+      sortDir,
     ],
   );
+
+  const handleSort = (columnId) => {
+    const nextDirection = sortBy === columnId && sortDir === 'asc' ? 'desc' : 'asc';
+    setSortBy(columnId);
+    setSortDir(nextDirection);
+  };
+
+  const toggleColumn = (columnId) => {
+    const column = TRADE_COLUMNS.find((item) => item.id === columnId);
+    if (column?.required) return;
+    setVisibleColumns((current) => {
+      const next = current.includes(columnId)
+        ? current.filter((id) => id !== columnId)
+        : [...current, columnId];
+      localStorage.setItem('tortoise-scroll-trade-columns', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const isVisible = (columnId) => visibleColumns.includes(columnId);
 
   const loadAccounts = useCallback(async () => {
     setAccountsLoading(true);
@@ -322,16 +379,12 @@ export default function TradesPage() {
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 2,
-        }}
-      >
-        <Typography variant='h5'>Trades</Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+      <PageHeader
+        eyebrow='Trading workspace'
+        title='Trades'
+        description={`${pagination.total.toLocaleString()} recorded trade${pagination.total === 1 ? '' : 's'} · Review execution, context, and process without losing the detail.`}
+        actions={
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <Button
             variant='outlined'
             size='small'
@@ -360,8 +413,9 @@ export default function TradesPage() {
               </Button>
             </span>
           </Tooltip>
-        </Box>
-      </Box>
+          </Box>
+        }
+      />
 
       {error && <ErrorState compact message={error} onClose={() => setError(null)} sx={{ mb: 4 }} />}
       {toast && (
@@ -377,16 +431,41 @@ export default function TradesPage() {
         </Alert>
       )}
 
-      <SearchField
-        inputRef={searchInputRef}
-        label='Search trades'
-        placeholder='Search symbol, setup, tags, notes…  (/)'
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
-        sx={{ mb: 4, width: { xs: '100%', sm: 340 } }}
-      />
-
       <Panel padding={0}>
+        <Toolbar
+          disableGutters
+          sx={{ px: 3, py: 2, gap: 2, flexWrap: 'wrap', borderBottom: 1, borderColor: 'divider' }}
+        >
+          <SearchField
+            inputRef={searchInputRef}
+            label='Search trades'
+            placeholder='Symbol, setup, tags, notes…  (/)'
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            sx={{ width: { xs: '100%', sm: 340 } }}
+          />
+          <Typography variant='caption' color='text.secondary' sx={{ flex: 1 }}>
+            {loading ? 'Updating results…' : `Showing ${trades.length} of ${pagination.total}`}
+          </Typography>
+          <Button
+            size='small'
+            variant='outlined'
+            startIcon={<ViewColumnIcon />}
+            onClick={(event) => setColumnMenuAnchor(event.currentTarget)}
+            aria-haspopup='menu'
+            aria-expanded={Boolean(columnMenuAnchor)}
+          >
+            Columns
+          </Button>
+          <Menu anchorEl={columnMenuAnchor} open={Boolean(columnMenuAnchor)} onClose={() => setColumnMenuAnchor(null)}>
+            {TRADE_COLUMNS.map((column) => (
+              <MenuItem key={column.id} dense disabled={column.required} onClick={() => toggleColumn(column.id)}>
+                <Checkbox size='small' checked={isVisible(column.id)} />
+                <ListItemText primary={column.label} secondary={column.required ? 'Required' : undefined} />
+              </MenuItem>
+            ))}
+          </Menu>
+        </Toolbar>
         {selected.length > 0 && (
           <Toolbar
             sx={{
@@ -415,8 +494,8 @@ export default function TradesPage() {
             </Button>
           </Toolbar>
         )}
-        <TableContainer>
-          <Table size='small'>
+        <TableContainer sx={{ maxHeight: { xs: 'none', lg: 'calc(100vh - 330px)' } }}>
+          <Table size='small' stickyHeader aria-label='Trades'>
             <TableHead>
               <TableRow>
                 <TableCell padding='checkbox'>
@@ -428,26 +507,26 @@ export default function TradesPage() {
                     onChange={toggleSelectAll}
                   />
                 </TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Symbol</TableCell>
-                <TableCell>Dir</TableCell>
-                <TableCell align='right'>Qty</TableCell>
-                <TableCell align='right'>Entry</TableCell>
-                <TableCell align='right'>Exit</TableCell>
-                <TableCell align='right'>Net P&L</TableCell>
-                <TableCell align='right'>R</TableCell>
-                <TableCell>Setup</TableCell>
-                <TableCell>Session</TableCell>
-                <TableCell align='right'>Duration</TableCell>
-                <TableCell>Tags</TableCell>
-                <TableCell align='center'>Plan</TableCell>
+                {TRADE_COLUMNS.filter((column) => isVisible(column.id)).map((column) => (
+                  <TableCell key={column.id} align={column.numeric ? 'right' : column.id === 'followedPlan' ? 'center' : 'left'}>
+                    {column.sortable ? (
+                      <TableSortLabel
+                        active={sortBy === column.id}
+                        direction={sortBy === column.id ? sortDir : 'asc'}
+                        onClick={() => handleSort(column.id)}
+                      >
+                        {column.label}
+                      </TableSortLabel>
+                    ) : column.label}
+                  </TableCell>
+                ))}
                 <TableCell align='right'>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={15} align='center' sx={{ py: 4 }}>
+                  <TableCell colSpan={visibleColumns.length + 2} align='center' sx={{ py: 4 }}>
                     <LoadingState compact label='Loading trades…' />
                   </TableCell>
                 </TableRow>
@@ -455,7 +534,7 @@ export default function TradesPage() {
 
               {!loading && trades.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={15} align='center' sx={{ py: 4 }}>
+                  <TableCell colSpan={visibleColumns.length + 2} align='center' sx={{ py: 4 }}>
                     <EmptyState
                       compact
                       title={search ? 'No matching trades' : hasAccounts ? 'No trades recorded' : 'Create an account first'}
@@ -483,45 +562,44 @@ export default function TradesPage() {
                         onChange={() => toggleSelectOne(t._id)}
                       />
                     </TableCell>
-                    <TableCell
+                    {isVisible('entryTime') && <TableCell
                       className='mono-data'
-                      onClick={() => navigate(`/trades/${t._id}`)}
-                      sx={{ cursor: 'pointer' }}
+                      sx={{ whiteSpace: 'nowrap' }}
                     >
-                      {format(new Date(t.entryTime), 'MM/dd/yy HH:mm')}
-                    </TableCell>
-                    <TableCell
-                      sx={{ fontWeight: 600, cursor: 'pointer' }}
-                      onClick={() => navigate(`/trades/${t._id}`)}
+                      <Typography variant='body2' className='mono-data'>{format(new Date(t.entryTime), 'MMM d, yyyy')}</Typography>
+                      <Typography variant='caption' color='text.secondary' className='mono-data'>{format(new Date(t.entryTime), 'HH:mm')}</Typography>
+                    </TableCell>}
+                    {isVisible('symbol') && <TableCell
+                      sx={{ fontWeight: 700, letterSpacing: '0.02em' }}
                     >
                       {t.symbol}
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isVisible('direction') && <TableCell>
                       <TradeDirection direction={t.direction} />
-                    </TableCell>
-                    <TableCell align='right' className='mono-data'>
+                    </TableCell>}
+                    {isVisible('quantity') && <TableCell align='right' className='mono-data'>
                       {t.quantity}
-                    </TableCell>
-                    <TableCell align='right' className='mono-data'>
+                    </TableCell>}
+                    {isVisible('entryPrice') && <TableCell align='right' className='mono-data'>
                       {t.entryPrice?.toFixed(2)}
-                    </TableCell>
-                    <TableCell align='right' className='mono-data'>
+                    </TableCell>}
+                    {isVisible('exitPrice') && <TableCell align='right' className='mono-data'>
                       {t.exitPrice !== null && t.exitPrice !== undefined
                         ? t.exitPrice.toFixed(2)
                         : '—'}
-                    </TableCell>
-                    <TableCell align='right'>
+                    </TableCell>}
+                    {isVisible('netPnL') && <TableCell align='right'>
                       <ProfitLossValue value={t.netPnL} />
-                    </TableCell>
-                    <TableCell align='right'>
+                    </TableCell>}
+                    {isVisible('rMultiple') && <TableCell align='right'>
                       <RMultiple value={t.rMultiple} />
-                    </TableCell>
-                    <TableCell>{t.setup || '—'}</TableCell>
-                    <TableCell>{t.session}</TableCell>
-                    <TableCell align='right' className='mono-data'>
+                    </TableCell>}
+                    {isVisible('setup') && <TableCell sx={{ whiteSpace: 'nowrap' }}>{t.setup || '—'}</TableCell>}
+                    {isVisible('session') && <TableCell sx={{ whiteSpace: 'nowrap' }}>{t.session}</TableCell>}
+                    {isVisible('holdingTimeSeconds') && <TableCell align='right' className='mono-data'>
                       {formatDuration(t.holdingTimeSeconds)}
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isVisible('tags') && <TableCell sx={{ minWidth: 130 }}>
                       {(t.tags || []).slice(0, 3).map((tag) => (
                         <Tag
                           key={tag}
@@ -529,18 +607,19 @@ export default function TradesPage() {
                           sx={{ mr: 0.5, mb: 0.5 }}
                         />
                       ))}
-                    </TableCell>
-                    <TableCell align='center'>
+                      {(t.tags || []).length > 3 && <Tag label={`+${t.tags.length - 3}`} />}
+                    </TableCell>}
+                    {isVisible('followedPlan') && <TableCell align='center'>
                       {t.followedPlan === true && (
-                        <CheckIcon fontSize='small' color='success' />
+                        <Tooltip title='Plan followed'><CheckIcon fontSize='small' color='success' /></Tooltip>
                       )}
                       {t.followedPlan === false && (
-                        <CloseIcon fontSize='small' color='error' />
+                        <Tooltip title='Plan not followed'><CloseIcon fontSize='small' color='error' /></Tooltip>
                       )}
                       {(t.followedPlan === null ||
                         t.followedPlan === undefined) &&
                         '—'}
-                    </TableCell>
+                    </TableCell>}
                     <TableCell
                       align='right'
                       onClick={(e) => e.stopPropagation()}
