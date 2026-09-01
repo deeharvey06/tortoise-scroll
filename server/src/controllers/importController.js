@@ -26,8 +26,28 @@ export async function postCommit(req, res) {
     res.status(400);
     throw new Error('No CSV file uploaded (field name must be "file")');
   }
-  // Validate request body
-  const validated = importCommitSchema.parse(req.body);
+
+  let parsedMapping = {};
+  if (req.body && typeof req.body.mapping === 'string') {
+    try {
+      parsedMapping = JSON.parse(req.body.mapping);
+    } catch (error) {
+      res.status(400);
+      throw new Error('Invalid CSV mapping payload');
+    }
+  } else if (
+    req.body &&
+    req.body.mapping &&
+    typeof req.body.mapping === 'object'
+  ) {
+    parsedMapping = req.body.mapping;
+  }
+
+  // Validate request body after decoding multipart mapping payloads
+  const validated = importCommitSchema.parse({
+    ...req.body,
+    mapping: parsedMapping,
+  });
 
   let mapping = {};
   if (validated.mapping) {

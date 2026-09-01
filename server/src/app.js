@@ -47,14 +47,23 @@ export function createApp() {
       origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
     }),
   );
-  app.use(
-    rateLimit({
-      windowMs: 60 * 1000,
-      max: 200,
-      standardHeaders: true,
-      legacyHeaders: false,
-    }),
-  );
+  const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: process.env.NODE_ENV === 'test' ? 100000 : 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: process.env.NODE_ENV === 'test' ? 100000 : 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  if (process.env.NODE_ENV !== 'test') {
+    app.use('/api/auth', authLimiter);
+    app.use(apiLimiter);
+  }
   app.use(express.json({ limit: '25mb' }));
   app.use(express.urlencoded({ extended: true }));
 

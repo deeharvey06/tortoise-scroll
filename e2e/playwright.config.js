@@ -16,7 +16,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://127.0.0.1:5174',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -26,15 +26,15 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run dev --prefix ../server',
+      command: 'NODE_ENV=test JWT_SECRET=test-secret npm run dev --prefix ../server',
       url: 'http://localhost:5050/api/health',
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 30_000,
     },
     {
-      command: 'npm run dev --prefix ../client',
-      url: 'http://localhost:5173',
-      reuseExistingServer: true,
+      command: 'NODE_ENV=test npm run dev --prefix ../client -- --host 127.0.0.1 --port 5174 --strictPort',
+      url: 'http://127.0.0.1:5174',
+      reuseExistingServer: false,
       timeout: 30_000,
     },
   ],

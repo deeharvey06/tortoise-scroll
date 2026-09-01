@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
@@ -30,6 +29,9 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import * as backtestApi from '../../services/backtestService';
 import { palette } from '../../theme/theme';
 import KpiCard from '../../components/KpiCard';
+import { ConfirmationDialog } from '../../components/ui';
+import PageHeader from '../../components/PageHeader';
+import { EmptyState, LoadingState, Panel } from '../../components/ui';
 
 const emptyForm = {
   name: '',
@@ -165,20 +167,15 @@ export default function BacktestingPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress size={28} />
-      </Box>
+      <LoadingState label="Loading backtests" />
     );
   }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5">Backtesting</Typography>
-        <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={openCreate}>
+      <PageHeader eyebrow="Tools" title="Backtesting" description="Define and evaluate repeatable rules against connected historical market data." actions={<Button variant="contained" size="small" startIcon={<AddIcon />} onClick={openCreate}>
           New backtest
-        </Button>
-      </Box>
+        </Button>} />
 
       {!status?.configured && (
         <Alert severity="info" sx={{ mb: 2 }}>
@@ -196,9 +193,9 @@ export default function BacktestingPage() {
       )}
 
       {configs.length === 0 ? (
-        <Alert severity="info">No saved backtests yet. Click "New backtest" to define your first one.</Alert>
+        <EmptyState title="No saved backtests" description="Define your first rules-based test when you are ready." action={<Button variant="contained" size="small" onClick={openCreate}>New backtest</Button>} />
       ) : (
-        <Paper>
+        <Panel padding={0} sx={{ overflowX: 'auto' }}>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -257,7 +254,7 @@ export default function BacktestingPage() {
               ))}
             </TableBody>
           </Table>
-        </Paper>
+        </Panel>
       )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -322,18 +319,14 @@ export default function BacktestingPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Delete backtest?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">This permanently deletes "{deleteTarget?.name}".</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        title="Delete backtest?"
+        description={`This permanently deletes "${deleteTarget?.name || ''}". This cannot be undone.`}
+        confirmLabel="Delete backtest"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
 
       <Dialog open={!!resultView} onClose={() => setResultView(null)} maxWidth="sm" fullWidth>
         <DialogTitle>{resultView?.config.name} — result</DialogTitle>

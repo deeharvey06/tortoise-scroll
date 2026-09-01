@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -15,12 +14,13 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import Alert from '@mui/material/Alert';
-import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 
 import * as importApi from '../../services/importService';
 import * as tradeApi from '../../services/tradeService';
+import PageHeader from '../../components/PageHeader';
+import { Panel, SectionHeader, StatusBadge } from '../../components/ui';
 
 const TARGET_FIELDS = [
   { key: 'symbol', label: 'Symbol', required: true },
@@ -36,7 +36,7 @@ const TARGET_FIELDS = [
   { key: 'notes', label: 'Notes', required: false },
 ];
 
-const STEPS = ['Choose file & broker', 'Map columns', 'Preview & confirm', 'Result'];
+const STAGES = ['Upload', 'Detect', 'Map', 'Validate', 'Review', 'Import', 'Results'];
 
 export default function ImportPage() {
   const [activeStep, setActiveStep] = useState(0);
@@ -57,6 +57,10 @@ export default function ImportPage() {
 
   const [loading, setLoading] = useState(false);
   const [job, setJob] = useState(null);
+  const visualStage = activeStep === 0 ? (loading ? 1 : 0) : activeStep === 1 ? 2 : activeStep === 2 ? (loading ? 5 : 4) : 6;
+  const failedRows = job?.rows?.filter((row) => row.outcome === 'error') || [];
+  const hasErrorField = failedRows.some((row) => row.field !== undefined);
+  const hasErrorValue = failedRows.some((row) => row.value !== undefined);
 
   useEffect(() => {
     importApi.fetchAdapters().then(setAdapters).catch((e) => setError(e.message));
@@ -140,18 +144,18 @@ export default function ImportPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 920 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Import trades
-      </Typography>
+    <Box sx={{ maxWidth: 1120 }}>
+      <PageHeader eyebrow="System" title="Import trades" description="Bring broker CSV exports into your permanent trading record through a controlled, reviewable workflow." />
 
-      <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
-        {STEPS.map((label) => (
+      <Box sx={{ overflowX: 'auto', mb: 6, pb: 1 }} aria-label="Import progress">
+      <Stepper activeStep={visualStage} alternativeLabel sx={{ minWidth: 680, '& .MuiStepLabel-label': { typography: 'caption' } }}>
+        {STAGES.map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>
           </Step>
         ))}
       </Stepper>
+      </Box>
 
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
@@ -160,7 +164,8 @@ export default function ImportPage() {
       )}
 
       {activeStep === 0 && (
-        <Paper sx={{ p: 3 }}>
+        <Panel>
+          <SectionHeader eyebrow="Upload" title="Choose source file" description="Select the broker format, then provide its CSV export. The source file is not modified." />
           <TextField
             select
             label="Broker format"
@@ -190,7 +195,7 @@ export default function ImportPage() {
               borderRadius: 1,
               p: 5,
               textAlign: 'center',
-              backgroundColor: dragOver ? 'rgba(76, 141, 255, 0.06)' : 'transparent',
+              backgroundColor: dragOver ? 'action.hover' : 'transparent',
             }}
           >
             <UploadFileIcon sx={{ fontSize: 36, color: 'text.secondary', mb: 1 }} />
@@ -218,11 +223,12 @@ export default function ImportPage() {
               {loading ? <CircularProgress size={18} /> : 'Preview'}
             </Button>
           </Box>
-        </Paper>
+        </Panel>
       )}
 
       {activeStep === 1 && (
-        <Paper sx={{ p: 3 }}>
+        <Panel>
+          <SectionHeader eyebrow="Detect · Map" title="Confirm column mapping" description="Review the detected headers before any rows are imported." />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {totalRows} rows detected. Map each field to a column from your file. Fields marked * are required —
             rows that fail to resolve them will be reported as errors, never silently skipped.
@@ -268,11 +274,12 @@ export default function ImportPage() {
               Continue
             </Button>
           </Box>
-        </Paper>
+        </Panel>
       )}
 
       {activeStep === 2 && (
-        <Paper sx={{ p: 3 }}>
+        <Panel>
+          <SectionHeader eyebrow="Validate · Review" title="Review interpreted trades" description="Choose the destination account and verify how the mapped values will be interpreted." />
           <TextField
             select
             label="Import into account"
@@ -320,15 +327,16 @@ export default function ImportPage() {
               {loading ? <CircularProgress size={18} /> : `Import ${totalRows} rows`}
             </Button>
           </Box>
-        </Paper>
+        </Panel>
       )}
 
       {activeStep === 3 && job && (
-        <Paper sx={{ p: 3 }}>
+        <Panel>
+          <SectionHeader eyebrow="Results" title="Import completed" description="Every submitted row is accounted for below." />
           <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Chip label={`${job.summary.imported} imported`} color="success" />
-            <Chip label={`${job.summary.duplicates} duplicates skipped`} color="warning" variant="outlined" />
-            <Chip label={`${job.summary.errors} errors`} color={job.summary.errors > 0 ? 'error' : 'default'} variant="outlined" />
+            <StatusBadge label={`${job.summary.imported} imported`} tone="positive" />
+            <StatusBadge label={`${job.summary.duplicates} duplicates skipped`} tone="warning" />
+            <StatusBadge label={`${job.summary.errors} errors`} tone={job.summary.errors > 0 ? 'negative' : 'neutral'} />
           </Box>
 
           {job.summary.errors > 0 && (
@@ -341,15 +349,17 @@ export default function ImportPage() {
                   <TableHead>
                     <TableRow>
                       <TableCell>Row</TableCell>
+                      {hasErrorField && <TableCell>Field</TableCell>}
+                      {hasErrorValue && <TableCell>Value</TableCell>}
                       <TableCell>Reason</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {job.rows
-                      .filter((r) => r.outcome === 'error')
-                      .map((r) => (
+                    {failedRows.map((r) => (
                         <TableRow key={r.rowNumber}>
                           <TableCell>{r.rowNumber}</TableCell>
+                          {hasErrorField && <TableCell>{r.field ?? '—'}</TableCell>}
+                          {hasErrorValue && <TableCell className="financial-number">{r.value ?? '—'}</TableCell>}
                           <TableCell>{r.message}</TableCell>
                         </TableRow>
                       ))}
@@ -362,7 +372,7 @@ export default function ImportPage() {
           <Button variant="contained" onClick={startOver}>
             Import another file
           </Button>
-        </Paper>
+        </Panel>
       )}
     </Box>
   );

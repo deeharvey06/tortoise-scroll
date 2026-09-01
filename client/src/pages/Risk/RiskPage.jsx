@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -12,6 +11,8 @@ import LinearProgress from '@mui/material/LinearProgress';
 import * as riskApi from '../../services/riskService';
 import { useFilterStore } from '../../store/useFilterStore';
 import KpiCard from '../../components/KpiCard';
+import PageHeader from '../../components/PageHeader';
+import { EmptyState, ErrorState, LoadingState, Panel, SectionHeader, StatusBadge } from '../../components/ui';
 
 const LIMIT_FIELDS = [
   ['maxDailyLoss', 'Max daily loss ($)'],
@@ -28,9 +29,9 @@ function fmtMoney(v) {
   return `${sign}$${Math.abs(v).toFixed(2)}`;
 }
 
-function LimitBar({ label, current, limit, invert }) {
+function LimitBar({ label, current, limit, formatValue = (value) => Math.abs(value).toFixed(2) }) {
   if (limit === null || limit === undefined) return null;
-  const pct = Math.min(100, (Math.abs(current) / Math.abs(limit)) * 100);
+  const pct = Math.abs(limit) === 0 ? 100 : Math.min(100, (Math.abs(current) / Math.abs(limit)) * 100);
   const danger = pct >= 100;
   const warn = pct >= 80;
   return (
@@ -38,14 +39,14 @@ function LimitBar({ label, current, limit, invert }) {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
         <Typography variant="body2">{label}</Typography>
         <Typography variant="body2" className="mono-data" color={danger ? 'error.main' : warn ? 'warning.main' : 'text.secondary'}>
-          {Math.abs(current).toFixed(2)} / {Math.abs(limit)}
+          {formatValue(current)} / {formatValue(limit)} · {pct.toFixed(0)}%
         </Typography>
       </Box>
       <LinearProgress
         variant="determinate"
         value={pct}
         color={danger ? 'error' : warn ? 'warning' : 'primary'}
-        sx={{ height: 8, borderRadius: 4 }}
+        sx={{ height: 6, borderRadius: 3, bgcolor: 'action.hover' }}
       />
     </Box>
   );
@@ -104,31 +105,23 @@ export default function RiskPage() {
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress size={28} />
-      </Box>
-    );
+    return <LoadingState label='Loading risk controls…' skeletonRows={5} />;
   }
+  if (error && !dashboard) return <ErrorState message={error} onRetry={load} />;
 
   const current = dashboard?.current;
+  const dailyLimit = dashboard?.settings?.maxDailyLoss;
+  const dailyLossUsed = current.dailyPnL < 0 ? Math.abs(current.dailyPnL) : 0;
+  const dailyRemaining = dailyLimit == null ? null : Math.max(0, Math.abs(dailyLimit) - dailyLossUsed);
+  const hasWarnings = dashboard?.warnings?.length > 0;
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Risk
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {accountId
+      <PageHeader eyebrow='Capital protection' title='Risk' description={accountId
           ? 'Showing limits and exposure for the account selected in the filter bar.'
-          : 'Showing global limits and exposure across all accounts — select an account in the filter bar for account-specific limits.'}
-      </Typography>
+          : 'Showing global limits and exposure across all accounts. Select an account for account-specific controls.'} actions={<StatusBadge label={hasWarnings ? `${dashboard.warnings.length} attention item${dashboard.warnings.length === 1 ? '' : 's'}` : 'Within configured limits'} tone={hasWarnings ? 'warning' : 'positive'} />} />
 
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {error && <ErrorState compact message={error} onClose={() => setError(null)} sx={{ mb: 4 }} />}
       {toast && (
         <Alert severity="success" onClose={() => setToast(null)} sx={{ mb: 2 }}>
           {toast}
@@ -136,7 +129,7 @@ export default function RiskPage() {
       )}
 
       {dashboard?.warnings?.length > 0 && (
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 4 }}>
           {dashboard.warnings.map((w, i) => (
             <Alert severity="warning" key={i} sx={{ mb: 1 }}>
               {w}
@@ -145,59 +138,56 @@ export default function RiskPage() {
         </Box>
       )}
 
-      <Grid container spacing={1.5} sx={{ mb: 3 }}>
-        <Grid item xs={6} sm={3}>
+      <Grid container spacing={1.5} sx={{ mb: 5 }}>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="Today's P&L" value={fmtMoney(current.dailyPnL)} colorByValue />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={4} lg={3}>
+          <KpiCard label="Daily risk remaining" value={dailyRemaining == null ? 'Not configured' : fmtMoney(dailyRemaining)} />
+        </Grid>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="This week's P&L" value={fmtMoney(current.weeklyPnL)} colorByValue />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="Current drawdown" value={fmtMoney(current.currentDrawdown)} colorByValue />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="Max drawdown" value={fmtMoney(current.maxDrawdown)} colorByValue />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="Consecutive losses" value={current.consecutiveLosses} />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="Trades today" value={current.tradesToday} />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="Open positions" value={current.openPositions} />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={4} lg={3}>
           <KpiCard label="Current exposure" value={fmtMoney(current.currentExposure)} />
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-              Limits vs. current usage
-            </Typography>
+          <Panel sx={{ height: '100%' }}>
+            <SectionHeader eyebrow='Utilization' title='Limits vs. current usage' description='Warnings strengthen only as usage approaches or reaches a configured limit.' />
             <LimitBar label="Daily loss" current={current.dailyPnL} limit={dashboard.settings?.maxDailyLoss} />
             <LimitBar label="Weekly loss" current={current.weeklyPnL} limit={dashboard.settings?.maxWeeklyLoss} />
-            <LimitBar label="Trades today" current={current.tradesToday} limit={dashboard.settings?.maxTradesPerDay} />
-            <LimitBar label="Consecutive losses" current={current.consecutiveLosses} limit={dashboard.settings?.maxConsecutiveLosses} />
+            <LimitBar label="Trades today" current={current.tradesToday} limit={dashboard.settings?.maxTradesPerDay} formatValue={(value) => Math.abs(value).toFixed(0)} />
+            <LimitBar label="Consecutive losses" current={current.consecutiveLosses} limit={dashboard.settings?.maxConsecutiveLosses} formatValue={(value) => Math.abs(value).toFixed(0)} />
             {!dashboard.settings?.maxDailyLoss &&
               !dashboard.settings?.maxWeeklyLoss &&
               !dashboard.settings?.maxTradesPerDay &&
               !dashboard.settings?.maxConsecutiveLosses && (
-                <Typography variant="body2" color="text.secondary">
-                  No limits configured yet — set them on the right to see live usage bars here.
-                </Typography>
+                <EmptyState compact title='No limits configured' description='Set limits to see live utilization and threshold warnings.' />
               )}
-          </Paper>
+          </Panel>
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-              Configure limits
-            </Typography>
+          <Panel>
+            <SectionHeader eyebrow='Policy' title='Configure limits' description='Define the boundaries that protect capital and decision quality.' />
             <Grid container spacing={2}>
               {LIMIT_FIELDS.map(([key, label]) => (
                 <Grid item xs={12} sm={6} key={key}>
@@ -217,7 +207,7 @@ export default function RiskPage() {
                 {saving ? <CircularProgress size={18} /> : 'Save limits'}
               </Button>
             </Box>
-          </Paper>
+          </Panel>
         </Grid>
       </Grid>
     </Box>

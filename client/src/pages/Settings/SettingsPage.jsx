@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -11,12 +10,6 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
-import IconButton from '@mui/material/IconButton';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -27,6 +20,9 @@ import * as tagApi from '../../services/tagService';
 import * as tradeApi from '../../services/tradeService';
 import * as strategyApi from '../../services/strategyService';
 import * as backupApi from '../../services/backupService';
+import PageHeader from '../../components/PageHeader';
+import ThemeModeSelector from '../../components/ThemeModeSelector';
+import { ConfirmationDialog, EmptyState, LoadingState, Panel, SectionHeader } from '../../components/ui';
 
 const CATEGORIES = ['setup', 'mistake', 'emotion', 'custom'];
 
@@ -35,26 +31,27 @@ function GeneralTab({ settings, onSave, saving, accounts }) {
   useEffect(() => setForm(settings), [settings]);
 
   return (
-    <Paper sx={{ p: 2.5, maxWidth: 600 }}>
+    <Panel sx={{ maxWidth: 720 }}>
+      <SectionHeader title="General preferences" description="Set the display context used throughout your journal." />
       <Grid container spacing={2}>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField label="Timezone" fullWidth size="small" value={form.timezone} onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))} helperText="e.g. UTC, America/New_York" />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField select label="Currency" fullWidth size="small" value={form.currency} onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}>
             {['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'].map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
           </TextField>
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField select label="Default account" fullWidth size="small" value={form.defaultAccountId || ''} onChange={(e) => setForm((f) => ({ ...f, defaultAccountId: e.target.value || null }))}>
             <MenuItem value="">None</MenuItem>
             {accounts.map((a) => <MenuItem key={a._id} value={a._id}>{a.name}</MenuItem>)}
           </TextField>
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={12} sm={6}>
           <TextField label="Trading hours start" fullWidth size="small" value={form.tradingHoursStart} onChange={(e) => setForm((f) => ({ ...f, tradingHoursStart: e.target.value }))} />
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={12} sm={6}>
           <TextField label="Trading hours end" fullWidth size="small" value={form.tradingHoursEnd} onChange={(e) => setForm((f) => ({ ...f, tradingHoursEnd: e.target.value }))} />
         </Grid>
       </Grid>
@@ -63,7 +60,7 @@ function GeneralTab({ settings, onSave, saving, accounts }) {
           {saving ? <CircularProgress size={16} /> : 'Save'}
         </Button>
       </Box>
-    </Paper>
+    </Panel>
   );
 }
 
@@ -72,9 +69,10 @@ function TradingTab({ settings, onSave, saving, strategies }) {
   useEffect(() => setForm(settings), [settings]);
 
   return (
-    <Paper sx={{ p: 2.5, maxWidth: 600 }}>
+    <Panel sx={{ maxWidth: 720 }}>
+      <SectionHeader title="Trading defaults" description="Defaults accelerate entry without changing trade calculations." />
       <Grid container spacing={2}>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             type="number"
             label="Default risk amount ($)"
@@ -84,7 +82,7 @@ function TradingTab({ settings, onSave, saving, strategies }) {
             onChange={(e) => setForm((f) => ({ ...f, defaultRiskAmount: e.target.value === '' ? null : Number(e.target.value) }))}
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             type="number"
             label="Default R target"
@@ -106,7 +104,7 @@ function TradingTab({ settings, onSave, saving, strategies }) {
           {saving ? <CircularProgress size={16} /> : 'Save'}
         </Button>
       </Box>
-    </Paper>
+    </Panel>
   );
 }
 
@@ -147,7 +145,8 @@ function TagsTab() {
   };
 
   return (
-    <Paper sx={{ p: 2.5, maxWidth: 700 }}>
+    <Panel sx={{ maxWidth: 760 }}>
+      <SectionHeader title="Tag vocabulary" description="Maintain the consistent labels used to classify process and performance." />
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Tags applied on trades are free-form, but this catalog powers autocomplete and lets you manage the
         vocabulary by category (Setup / Mistake / Emotion / Custom).
@@ -178,8 +177,8 @@ function TagsTab() {
           );
         })
       )}
-      {!loading && tags.length === 0 && <Typography variant="body2" color="text.secondary">No tags yet.</Typography>}
-    </Paper>
+      {!loading && tags.length === 0 && <EmptyState title="No tags yet" description="Add a tag to begin building your trading vocabulary." />}
+    </Panel>
   );
 }
 
@@ -236,8 +235,8 @@ function DataTab() {
 
   return (
     <Box sx={{ maxWidth: 700 }}>
-      <Paper sx={{ p: 2.5, mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>Export</Typography>
+      <Panel sx={{ mb: 4 }}>
+        <SectionHeader title="Export" description="Create a portable copy of your journal data." />
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Download your entire database (accounts, trades, strategies, playbooks, tags, journal, risk settings,
           backtests, AI memories/conversations) as a single JSON file. Screenshot image files are not included —
@@ -258,10 +257,10 @@ function DataTab() {
             Export trades only (CSV)
           </Button>
         </Box>
-      </Paper>
+      </Panel>
 
-      <Paper sx={{ p: 2.5, mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>Restore</Typography>
+      <Panel sx={{ mb: 4 }}>
+        <SectionHeader title="Restore" description="Replace current data from a previously exported Tortoise Scroll backup." />
         <Alert severity="warning" sx={{ mb: 2 }}>
           Restoring replaces every collection present in the backup file with its contents. This cannot be undone —
           export a fresh backup first if you want to keep your current data.
@@ -284,10 +283,10 @@ function DataTab() {
             ))}
           </Box>
         )}
-      </Paper>
+      </Panel>
 
-      <Paper sx={{ p: 2.5 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>MongoDB-level backup (advanced)</Typography>
+      <Panel>
+        <SectionHeader title="MongoDB-level backup" eyebrow="Advanced" />
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
           For a complete binary backup (including indexes), use MongoDB's own tools from a terminal:
         </Typography>
@@ -295,24 +294,11 @@ function DataTab() {
 {`mongodump --uri="mongodb://localhost:27017/trading-journal" --out=./backup
 mongorestore --uri="mongodb://localhost:27017/trading-journal" ./backup/trading-journal`}
         </Box>
-      </Paper>
+      </Panel>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Restore from backup?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            This will permanently replace your current accounts, trades, strategies, playbooks, tags, journal
-            entries, risk settings, backtests, and AI memories/conversations with the contents of{' '}
-            <strong>{pendingFile?.name}</strong>. This cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={handleConfirmRestore}>
-            Restore and replace my data
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmationDialog open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmRestore}
+        title="Restore from backup?" confirmLabel="Restore and replace my data"
+        description={`This permanently replaces current journal data with ${pendingFile?.name || 'the selected backup'}. This cannot be undone.`} />
     </Box>
   );
 }
@@ -348,17 +334,15 @@ export default function SettingsPage() {
 
   if (!settings) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress size={28} />
-      </Box>
+      <LoadingState label="Loading settings" />
     );
   }
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>Settings</Typography>
+      <PageHeader eyebrow="System" title="Settings" description="Manage Tortoise Scroll preferences, trading defaults, vocabulary, intelligence, and data." actions={<ThemeModeSelector />} />
 
-      <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 2 }}>
+      <Tabs value={tab} onChange={(e, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile aria-label="Settings sections" sx={{ mb: 4 }}>
         <Tab value="general" label="General" />
         <Tab value="trading" label="Trading" />
         <Tab value="tags" label="Tags" />
@@ -373,15 +357,16 @@ export default function SettingsPage() {
       {tab === 'trading' && <TradingTab settings={settings} onSave={handleSave} saving={saving} strategies={strategies} />}
       {tab === 'tags' && <TagsTab />}
       {tab === 'ai' && (
-        <Paper sx={{ p: 2.5, maxWidth: 500 }}>
+        <Panel sx={{ maxWidth: 620 }}>
+          <SectionHeader title="Tortoise AI settings" description="Provider controls remain beside the AI experience so changes can be evaluated immediately." />
           <Typography variant="body2" sx={{ mb: 2 }}>
             AI provider, model, and temperature settings live on the AI Trading Partner page itself, since that's
             where you can immediately see the effect of a change.
           </Typography>
           <Button component={RouterLink} to="/ai-partner" variant="outlined" size="small" endIcon={<OpenInNewIcon fontSize="small" />}>
-            Go to AI Trading Partner settings
+            Go to Tortoise AI settings
           </Button>
-        </Paper>
+        </Panel>
       )}
       {tab === 'data' && <DataTab />}
     </Box>

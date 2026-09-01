@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
-import Chip from '@mui/material/Chip';
 import Autocomplete from '@mui/material/Autocomplete';
 import Slider from '@mui/material/Slider';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -32,6 +30,8 @@ import * as replayApi from '../../services/replayService';
 import * as tradeApi from '../../services/tradeService';
 import * as tagApi from '../../services/tagService';
 import { palette } from '../../theme/theme';
+import PageHeader from '../../components/PageHeader';
+import { EmptyState, Panel, ProfitLossValue, RMultiple, SectionHeader, TradeDirection } from '../../components/ui';
 
 const SPEED_OPTIONS = [
   { value: 3000, label: '0.5x' },
@@ -39,12 +39,6 @@ const SPEED_OPTIONS = [
   { value: 750, label: '2x' },
   { value: 300, label: '4x' },
 ];
-
-function fmtMoney(v) {
-  if (v === null || v === undefined) return '—';
-  const sign = v < 0 ? '-' : '';
-  return `${sign}$${Math.abs(v).toFixed(2)}`;
-}
 
 export default function ReplayPage() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -143,11 +137,9 @@ export default function ReplayPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Trade Replay
-      </Typography>
+      <PageHeader eyebrow="Tools" title="Trade Replay" description="Review the sequence of a completed session without changing its recorded market data." />
 
-      <Paper sx={{ p: 2, mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Panel sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <TextField
           type="date"
           label="Session date"
@@ -159,7 +151,7 @@ export default function ReplayPage() {
         <Button variant="contained" size="small" onClick={loadSession} disabled={loading}>
           {loading ? <CircularProgress size={18} /> : 'Load session'}
         </Button>
-      </Paper>
+      </Panel>
 
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
@@ -167,7 +159,7 @@ export default function ReplayPage() {
         </Alert>
       )}
 
-      {session && trades.length === 0 && <Alert severity="info">No trades found on {date}.</Alert>}
+      {session && trades.length === 0 && <EmptyState title="No trades in this session" description={`No trades were recorded on ${date}.`} />}
 
       {session && trades.length > 0 && (
         <>
@@ -179,7 +171,7 @@ export default function ReplayPage() {
             </Alert>
           )}
 
-          <Paper sx={{ p: 2, mb: 2 }}>
+          <Panel sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="body2" color="text.secondary">
                 Trade {index + 1} of {trades.length}
@@ -229,34 +221,30 @@ export default function ReplayPage() {
               onChange={(e, v) => setIndex(v)}
               marks
             />
-          </Paper>
+          </Panel>
 
           {current && (
             <Grid container spacing={2}>
               <Grid item xs={12} md={7}>
-                <Paper sx={{ p: 2, mb: 2 }}>
+                <Panel sx={{ mb: 4 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
                     <Typography variant="h6">{current.symbol}</Typography>
-                    <Chip size="small" label={current.direction} color={current.direction === 'long' ? 'success' : 'error'} variant="outlined" />
+                    <TradeDirection direction={current.direction} />
                     <Typography variant="body2" color="text.secondary">
                       {format(new Date(current.entryTime), 'p')}
                       {current.exitTime ? ` → ${format(new Date(current.exitTime), 'p')}` : ' (open)'}
                     </Typography>
                   </Box>
                   <Grid container spacing={2} sx={{ mb: 2 }}>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Typography variant="caption" color="text.secondary">Net P&L</Typography>
-                      <Typography sx={{ color: current.netPnL >= 0 ? 'success.main' : 'error.main', fontWeight: 700 }}>
-                        {fmtMoney(current.netPnL)}
-                      </Typography>
+                      <ProfitLossValue value={current.netPnL} />
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Typography variant="caption" color="text.secondary">R multiple</Typography>
-                      <Typography sx={{ fontWeight: 700 }}>
-                        {current.rMultiple !== null && current.rMultiple !== undefined ? `${current.rMultiple.toFixed(2)}R` : '—'}
-                      </Typography>
+                      <RMultiple value={current.rMultiple} />
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Typography variant="caption" color="text.secondary">Quantity</Typography>
                       <Typography sx={{ fontWeight: 700 }}>{current.quantity}</Typography>
                     </Grid>
@@ -287,14 +275,12 @@ export default function ReplayPage() {
                     Points shown are your real logged entry/exit/fill prices only — the connecting line is a visual
                     aid, not actual intrabar price action.
                   </Typography>
-                </Paper>
+                </Panel>
               </Grid>
 
               <Grid item xs={12} md={5}>
-                <Paper sx={{ p: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Annotate this trade
-                  </Typography>
+                <Panel>
+                  <SectionHeader title="Annotate this trade" description="Record context without changing execution data." />
                   <TextField
                     label="Notes"
                     fullWidth
@@ -325,7 +311,7 @@ export default function ReplayPage() {
                       {saving ? <CircularProgress size={16} /> : 'Save'}
                     </Button>
                   </Box>
-                </Paper>
+                </Panel>
               </Grid>
             </Grid>
           )}

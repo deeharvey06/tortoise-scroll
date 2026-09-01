@@ -7,6 +7,7 @@ import {
   uploadViaLabelButton,
   selectAccountFilter,
   findImportedTradeRow,
+  authenticateAsDemo,
 } from './helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +35,10 @@ const STRATEGY_NAME = `E2E Strategy ${RUN_ID}`;
 const PLAYBOOK_NAME = `E2E Playbook ${RUN_ID}`;
 
 test.describe.serial('MVP end-to-end flow', () => {
+  test.beforeEach(async ({ page, request }) => {
+    await authenticateAsDemo(page, request);
+  });
+
   test('01 — create an account', async ({ page }) => {
     await page.goto('/trades');
     await expect(page.getByRole('heading', { name: 'Trades' })).toBeVisible();
@@ -87,7 +92,7 @@ test.describe.serial('MVP end-to-end flow', () => {
   test('03 — open the imported trade', async ({ page }) => {
     await page.goto('/trades');
     await selectAccountFilter(page, ACCOUNT_NAME);
-    const tradeRow = findImportedTradeRow(page, 'AAPL', '08/20/26 14:30');
+    const tradeRow = findImportedTradeRow(page, 'AAPL', 'Aug 20, 2026');
     await expect(tradeRow).toBeVisible();
 
     await tradeRow.click();
@@ -107,7 +112,7 @@ test.describe.serial('MVP end-to-end flow', () => {
     // some Playwright versions — re-navigating is always safe either way).
     await page.goto('/trades');
     await selectAccountFilter(page, ACCOUNT_NAME);
-    const tradeRow = findImportedTradeRow(page, 'AAPL', '08/20/26 14:30');
+    const tradeRow = findImportedTradeRow(page, 'AAPL', 'Aug 20, 2026');
     await tradeRow.click();
     await expect(page).toHaveURL(/\/trades\/[a-f0-9]{24}$/);
 
@@ -118,7 +123,7 @@ test.describe.serial('MVP end-to-end flow', () => {
     await page.keyboard.press('Enter');
 
     await page.getByRole('button', { name: 'Save journal' }).click();
-    await expect(page.getByText('Saved')).toBeVisible();
+    await expect(page.getByText('Journal saved')).toBeVisible();
 
     // Reload and confirm it actually persisted server-side, not just in
     // local component state.
@@ -126,13 +131,13 @@ test.describe.serial('MVP end-to-end flow', () => {
     await expect(page.getByLabel('Notes')).toHaveValue(
       /clean breakout above premarket high/,
     );
-    await expect(page.getByText('e2e-verified')).toBeVisible();
+    await expect(page.getByText('e2e-verified').first()).toBeVisible();
   });
 
   test('05 — upload a screenshot to the trade', async ({ page }) => {
     await page.goto('/trades');
     await selectAccountFilter(page, ACCOUNT_NAME);
-    const tradeRow = findImportedTradeRow(page, 'AAPL', '08/20/26 14:30');
+    const tradeRow = findImportedTradeRow(page, 'AAPL', 'Aug 20, 2026');
     await tradeRow.click();
     await expect(page).toHaveURL(/\/trades\/[a-f0-9]{24}$/);
 
@@ -178,7 +183,7 @@ test.describe.serial('MVP end-to-end flow', () => {
   }) => {
     await page.goto('/trades');
     await selectAccountFilter(page, ACCOUNT_NAME);
-    const aaplRow = findImportedTradeRow(page, 'AAPL', '08/20/26 14:30');
+    const aaplRow = findImportedTradeRow(page, 'AAPL', 'Aug 20, 2026');
     await aaplRow.getByRole('button', { name: 'Edit trade' }).click();
 
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -190,7 +195,7 @@ test.describe.serial('MVP end-to-end flow', () => {
     // Confirm on the Strategies page that this trade now rolls up into its
     // performance panel — the real proof the assignment took effect.
     await page.goto('/strategies');
-    await page.getByText(STRATEGY_NAME).click();
+    await page.getByRole('button', { name: new RegExp(STRATEGY_NAME) }).click();
     const tradesKpiValue = page.getByTestId('kpi-trades-value');
     await expect(tradesKpiValue).toBeVisible();
     await expect(tradesKpiValue).not.toHaveText('—');
@@ -227,10 +232,10 @@ test.describe.serial('MVP end-to-end flow', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page.getByText('Total trades')).toBeVisible();
+    await expect(page.getByTestId('kpi-total-trades').getByText('Total trades')).toBeVisible();
 
     await page.getByRole('button', { name: /^Filters/ }).click();
-    await page.getByLabel('Symbol').fill('AAPL');
+    await page.getByRole('textbox', { name: 'Symbol' }).fill('AAPL');
     await page.keyboard.press('Escape'); // close popover
 
     // The active-filter chip should now show AAPL, and the Filters button
@@ -266,7 +271,7 @@ test.describe.serial('MVP end-to-end flow', () => {
 
   test('11 — review a trading day on the Calendar', async ({ page }) => {
     await page.goto('/calendar');
-    await expect(page.getByRole('heading', { level: 5 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 })).toBeVisible();
 
     // The fixture's AAPL trade is dated 2026-08-20. The calendar defaults to
     // the current month; this searches backward up to 24 months to find
@@ -276,15 +281,15 @@ test.describe.serial('MVP end-to-end flow', () => {
     // some reason, change fixtures/sample-trades.csv dates to match instead.
     const targetMonthLabel = 'August 2026';
     for (let i = 0; i < 24; i += 1) {
-      const label = await page.getByRole('heading', { level: 5 }).textContent();
+      const label = await page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 }).textContent();
       if (label === targetMonthLabel) break;
       await page.getByRole('button', { name: 'Previous month' }).click();
     }
-    await expect(page.getByRole('heading', { level: 5 })).toHaveText(
+    await expect(page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 })).toHaveText(
       targetMonthLabel,
     );
 
-    await page.getByText('20', { exact: true }).first().click();
+    await page.getByRole('button', { name: /August 20:.*trades/ }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(
       page
@@ -296,7 +301,7 @@ test.describe.serial('MVP end-to-end flow', () => {
 
   test('12 — create a pre-market plan journal entry', async ({ page }) => {
     await page.goto('/journal');
-    await page.getByRole('button', { name: '+ Pre-Market Plan' }).click();
+    await page.getByRole('button', { name: 'Pre-market plan' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page
       .getByRole('dialog')
@@ -306,20 +311,8 @@ test.describe.serial('MVP end-to-end flow', () => {
     await page.getByLabel('Risk Limit').fill('$300');
     await page.getByRole('button', { name: 'Create entry' }).click();
     await expect(page.getByRole('dialog')).toBeHidden();
-    // Scope to the new row specifically — both the quick-action button
-    // above the table and the new row's type chip contain the substring
-    // "Pre-Market Plan", so an unscoped text match would be ambiguous.
-    const newRow = page
-      .locator('tr', {
-        hasText: 'SPY gapping up on CPI data',
-      })
-      .first();
-    await expect(
-      newRow
-        .getByRole('cell')
-        .nth(1)
-        .getByText('Pre-Market Plan', { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText('SPY gapping up on CPI data').first()).toBeVisible();
+    await expect(page.getByText('Pre-Market Plan', { exact: true }).first()).toBeVisible();
   });
 
   test('13 — save risk settings and confirm they persist', async ({ page }) => {
@@ -373,5 +366,34 @@ test.describe.serial('MVP end-to-end flow', () => {
       page.getByRole('option', { name: ACCOUNT_NAME }),
     ).toBeVisible();
     await page.keyboard.press('Escape');
+  });
+
+  test('15 — unassign and delete the strategy and playbook', async ({ page }) => {
+    // Deletion is intentionally protected while a trade references either
+    // record. Clear both assignments through the same Trade form a user uses.
+    await page.goto('/trades');
+    await selectAccountFilter(page, ACCOUNT_NAME);
+    const aaplRow = findImportedTradeRow(page, 'AAPL', 'Aug 20, 2026');
+    await aaplRow.getByRole('button', { name: 'Edit trade' }).click();
+    await selectMuiOptionByLabel(page, 'Strategy (optional)', '— none —');
+    await selectMuiOptionByLabel(page, 'Playbook (optional)', '— none —');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+
+    await page.goto('/strategies');
+    await page.getByRole('button', { name: new RegExp(STRATEGY_NAME) }).click();
+    await page.getByRole('button', { name: 'Delete strategy' }).click();
+    const strategyDialog = page.getByRole('dialog', { name: 'Delete strategy?' });
+    await strategyDialog.getByRole('button', { name: 'Delete strategy' }).click();
+    await expect(strategyDialog).toBeHidden();
+    await expect(page.getByText(STRATEGY_NAME)).toHaveCount(0);
+
+    await page.goto('/playbooks');
+    await page.getByRole('button', { name: new RegExp(PLAYBOOK_NAME) }).click();
+    await page.getByRole('button', { name: 'Delete playbook' }).click();
+    const playbookDialog = page.getByRole('dialog', { name: 'Delete playbook?' });
+    await playbookDialog.getByRole('button', { name: 'Delete playbook' }).click();
+    await expect(playbookDialog).toBeHidden();
+    await expect(page.getByText(PLAYBOOK_NAME)).toHaveCount(0);
   });
 });

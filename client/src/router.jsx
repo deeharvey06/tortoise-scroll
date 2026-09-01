@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import AppLayout from './layout/AppLayout';
+import AppShell from './layout/AppShell';
 import useAuthStore from './store/useAuthStore';
 
 const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
@@ -33,8 +33,9 @@ const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage'));
 
 function PageFallback() {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-      <CircularProgress size={28} />
+    <Box role="status" aria-live="polite" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, minHeight: 180, color: 'text.secondary' }}>
+      <CircularProgress size={20} thickness={4} />
+      <Box component="span" sx={{ fontSize: 13 }}>Opening workspace…</Box>
     </Box>
   );
 }
@@ -50,7 +51,7 @@ function withSuspense(Component) {
 function ProtectedLayout() {
   const user = useAuthStore((state) => state.user);
   if (!user) return <Navigate to='/login' replace />;
-  return <AppLayout />;
+  return <AppShell />;
 }
 
 function PublicOnlyLayout() {

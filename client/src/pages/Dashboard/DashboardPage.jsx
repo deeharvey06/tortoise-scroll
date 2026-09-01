@@ -1,70 +1,106 @@
 import { useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Cell,
+  ResponsiveContainer, LineChart, Line, AreaChart, Area, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine,
 } from 'recharts';
 
 import * as analyticsApi from '../../services/analyticsService';
 import { useFilterParams } from '../../store/useFilterStore';
 import { palette } from '../../theme/theme';
-import KpiCard from '../../components/KpiCard';
+import PageHeader from '../../components/PageHeader';
+import {
+  EmptyState, ErrorState, LoadingState, MetricCard, Panel, SectionHeader,
+} from '../../components/ui';
 
-function fmtMoney(v) {
-  if (v === null || v === undefined) return null;
-  const sign = v < 0 ? '-' : '';
-  return `${sign}$${Math.abs(v).toFixed(2)}`;
+function fmtMoney(value) {
+  if (value === null || value === undefined) return null;
+  const sign = value < 0 ? '−' : '';
+  return `${sign}$${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function fmtDuration(seconds) {
   if (seconds === null || seconds === undefined) return null;
-  const h = Math.floor(seconds / 3600);
-  const m = Math.round((seconds % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.round((seconds % 3600) / 60);
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
 
-const chartTooltipStyle = {
+function fmtAxisMoney(value) {
+  if (!Number.isFinite(Number(value))) return value;
+  const number = Number(value);
+  const absolute = Math.abs(number);
+  const compact = absolute >= 1000000 ? `${(absolute / 1000000).toFixed(1)}m` : absolute >= 1000 ? `${(absolute / 1000).toFixed(1)}k` : absolute.toFixed(0);
+  return `${number < 0 ? '−' : ''}$${compact}`;
+}
+
+const tooltipStyle = {
   backgroundColor: palette.background.elevated,
   border: `1px solid ${palette.border}`,
-  borderRadius: 4,
+  borderRadius: 8,
+  color: 'var(--ts-text-primary)',
+  fontFamily: 'var(--ts-font-numeric)',
   fontSize: 12,
+  boxShadow: 'var(--ts-shadow-sm)',
 };
 
-function slugify(label) {
-  return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const axisStyle = { fontSize: 10, fill: 'var(--ts-chart-axis)' };
+
+function MoneyTooltip({ active, payload, label, labelFormatter }) {
+  if (!active || !payload?.length) return null;
+  const point = payload[0];
+  const formattedLabel = labelFormatter ? labelFormatter(label) : label;
+  return (
+    <Box sx={{ ...tooltipStyle, p: 3 }}>
+      {formattedLabel && <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>{formattedLabel}</Typography>}
+      <Typography variant="body2" className="financial-number" sx={{ fontWeight: 700 }}>
+        {point.name}: {fmtMoney(point.value)}
+      </Typography>
+    </Box>
+  );
 }
 
-function ChartSection({ title, children, empty }) {
+function ChartPanel({ title, description, children, empty, height = 260, testId }) {
   return (
-    <Paper sx={{ p: 2, height: '100%' }} data-testid={`chart-${slugify(title)}`}>
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {title}
-      </Typography>
+    <Panel role="group" aria-label={title} sx={{ height: '100%' }} data-testid={testId}>
+      <SectionHeader title={title} description={description} component="h2" />
       {empty ? (
-        <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            No closed trades in this range.
-          </Typography>
-        </Box>
+        <EmptyState compact title="No closed trades" description="Adjust the active date range or filters to populate this view." sx={{ height }} />
       ) : (
-        children
+        <Box sx={{ width: '100%', height }}>{children}</Box>
       )}
-    </Paper>
+    </Panel>
+  );
+}
+
+function OutcomeBars({ data, dataKey = 'netPnL', categoryKey = 'label', layout, categoryWidth = 64 }) {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} layout={layout} margin={layout === 'vertical' ? { left: 12, right: 12 } : { top: 4, right: 8, left: 0, bottom: 4 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={palette.border} vertical={layout !== 'vertical'} horizontal />
+        {layout === 'vertical' ? (
+          <>
+            <XAxis type="number" tick={axisStyle} tickFormatter={fmtAxisMoney} />
+            <YAxis type="category" dataKey={categoryKey} tick={axisStyle} width={categoryWidth} />
+          </>
+        ) : (
+          <>
+            <XAxis dataKey={categoryKey} tick={axisStyle} />
+            <YAxis tick={axisStyle} tickFormatter={fmtAxisMoney} width={48} />
+          </>
+        )}
+        <ReferenceLine x={layout === 'vertical' ? 0 : undefined} y={layout === 'vertical' ? undefined : 0} stroke={palette.text.secondary} strokeOpacity={0.55} />
+        <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'var(--ts-surface-hover)' }} />
+        <Bar dataKey={dataKey} name="Net P&L" radius={layout === 'vertical' ? [0, 3, 3, 0] : [3, 3, 0, 0]}>
+          {data.map((item, index) => <Cell key={`${item.key || item.label || index}`} fill={item[dataKey] >= 0 ? palette.profit : palette.loss} />)}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -80,239 +116,203 @@ export default function DashboardPage() {
     setError(null);
     analyticsApi
       .fetchDashboard(params)
-      .then((d) => !cancelled && setData(d))
-      .catch((err) => !cancelled && setError(err.response?.data?.error?.message || err.message))
+      .then((response) => !cancelled && setData(response))
+      .catch((requestError) => !cancelled && setError(requestError.response?.data?.error?.message || requestError.message))
       .finally(() => !cancelled && setLoading(false));
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(params)]);
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress size={28} />
-      </Box>
-    );
-  }
-
-  if (error) return <Alert severity="error">{error}</Alert>;
+  if (loading) return <LoadingState label="Building your performance view…" skeletonRows={5} />;
+  if (error) return <ErrorState message={error} />;
   if (!data) return null;
 
   const { summary } = data;
   const hasClosed = summary.closedTrades > 0;
+  const evidence = `${summary.closedTrades} closed of ${summary.totalTrades} total trade${summary.totalTrades === 1 ? '' : 's'}`;
+
+  if (summary.totalTrades === 0) {
+    return (
+      <Box>
+        <PageHeader title="Dashboard" eyebrow="Command center" description="A clear view of performance, risk, repeatability, and the evidence behind your trading process." />
+        <Panel>
+          <EmptyState
+            title="No trades match the current view"
+            description="Import a broker statement, record a trade, or widen the date range and filters to begin your performance review."
+            action={<Button component={RouterLink} to="/trades" variant="contained">Open trades</Button>}
+          />
+        </Panel>
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Dashboard
-      </Typography>
+      <PageHeader
+        title="Dashboard"
+        eyebrow="Command center"
+        description="Performance, risk, repeatability, and the evidence behind your current results."
+      />
 
-      {summary.totalTrades === 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          No trades match the current filters. Log trades or import a CSV, or widen the date range / filters above.
-        </Alert>
-      )}
+      <Box component="section" aria-label="Performance overview" sx={{ mb: 8 }}>
+        <SectionHeader title="Performance overview" description={evidence} component="h2" sx={{ mb: 3 }} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(7, minmax(0, 1fr))' }, gap: 3 }}>
+          <Box sx={{ gridColumn: { sm: 'span 2', lg: 'span 2' } }}>
+            <MetricCard label="Net P&L" value={fmtMoney(summary.netPnL)} colorByValue emphasis="primary" supportingText={evidence} />
+          </Box>
+          <Box>
+            <MetricCard label="Win rate" value={summary.winRate} suffix="%" emphasis="primary" supportingText={`${summary.winningTrades} winners`} />
+          </Box>
+          <Box>
+            <MetricCard label="Profit factor" value={summary.profitFactor} emphasis="primary" supportingText="Gross profit ÷ gross loss" />
+          </Box>
+          <Box>
+            <MetricCard label="Expectancy" value={fmtMoney(summary.expectancy)} colorByValue emphasis="primary" supportingText="Average per closed trade" />
+          </Box>
+          <Box>
+            <MetricCard label="Avg R" value={summary.avgR === null ? null : summary.avgR.toFixed(2)} suffix="R" colorByValue emphasis="primary" supportingText="Risk-normalized outcome" />
+          </Box>
+          <Box>
+            <MetricCard label="Max drawdown" value={fmtMoney(summary.maxDrawdown)} colorByValue emphasis="primary" supportingText="Largest peak-to-trough decline" />
+          </Box>
+        </Box>
+      </Box>
 
-      <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Net P&L" value={fmtMoney(summary.netPnL)} colorByValue />
+      <Box component="section" aria-label="Equity and drawdown" sx={{ mb: 8 }}>
+        <Grid container spacing={4}>
+          <Grid item xs={12} lg={8}>
+            <ChartPanel title="Equity curve" description={`Cumulative closed-trade P&L · ${summary.closedTrades} trade sample`} empty={!hasClosed} height={360} testId="chart-equity-curve">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.equityCurve} margin={{ top: 8, right: 16, left: 8, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={palette.border} vertical={false} />
+                  <XAxis dataKey="date" tick={axisStyle} tickFormatter={(date) => new Date(date).toLocaleDateString()} minTickGap={28} />
+                  <YAxis tick={axisStyle} tickFormatter={fmtAxisMoney} width={56} />
+                  <ReferenceLine y={0} stroke={palette.text.secondary} strokeOpacity={0.55} />
+                  <Tooltip content={<MoneyTooltip labelFormatter={(date) => new Date(date).toLocaleString()} />} />
+                  <Line type="monotone" dataKey="equity" name="Equity" stroke={palette.accent.main} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartPanel>
+          </Grid>
+          <Grid item xs={12} lg={4}>
+            <ChartPanel title="Drawdown" description="Distance below the running equity peak" empty={!hasClosed} height={360} testId="chart-drawdown">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.drawdownCurve} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={palette.border} vertical={false} />
+                  <XAxis dataKey="date" tick={axisStyle} tickFormatter={(date) => new Date(date).toLocaleDateString()} minTickGap={36} />
+                  <YAxis tick={axisStyle} tickFormatter={fmtAxisMoney} width={52} />
+                  <ReferenceLine y={0} stroke={palette.text.secondary} strokeOpacity={0.55} />
+                  <Tooltip content={<MoneyTooltip labelFormatter={(date) => new Date(date).toLocaleString()} />} />
+                  <Area type="monotone" dataKey="drawdown" name="Drawdown" stroke={palette.loss} fill={palette.loss} fillOpacity={0.1} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartPanel>
+          </Grid>
         </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Gross P&L" value={fmtMoney(summary.grossPnL)} colorByValue />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Win rate" value={summary.winRate} suffix="%" />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Loss rate" value={summary.lossRate} suffix="%" />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Profit factor" value={summary.profitFactor} />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Expectancy" value={fmtMoney(summary.expectancy)} colorByValue />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Avg win" value={fmtMoney(summary.avgWin)} colorByValue />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Avg loss" value={fmtMoney(summary.avgLoss)} colorByValue />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Avg R" value={summary.avgR} suffix="R" />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Total trades" value={summary.totalTrades} />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Winning trades" value={summary.winningTrades} />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Losing trades" value={summary.losingTrades} />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Largest winner" value={fmtMoney(summary.largestWinner)} colorByValue />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Largest loser" value={fmtMoney(summary.largestLoser)} colorByValue />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Max drawdown" value={fmtMoney(summary.maxDrawdown)} colorByValue />
-        </Grid>
-        <Grid item xs={6} sm={3} md={2}>
-          <KpiCard label="Avg holding time" value={fmtDuration(summary.avgHoldingTimeSeconds)} />
-        </Grid>
-      </Grid>
+      </Box>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <ChartSection title="Equity curve" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={data.equityCurve}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d) => new Date(d).toLocaleDateString()} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={chartTooltipStyle} labelFormatter={(d) => new Date(d).toLocaleString()} />
-                <Line type="monotone" dataKey="equity" stroke={palette.accent.main} strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartSection>
+      <Box component="section" aria-label="Sample and outcome evidence" sx={{ mb: 8 }}>
+        <Grid container spacing={4}>
+          <Grid item xs={12} lg={8}>
+            <Panel>
+              <SectionHeader title="Outcome evidence" description="Supporting metrics behind the headline result" component="h2" />
+              <Grid container spacing={3}>
+                <Grid item xs={6} sm={4}><MetricCard label="Gross P&L" value={fmtMoney(summary.grossPnL)} colorByValue /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Avg winner" value={fmtMoney(summary.avgWin)} colorByValue /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Avg loser" value={fmtMoney(summary.avgLoss)} colorByValue /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Largest winner" value={fmtMoney(summary.largestWinner)} colorByValue /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Largest loser" value={fmtMoney(summary.largestLoser)} colorByValue /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Avg holding time" value={fmtDuration(summary.avgHoldingTimeSeconds)} /></Grid>
+              </Grid>
+            </Panel>
+          </Grid>
+          <Grid item xs={12} lg={4}>
+            <Panel sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <SectionHeader title="Process review" description="Review behavior and rule adherence alongside profitability." component="h2" />
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={6} sm={4}><MetricCard label="Total trades" value={summary.totalTrades} /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Closed trades" value={summary.closedTrades} /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Open trades" value={summary.openTrades} /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Winning trades" value={summary.winningTrades} /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Losing trades" value={summary.losingTrades} /></Grid>
+                <Grid item xs={6} sm={4}><MetricCard label="Loss rate" value={summary.lossRate} suffix="%" /></Grid>
+              </Grid>
+              <Button component={RouterLink} to="/reports" endIcon={<ArrowForwardIcon />} sx={{ mt: 'auto', alignSelf: 'flex-start' }}>
+                Review process evidence
+              </Button>
+            </Panel>
+          </Grid>
         </Grid>
+      </Box>
 
-        <Grid item xs={12} md={6}>
-          <ChartSection title="Drawdown" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={data.drawdownCurve}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(d) => new Date(d).toLocaleDateString()} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={chartTooltipStyle} labelFormatter={(d) => new Date(d).toLocaleString()} />
-                <Area type="monotone" dataKey="drawdown" stroke={palette.loss} fill={palette.loss} fillOpacity={0.15} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartSection>
+      <Box component="section" aria-label="Consistency and distribution" sx={{ mb: 8 }}>
+        <SectionHeader title="Consistency and distribution" description="How results are distributed across individual trades and trading days." component="h2" />
+        <Grid container spacing={4}>
+          <Grid item xs={12} lg={6}>
+            <ChartPanel title="Daily P&L" description={`${data.dailyStats.length} trading day${data.dailyStats.length === 1 ? '' : 's'} in this view`} empty={!hasClosed} testId="chart-daily-p-l">
+              <OutcomeBars data={data.dailyStats} categoryKey="date" />
+            </ChartPanel>
+          </Grid>
+          <Grid item xs={12} lg={3}>
+            <ChartPanel title="Win / loss distribution" description={`${summary.closedTrades} closed trades`} empty={!hasClosed} testId="chart-win-loss-distribution">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.winLossDistribution} margin={{ left: 0, right: 8, bottom: 28 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={palette.border} vertical={false} />
+                  <XAxis dataKey="label" tick={axisStyle} interval={0} angle={-24} textAnchor="end" height={54} />
+                  <YAxis tick={axisStyle} allowDecimals={false} width={28} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--ts-surface-hover)' }} />
+                  <Bar dataKey="count" name="Trades" fill={palette.accent.main} radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartPanel>
+          </Grid>
+          <Grid item xs={12} lg={3}>
+            <ChartPanel title="R-multiple distribution" description="Risk-normalized trade outcomes" empty={!hasClosed} testId="chart-r-multiple-distribution">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.rMultipleDistribution} margin={{ left: 0, right: 8, bottom: 28 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={palette.border} vertical={false} />
+                  <XAxis dataKey="label" tick={axisStyle} interval={0} angle={-24} textAnchor="end" height={54} />
+                  <YAxis tick={axisStyle} allowDecimals={false} width={28} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--ts-surface-hover)' }} />
+                  <Bar dataKey="count" name="Trades" fill={palette.neutralAmber} radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartPanel>
+          </Grid>
         </Grid>
+      </Box>
 
-        <Grid item xs={12} md={6}>
-          <ChartSection title="Daily P&L" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.dailyStats}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="netPnL">
-                  {data.dailyStats.map((d, i) => (
-                    <Cell key={i} fill={d.netPnL >= 0 ? palette.profit : palette.loss} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartSection>
+      <Box component="section" aria-label="What is working" sx={{ mb: 8 }}>
+        <SectionHeader title="What is working—and what is not" description="Net results grouped by setup and symbol, with each category based only on existing closed trades." component="h2" />
+        <Grid container spacing={4}>
+          <Grid item xs={12} lg={6}>
+            <ChartPanel title="P&L by setup" description={`${data.bySetup.length} setup${data.bySetup.length === 1 ? '' : 's'} represented`} empty={!hasClosed} testId="chart-p-l-by-setup">
+              <OutcomeBars data={data.bySetup} layout="vertical" categoryWidth={88} />
+            </ChartPanel>
+          </Grid>
+          <Grid item xs={12} lg={6}>
+            <ChartPanel title="P&L by symbol" description={`${data.bySymbol.length} symbol${data.bySymbol.length === 1 ? '' : 's'} represented`} empty={!hasClosed} testId="chart-p-l-by-symbol">
+              <OutcomeBars data={data.bySymbol} layout="vertical" categoryWidth={70} />
+            </ChartPanel>
+          </Grid>
         </Grid>
+      </Box>
 
-        <Grid item xs={12} md={6}>
-          <ChartSection title="Win / loss distribution" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.winLossDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={0} angle={-20} textAnchor="end" height={50} />
-                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="count" fill={palette.accent.main} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartSection>
+      <Box component="section" aria-label="Timing evidence">
+        <SectionHeader title="Timing evidence" description="Where results concentrate across weekdays and entry hours." component="h2" />
+        <Grid container spacing={4}>
+          <Grid item xs={12} lg={6}>
+            <ChartPanel title="P&L by day of week" empty={!hasClosed} testId="chart-p-l-by-day-of-week">
+              <OutcomeBars data={data.byDayOfWeek} />
+            </ChartPanel>
+          </Grid>
+          <Grid item xs={12} lg={6}>
+            <ChartPanel title="P&L by entry hour" description="Hours are reported in UTC by the existing analytics source." empty={!hasClosed} testId="chart-p-l-by-hour-entry-time-utc">
+              <OutcomeBars data={data.byHour} />
+            </ChartPanel>
+          </Grid>
         </Grid>
-
-        <Grid item xs={12} md={6}>
-          <ChartSection title="R-multiple distribution" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.rMultipleDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={0} angle={-20} textAnchor="end" height={50} />
-                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="count" fill={palette.neutralAmber} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartSection>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <ChartSection title="P&L by day of week" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.byDayOfWeek}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="netPnL">
-                  {data.byDayOfWeek.map((d, i) => (
-                    <Cell key={i} fill={d.netPnL >= 0 ? palette.profit : palette.loss} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartSection>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <ChartSection title="P&L by hour (entry time, UTC)" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.byHour}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={2} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="netPnL">
-                  {data.byHour.map((d, i) => (
-                    <Cell key={i} fill={d.netPnL >= 0 ? palette.profit : palette.loss} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartSection>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <ChartSection title="P&L by symbol" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.bySymbol} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="label" tick={{ fontSize: 10 }} width={60} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="netPnL">
-                  {data.bySymbol.map((d, i) => (
-                    <Cell key={i} fill={d.netPnL >= 0 ? palette.profit : palette.loss} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartSection>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <ChartSection title="P&L by setup" empty={!hasClosed}>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.bySetup} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={palette.border} />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="label" tick={{ fontSize: 10 }} width={80} />
-                <Tooltip contentStyle={chartTooltipStyle} />
-                <Bar dataKey="netPnL">
-                  {data.bySetup.map((d, i) => (
-                    <Cell key={i} fill={d.netPnL >= 0 ? palette.profit : palette.loss} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartSection>
-        </Grid>
-      </Grid>
+      </Box>
     </Box>
   );
 }
