@@ -37,7 +37,7 @@ export default function Topbar({ mobile = false, onOpenNavigation }) {
         borderBottom: '1px solid', borderColor: 'divider',
       }}
     >
-      <Box sx={{ minHeight: 52, px: { xs: 4, sm: 5, lg: 6 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3 }}>
+      <Box sx={{ minHeight: 52, px: { xs: 3, sm: 5, lg: 6 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: { xs: 1, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
           {mobile && (
             <IconButton edge="start" size="small" aria-label="Open navigation" onClick={onOpenNavigation}>
@@ -73,7 +73,7 @@ export default function Topbar({ mobile = false, onOpenNavigation }) {
           ))}
         </Box>
       </Box>
-      <Box sx={{ px: { xs: 4, sm: 5, lg: 6 }, py: 2, borderTop: '1px solid', borderColor: 'var(--ts-border-subtle)', overflow: 'hidden' }}>
+      <Box sx={{ px: { xs: 3, sm: 5, lg: 6 }, py: 2, borderTop: '1px solid', borderColor: 'var(--ts-border-subtle)', overflow: 'hidden' }}>
         <GlobalFilterBar compact={mobile} />
       </Box>
     </Box>

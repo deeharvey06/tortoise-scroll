@@ -75,6 +75,32 @@ test('dashboard renders its primary content at a mobile viewport', async ({
   await expect(page.getByTestId('chart-equity-curve')).toBeVisible();
 });
 
+const RESPONSIVE_VIEWPORTS = [
+  { name: 'desktop workstation', width: 1920, height: 1080 },
+  { name: 'large laptop', width: 1440, height: 900 },
+  { name: 'small laptop', width: 1024, height: 768 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'mobile', width: 390, height: 844 },
+];
+
+for (const viewport of RESPONSIVE_VIEWPORTS) {
+  test(`application shell remains usable at ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto('/trades');
+    await expect(page.getByRole('heading', { name: 'Trades' })).toBeVisible();
+
+    if (viewport.width < 900) {
+      await page.getByRole('button', { name: 'Open navigation' }).click();
+      await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+      await page.getByRole('button', { name: 'Close navigation' }).click();
+    } else {
+      await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    }
+
+    await expect(page.locator('#main-content')).toBeVisible();
+  });
+}
+
 test('re-importing the same CSV reports duplicate rows', async ({
   page,
   request,

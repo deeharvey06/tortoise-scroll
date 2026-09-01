@@ -43,7 +43,8 @@ function GroupTable({ rows, keyLabel }) {
     );
   }
   return (
-    <Table size="small">
+    <Box sx={{ overflowX: 'auto' }}>
+    <Table size="small" aria-label={`${keyLabel} comparison`}>
       <TableHead>
         <TableRow>
           <TableCell>{keyLabel}</TableCell>
@@ -67,6 +68,7 @@ function GroupTable({ rows, keyLabel }) {
         ))}
       </TableBody>
     </Table>
+    </Box>
   );
 }
 
@@ -193,9 +195,7 @@ function BehaviorReport({ data }) {
                       <TableCell align="right" className="mono-data">
                         {m.count}
                       </TableCell>
-                      <TableCell align="right" className="mono-data" sx={{ color: m.avgPnL >= 0 ? 'success.main' : 'error.main' }}>
-                        {fmtMoney(m.avgPnL)}
-                      </TableCell>
+                      <TableCell align="right"><ProfitLossValue value={m.avgPnL} /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -228,9 +228,7 @@ function BehaviorReport({ data }) {
                       <TableCell align="right" className="mono-data">
                         {m.count}
                       </TableCell>
-                      <TableCell align="right" className="mono-data" sx={{ color: m.avgPnL >= 0 ? 'success.main' : 'error.main' }}>
-                        {fmtMoney(m.avgPnL)}
-                      </TableCell>
+                      <TableCell align="right"><ProfitLossValue value={m.avgPnL} /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

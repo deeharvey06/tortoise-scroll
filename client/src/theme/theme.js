@@ -97,6 +97,9 @@ export function createTortoiseTheme(mode = 'dark') {
         styleOverrides: {
           ':root': { ...cssVariables(tokens), colorScheme: mode },
           body: { backgroundColor: colors.background.canvas, color: colors.text.primary },
+          'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])': {
+            '&:focus-visible': { outline: `2px solid ${colors.focus}`, outlineOffset: 2 },
+          },
           '::selection': { backgroundColor: colors.surface.selected, color: colors.text.primary },
           '@media (prefers-reduced-motion: reduce)': {
             '*, *::before, *::after': {
@@ -121,6 +124,8 @@ export function createTortoiseTheme(mode = 'dark') {
           head: { backgroundColor: colors.surface.secondary, color: colors.text.secondary, fontWeight: tokens.table.headerWeight },
         },
       },
+      MuiTableContainer: { styleOverrides: { root: { overflowX: 'auto', scrollbarGutter: 'stable' } } },
+      MuiIconButton: { styleOverrides: { root: { transitionDuration: `${tokens.transitions.fast}ms` } } },
       MuiInputLabel: { styleOverrides: { root: { color: colors.text.secondary } } },
       MuiFormHelperText: { styleOverrides: { root: { marginLeft: 0, color: colors.text.muted } } },
       MuiOutlinedInput: {
@@ -151,7 +156,7 @@ export function createTortoiseTheme(mode = 'dark') {
           outlined: { borderColor: colors.border.default },
         },
       },
-      MuiDialog: { styleOverrides: { paper: { borderRadius: radiusTokens.lg, boxShadow: tokens.shadows.md } } },
+      MuiDialog: { styleOverrides: { paper: { borderRadius: radiusTokens.lg, boxShadow: tokens.shadows.md, margin: 16, maxHeight: 'calc(100% - 32px)' } } },
       MuiDialogTitle: { styleOverrides: { root: { fontSize: typographyTokens.sizes.sectionHeading, fontWeight: 650, padding: '20px 24px 12px' } } },
       MuiDialogContent: { styleOverrides: { root: { padding: '16px 24px' } } },
       MuiDialogActions: { styleOverrides: { root: { padding: '12px 24px 20px', gap: 8 } } },

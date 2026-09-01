@@ -34,24 +34,24 @@ function GeneralTab({ settings, onSave, saving, accounts }) {
     <Panel sx={{ maxWidth: 720 }}>
       <SectionHeader title="General preferences" description="Set the display context used throughout your journal." />
       <Grid container spacing={2}>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField label="Timezone" fullWidth size="small" value={form.timezone} onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))} helperText="e.g. UTC, America/New_York" />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField select label="Currency" fullWidth size="small" value={form.currency} onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}>
             {['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'].map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
           </TextField>
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField select label="Default account" fullWidth size="small" value={form.defaultAccountId || ''} onChange={(e) => setForm((f) => ({ ...f, defaultAccountId: e.target.value || null }))}>
             <MenuItem value="">None</MenuItem>
             {accounts.map((a) => <MenuItem key={a._id} value={a._id}>{a.name}</MenuItem>)}
           </TextField>
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={12} sm={6}>
           <TextField label="Trading hours start" fullWidth size="small" value={form.tradingHoursStart} onChange={(e) => setForm((f) => ({ ...f, tradingHoursStart: e.target.value }))} />
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={12} sm={6}>
           <TextField label="Trading hours end" fullWidth size="small" value={form.tradingHoursEnd} onChange={(e) => setForm((f) => ({ ...f, tradingHoursEnd: e.target.value }))} />
         </Grid>
       </Grid>
@@ -72,7 +72,7 @@ function TradingTab({ settings, onSave, saving, strategies }) {
     <Panel sx={{ maxWidth: 720 }}>
       <SectionHeader title="Trading defaults" description="Defaults accelerate entry without changing trade calculations." />
       <Grid container spacing={2}>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             type="number"
             label="Default risk amount ($)"
@@ -82,7 +82,7 @@ function TradingTab({ settings, onSave, saving, strategies }) {
             onChange={(e) => setForm((f) => ({ ...f, defaultRiskAmount: e.target.value === '' ? null : Number(e.target.value) }))}
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             type="number"
             label="Default R target"
@@ -342,7 +342,7 @@ export default function SettingsPage() {
     <Box>
       <PageHeader eyebrow="System" title="Settings" description="Manage Tortoise Scroll preferences, trading defaults, vocabulary, intelligence, and data." actions={<ThemeModeSelector />} />
 
-      <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 2 }}>
+      <Tabs value={tab} onChange={(e, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile aria-label="Settings sections" sx={{ mb: 4 }}>
         <Tab value="general" label="General" />
         <Tab value="trading" label="Trading" />
         <Tab value="tags" label="Tags" />

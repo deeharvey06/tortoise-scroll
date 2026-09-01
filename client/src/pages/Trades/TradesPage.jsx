@@ -551,7 +551,15 @@ export default function TradesPage() {
                     hover
                     selected={selected.includes(t._id)}
                     onClick={() => navigate(`/trades/${t._id}`)}
-                    sx={{ cursor: 'pointer' }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        navigate(`/trades/${t._id}`);
+                      }
+                    }}
+                    tabIndex={0}
+                    aria-label={`Open ${t.symbol} trade from ${format(new Date(t.entryTime), 'MMM d, yyyy')}`}
+                    sx={{ cursor: 'pointer', '&:focus-visible': { outline: '2px solid var(--ts-focus-ring)', outlineOffset: -2 } }}
                   >
                     <TableCell
                       padding='checkbox'
@@ -560,6 +568,7 @@ export default function TradesPage() {
                       <Checkbox
                         checked={selected.includes(t._id)}
                         onChange={() => toggleSelectOne(t._id)}
+                        inputProps={{ 'aria-label': `Select ${t.symbol} trade` }}
                       />
                     </TableCell>
                     {isVisible('entryTime') && <TableCell

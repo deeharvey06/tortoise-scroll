@@ -195,7 +195,7 @@ export default function BacktestingPage() {
       {configs.length === 0 ? (
         <EmptyState title="No saved backtests" description="Define your first rules-based test when you are ready." action={<Button variant="contained" size="small" onClick={openCreate}>New backtest</Button>} />
       ) : (
-        <Panel padding={0} sx={{ overflow: 'hidden' }}>
+        <Panel padding={0} sx={{ overflowX: 'auto' }}>
           <Table size="small">
             <TableHead>
               <TableRow>

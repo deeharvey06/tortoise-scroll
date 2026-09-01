@@ -5,7 +5,7 @@ export default function Panel({ children, padding = 4, interactive = false, sx, 
     <Paper
       {...props}
       sx={{
-        p: padding,
+        p: padding === 0 ? 0 : { xs: Math.min(padding, 3), sm: padding },
         borderRadius: 2,
         bgcolor: 'background.paper',
         transition: interactive ? 'border-color var(--ts-transition-fast), background-color var(--ts-transition-fast)' : undefined,

@@ -236,15 +236,15 @@ export default function ReplayPage() {
                     </Typography>
                   </Box>
                   <Grid container spacing={2} sx={{ mb: 2 }}>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Typography variant="caption" color="text.secondary">Net P&L</Typography>
                       <ProfitLossValue value={current.netPnL} />
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Typography variant="caption" color="text.secondary">R multiple</Typography>
                       <RMultiple value={current.rMultiple} />
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Typography variant="caption" color="text.secondary">Quantity</Typography>
                       <Typography sx={{ fontWeight: 700 }}>{current.quantity}</Typography>
                     </Grid>

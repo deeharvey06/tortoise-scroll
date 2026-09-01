@@ -147,13 +147,15 @@ export default function ImportPage() {
     <Box sx={{ maxWidth: 1120 }}>
       <PageHeader eyebrow="System" title="Import trades" description="Bring broker CSV exports into your permanent trading record through a controlled, reviewable workflow." />
 
-      <Stepper activeStep={visualStage} alternativeLabel sx={{ mb: 6, '& .MuiStepLabel-label': { typography: 'caption' } }}>
+      <Box sx={{ overflowX: 'auto', mb: 6, pb: 1 }} aria-label="Import progress">
+      <Stepper activeStep={visualStage} alternativeLabel sx={{ minWidth: 680, '& .MuiStepLabel-label': { typography: 'caption' } }}>
         {STAGES.map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>
           </Step>
         ))}
       </Stepper>
+      </Box>
 
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>

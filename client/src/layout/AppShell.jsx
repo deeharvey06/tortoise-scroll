@@ -60,8 +60,8 @@ export default function AppShell() {
           tabIndex={-1}
           sx={{
             flex: 1, minWidth: 0, width: '100%',
-            px: { xs: 4, sm: 5, lg: 6, xl: 8 }, py: { xs: 4, sm: 5, lg: 6 },
-            outline: 'none',
+            px: { xs: 3, sm: 5, lg: 6, xl: 8 }, py: { xs: 4, sm: 5, lg: 6 },
+            '&:focus': { outline: 'none' },
           }}
         >
           <Outlet />
