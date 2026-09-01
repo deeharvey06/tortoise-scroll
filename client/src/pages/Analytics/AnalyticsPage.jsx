@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
 import TableBody from '@mui/material/TableBody';
@@ -9,8 +8,11 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 
 import * as analyticsApi from '../../services/analyticsService';
+import * as strategyApi from '../../services/strategyService';
 import { useFilterParams } from '../../store/useFilterStore';
 import { EmptyState, ErrorState, LoadingState, Panel, ProfitLossValue, RMultiple, SectionHeader } from '../../components/ui';
+import PageHeader from '../../components/PageHeader';
+import { ComparisonBarChart } from '../../components/charts';
 
 function BreakdownTable({ title, rows }) {
   return (
@@ -19,7 +21,9 @@ function BreakdownTable({ title, rows }) {
       {rows.length === 0 ? (
         <EmptyState compact title="No closed trades" description="Adjust the selected range or filters to expand this analysis." />
       ) : (
-        <Table size="small">
+        <>
+        <ComparisonBarChart rows={rows} />
+        <Box sx={{ overflowX: 'auto', mt: 2 }}><Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>{title.replace('P&L by ', '')}</TableCell>
@@ -52,7 +56,8 @@ function BreakdownTable({ title, rows }) {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </Table></Box>
+        </>
       )}
     </Panel>
   );
@@ -68,9 +73,11 @@ export default function AnalyticsPage() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    analyticsApi
-      .fetchDashboard(params)
-      .then((d) => !cancelled && setData(d))
+    Promise.all([analyticsApi.fetchDashboard(params), strategyApi.fetchStrategies()])
+      .then(([dashboard, strategies]) => !cancelled && setData({
+        ...dashboard,
+        byStrategy: dashboard.byStrategy.map((row) => ({ ...row, label: strategies.find((strategy) => strategy._id === String(row.key))?.name || 'Unresolved strategy' })),
+      }))
       .catch((err) => !cancelled && setError(err.response?.data?.error?.message || err.message))
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -86,13 +93,7 @@ export default function AnalyticsPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Analytics
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Every row below is a real group of your own closed trades — sample size (Trades column) is shown so you can
-        judge how much weight a pattern deserves before you rely on it.
-      </Typography>
+      <PageHeader eyebrow='Pattern analysis' title='Analytics' description='Every comparison is built from your closed trades. Sample size stays visible so weak signals are never presented as strong evidence.' />
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
@@ -100,6 +101,9 @@ export default function AnalyticsPage() {
         </Grid>
         <Grid item xs={12} md={6}>
           <BreakdownTable title="P&L by setup" rows={data.bySetup} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <BreakdownTable title="P&L by strategy" rows={data.byStrategy} />
         </Grid>
         <Grid item xs={12} md={6}>
           <BreakdownTable title="P&L by session" rows={data.bySession} />
