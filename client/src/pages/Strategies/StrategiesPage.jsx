@@ -118,12 +118,15 @@ export default function StrategiesPage() {
     try {
       if (editing) {
         await strategyApi.updateStrategy(editing._id, form);
+        setDialogOpen(false);
+        await load();
       } else {
         const created = await strategyApi.createStrategy(form);
+        setStrategies((current) => [created, ...current]);
         setSelectedId(created._id);
+        setDialogOpen(false);
+        await load();
       }
-      setDialogOpen(false);
-      load();
     } catch (err) {
       setError(err.response?.data?.error?.message || err.message);
     }

@@ -5,6 +5,7 @@ import {
   selectMuiOptionByLabel,
   selectMuiOptionInRow,
   uploadViaLabelButton,
+  authenticateAsDemo,
 } from './helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,9 +16,15 @@ const INVALID_CSV = path.join(
   'invalid-trades.csv',
 );
 const VALID_CSV = path.join(__dirname, '..', 'fixtures', 'sample-trades.csv');
+let authHeaders;
+
+test.beforeEach(async ({ page, request }) => {
+  const session = await authenticateAsDemo(page, request);
+  authHeaders = { Authorization: `Bearer ${session.token}` };
+});
 
 async function createAccount(request, name) {
-  const response = await request.post('/api/accounts', { data: { name } });
+  const response = await request.post('/api/accounts', { data: { name }, headers: authHeaders });
   expect(response.ok()).toBeTruthy();
   return response.json();
 }
@@ -92,7 +99,7 @@ for (const viewport of RESPONSIVE_VIEWPORTS) {
     if (viewport.width < 900) {
       await page.getByRole('button', { name: 'Open navigation' }).click();
       await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
-      await page.getByRole('button', { name: 'Close navigation' }).click();
+      await page.getByRole('button', { name: 'Close navigation' }).click({ force: true });
     } else {
       await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
     }
@@ -122,7 +129,7 @@ test('re-importing the same CSV reports duplicate rows', async ({
 });
 
 test('Tortoise AI exposes chat state and deterministic research tools', async ({ page, request }) => {
-  const statusResponse = await request.get('/api/ai/status');
+  const statusResponse = await request.get('/api/ai/status', { headers: authHeaders });
   expect(statusResponse.ok()).toBeTruthy();
   const status = await statusResponse.json();
 

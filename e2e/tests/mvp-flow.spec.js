@@ -7,6 +7,7 @@ import {
   uploadViaLabelButton,
   selectAccountFilter,
   findImportedTradeRow,
+  authenticateAsDemo,
 } from './helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +35,10 @@ const STRATEGY_NAME = `E2E Strategy ${RUN_ID}`;
 const PLAYBOOK_NAME = `E2E Playbook ${RUN_ID}`;
 
 test.describe.serial('MVP end-to-end flow', () => {
+  test.beforeEach(async ({ page, request }) => {
+    await authenticateAsDemo(page, request);
+  });
+
   test('01 — create an account', async ({ page }) => {
     await page.goto('/trades');
     await expect(page.getByRole('heading', { name: 'Trades' })).toBeVisible();
@@ -126,7 +131,7 @@ test.describe.serial('MVP end-to-end flow', () => {
     await expect(page.getByLabel('Notes')).toHaveValue(
       /clean breakout above premarket high/,
     );
-    await expect(page.getByText('e2e-verified')).toBeVisible();
+    await expect(page.getByText('e2e-verified').first()).toBeVisible();
   });
 
   test('05 — upload a screenshot to the trade', async ({ page }) => {
@@ -227,10 +232,10 @@ test.describe.serial('MVP end-to-end flow', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page.getByText('Total trades')).toBeVisible();
+    await expect(page.getByTestId('kpi-total-trades').getByText('Total trades')).toBeVisible();
 
     await page.getByRole('button', { name: /^Filters/ }).click();
-    await page.getByLabel('Symbol').fill('AAPL');
+    await page.getByRole('textbox', { name: 'Symbol' }).fill('AAPL');
     await page.keyboard.press('Escape'); // close popover
 
     // The active-filter chip should now show AAPL, and the Filters button
@@ -306,7 +311,7 @@ test.describe.serial('MVP end-to-end flow', () => {
     await page.getByLabel('Risk Limit').fill('$300');
     await page.getByRole('button', { name: 'Create entry' }).click();
     await expect(page.getByRole('dialog')).toBeHidden();
-    await expect(page.getByText('SPY gapping up on CPI data')).toBeVisible();
+    await expect(page.getByText('SPY gapping up on CPI data').first()).toBeVisible();
     await expect(page.getByText('Pre-Market Plan', { exact: true }).first()).toBeVisible();
   });
 

@@ -1,5 +1,26 @@
 import { expect } from '@playwright/test';
 
+const AUTH_STORAGE_KEY = 'tortoise-scroll-auth';
+
+/**
+ * Authenticates through the real API, then seeds the same localStorage entry
+ * consumed by useAuthStore before the first protected route is rendered.
+ * Every Playwright test receives a fresh browser context, so this must run in
+ * beforeEach rather than relying on state from an earlier serial test.
+ */
+export async function authenticateAsDemo(page, request) {
+  const response = await request.post('/api/auth/login', {
+    data: { username: 'demo', password: 'demo123' },
+  });
+  expect(response.ok(), `Demo login failed: ${response.status()}`).toBeTruthy();
+  const session = await response.json();
+  await page.addInitScript(
+    ({ storageKey, value }) => localStorage.setItem(storageKey, value),
+    { storageKey: AUTH_STORAGE_KEY, value: JSON.stringify(session) },
+  );
+  return session;
+}
+
 /**
  * Opens and chooses an option from a labeled MUI <Select> (rendered via
  * TextField `select`). MUI wires the label to the select trigger via
@@ -61,6 +82,7 @@ export async function expectAlert(page, text) {
 }
 
 export default {
+  authenticateAsDemo,
   selectMuiOptionByLabel,
   selectMuiOptionInRow,
   uploadViaLabelButton,

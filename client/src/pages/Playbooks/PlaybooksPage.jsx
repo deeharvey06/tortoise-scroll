@@ -135,12 +135,15 @@ export default function PlaybooksPage() {
     try {
       if (editing) {
         await playbookApi.updatePlaybook(editing._id, form);
+        setDialogOpen(false);
+        await load();
       } else {
         const created = await playbookApi.createPlaybook(form);
+        setPlaybooks((current) => [created, ...current]);
         setSelectedId(created._id);
+        setDialogOpen(false);
+        await load();
       }
-      setDialogOpen(false);
-      load();
     } catch (err) {
       setError(err.response?.data?.error?.message || err.message);
     }
