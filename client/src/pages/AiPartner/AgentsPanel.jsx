@@ -27,12 +27,13 @@ import { format, subDays } from 'date-fns';
 import * as agentsApi from '../../services/agentsService';
 import * as tradeApi from '../../services/tradeService';
 import { useFilterParams } from '../../store/useFilterStore';
+import { EmptyState, Panel, SectionHeader, StatusBadge } from '../../components/ui';
 
 const CONDITION_FIELDS = ['setup', 'session', 'direction', 'symbol', 'assetType', 'followedPlan', 'rMultiple', 'netPnL', 'holdingTimeSeconds'];
 const OPERATORS = ['equals', 'contains', 'gt', 'gte', 'lt', 'lte'];
 
 function FindingsList({ findings }) {
-  if (!findings || findings.length === 0) return <Typography variant="body2" color="text.secondary">No findings.</Typography>;
+  if (!findings || findings.length === 0) return <EmptyState compact title='No findings' description='The current data and filters produced no deterministic findings.' />;
   return (
     <Box component="ul" sx={{ pl: 2, m: 0 }}>
       {findings.map((f, i) => (
@@ -47,15 +48,19 @@ function FindingsList({ findings }) {
 function NarrativeOrList({ result }) {
   if (!result) return null;
   return (
-    <Box>
+    <Box sx={{ display: 'grid', gap: 2 }}>
+      <Panel>
+        <SectionHeader eyebrow='Data / evidence' title='Deterministic findings' description='Computed from the existing trading data before any AI interpretation.' />
+        <FindingsList findings={result.findings} />
+      </Panel>
       {result.narrative && (
-        <Paper variant="outlined" sx={{ p: 1.5, mb: 1.5, backgroundColor: 'action.hover' }}>
+        <Panel sx={{ bgcolor: 'action.hover' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}><Typography variant='overline' color='primary.main'>AI interpretation</Typography><StatusBadge label='Tortoise Insight' tone='info' /></Box>
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
             {result.narrative}
           </Typography>
-        </Paper>
+        </Panel>
       )}
-      <FindingsList findings={result.findings} />
     </Box>
   );
 }
@@ -412,14 +417,14 @@ export default function AgentsPanel() {
   return (
     <Box>
       <Alert severity="info" sx={{ mb: 2 }}>
-        Every agent below computes its findings deterministically from your trade data first. If AI is configured
+        Every research tool below computes its findings deterministically from your trade data first. If AI is configured
         (see the gear icon), the findings are rewritten as prose; otherwise you see the same findings as a plain
         list. Either way, no agent invents a number that isn't in your data.
       </Alert>
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">1. Auto Trade Tagger</Typography>
+          <Typography variant="subtitle1">Auto Trade Tagger</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <AutoTaggerAgent />
@@ -428,7 +433,7 @@ export default function AgentsPanel() {
 
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">2. Session Review</Typography>
+          <Typography variant="subtitle1">Session Review</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <SessionReviewAgent />
@@ -437,7 +442,7 @@ export default function AgentsPanel() {
 
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">3. Pre-Market Briefing</Typography>
+          <Typography variant="subtitle1">Pre-Market Briefing</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <PreMarketAgent />
@@ -446,7 +451,7 @@ export default function AgentsPanel() {
 
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">4. Risk Monitor</Typography>
+          <Typography variant="subtitle1">Risk Monitor</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <RiskMonitorAgent />
@@ -455,7 +460,7 @@ export default function AgentsPanel() {
 
       <Accordion>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">5. Performance Patterns</Typography>
+          <Typography variant="subtitle1">Performance Patterns</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <PerformancePatternsAgent />

@@ -94,3 +94,21 @@ test('re-importing the same CSV reports duplicate rows', async ({
   await expect(page.getByText(/^0 imported$/)).toBeVisible();
   await expect(page.getByText(/^2 duplicates skipped$/)).toBeVisible();
 });
+
+test('Tortoise AI exposes chat state and deterministic research tools', async ({ page, request }) => {
+  const statusResponse = await request.get('/api/ai/status');
+  expect(statusResponse.ok()).toBeTruthy();
+  const status = await statusResponse.json();
+
+  await page.goto('/ai-partner');
+  await expect(page.getByRole('heading', { name: 'Tortoise AI' })).toBeVisible();
+  await expect(page.getByText(status.configured ? 'Configured' : 'Not configured', { exact: true })).toBeVisible();
+  const prompt = page.getByPlaceholder(/Ask about your trading|Configure AI above/);
+  if (status.configured) await expect(prompt).toBeEnabled();
+  else await expect(prompt).toBeDisabled();
+
+  await page.getByRole('tab', { name: 'Research tools' }).click();
+  for (const name of ['Auto Trade Tagger', 'Session Review', 'Pre-Market Briefing', 'Risk Monitor', 'Performance Patterns']) {
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+  }
+});

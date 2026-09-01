@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -24,6 +23,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import PageHeader from '../../components/PageHeader';
+import { EmptyState, ErrorState, Panel, SectionHeader, StatusBadge, Tag, TradeDirection, ProfitLossValue, RMultiple } from '../../components/ui';
 
 import * as aiApi from '../../services/aiService';
 import { useFilterParams } from '../../store/useFilterStore';
@@ -99,6 +100,48 @@ function SettingsPanel({ settings, onSave, saving }) {
           {saving ? <CircularProgress size={16} /> : 'Save AI settings'}
         </Button>
       </Box>
+    </Box>
+  );
+}
+
+function EvidencePanel({ snapshot, sampleSize }) {
+  const count = snapshot?.summary?.closedTrades ?? sampleSize;
+  if (!snapshot && count == null) return null;
+  return (
+    <Box sx={{ mt: 2.5, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <Typography variant='overline' color='text.secondary'>Data / evidence</Typography>
+        {count != null && <StatusBadge label={`${count} closed trade${count === 1 ? '' : 's'}`} tone='info' />}
+      </Box>
+      {snapshot?.filtersApplied && Object.keys(snapshot.filtersApplied).length > 0 && (
+        <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>{Object.entries(snapshot.filtersApplied).filter(([, value]) => value != null && value !== '').map(([key, value]) => <Tag key={key} label={`${key}: ${Array.isArray(value) ? value.join(', ') : value}`} />)}</Box>
+      )}
+      {snapshot?.recentTrades?.length > 0 && (
+        <Box sx={{ display: 'grid', gap: 1 }}>
+          <Typography variant='caption' color='text.secondary'>Recent supporting trades supplied to this response</Typography>
+          {snapshot.recentTrades.slice(0, 5).map((trade, index) => (
+            <Box key={`${trade.symbol}-${trade.entryTime}-${index}`} sx={{ display: 'grid', gridTemplateColumns: 'minmax(64px, 1fr) auto auto auto', alignItems: 'center', gap: 1.5, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+              <Box><Typography variant='body2' sx={{ fontWeight: 700 }}>{trade.symbol}</Typography><Typography variant='caption' color='text.secondary'>{trade.setup || trade.strategy || trade.session || 'Recorded trade'}</Typography></Box>
+              <TradeDirection direction={trade.direction} />
+              <ProfitLossValue value={trade.netPnL} />
+              <RMultiple value={trade.rMultiple} />
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+function ConversationMessage({ message }) {
+  const user = message.role === 'user';
+  return (
+    <Box sx={{ mb: 3, ml: user ? { xs: 2, sm: 8 } : 0, mr: user ? 0 : { xs: 0, sm: 8 } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><Typography variant='overline' color={user ? 'text.secondary' : 'primary.main'}>{user ? 'User question' : 'AI interpretation'}</Typography>{!user && <StatusBadge label='Tortoise Insight' tone='info' />}</Box>
+      <Panel sx={{ mt: 0.5, bgcolor: user ? 'action.selected' : 'background.paper' }}>
+        <Typography variant='body2' sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.75 }}>{message.content}</Typography>
+        {!user && <EvidencePanel snapshot={message.contextSnapshot} sampleSize={message.sampleSize} />}
+      </Panel>
     </Box>
   );
 }
@@ -198,7 +241,8 @@ export default function AiPartnerPage() {
     try {
       const data = await aiApi.sendChatMessage({ conversationId: activeId, message, filters: params });
       setActiveId(data.conversationId);
-      setMessages((m) => [...m, { role: 'assistant', content: data.reply }]);
+      setMessages((m) => [...m, { role: 'assistant', content: data.reply, sampleSize: data.sampleSize }]);
+      aiApi.fetchConversation(data.conversationId).then((conversation) => setMessages(conversation.messages)).catch(() => {});
       if (data.memorySaved) loadMemories();
       loadConversations();
     } catch (err) {
@@ -227,16 +271,11 @@ export default function AiPartnerPage() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="h5">AI Trading Partner</Typography>
-        <IconButton size="small" aria-label="Toggle AI settings" onClick={() => setSettingsOpen((o) => !o)}>
-          <SettingsIcon fontSize="small" />
-        </IconButton>
-      </Box>
+      <PageHeader eyebrow='Analytical research assistant' title='Tortoise AI' description='Ask questions of your recorded trading history. Your data remains the evidence; AI provides interpretation.' actions={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>{status && <StatusBadge label={status.configured ? 'Configured' : 'Not configured'} tone={status.configured ? 'positive' : 'neutral'} />}<IconButton size="small" aria-label="Toggle AI settings" onClick={() => setSettingsOpen((o) => !o)}><SettingsIcon fontSize="small" /></IconButton></Box>} />
 
       <Tabs value={pageTab} onChange={(e, v) => setPageTab(v)} sx={{ mb: 2 }}>
         <Tab value="chat" label="Chat" />
-        <Tab value="agents" label="Agents" />
+        <Tab value="agents" label="Research tools" />
       </Tabs>
 
       {pageTab === 'agents' ? (
@@ -251,23 +290,20 @@ export default function AiPartnerPage() {
 
       {settings && (
         <Collapse in={settingsOpen}>
-          <Paper sx={{ mb: 2 }}>
+          <Panel sx={{ mb: 4 }}>
+            <SectionHeader eyebrow='Configuration' title='AI provider settings' description='Presentation settings are separate from your trading data and analytics.' />
             <SettingsPanel settings={settings} onSave={handleSaveSettings} saving={savingSettings} />
-          </Paper>
+          </Panel>
         </Collapse>
       )}
 
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {error && <ErrorState compact message={error} onClose={() => setError(null)} sx={{ mb: 4 }} />}
 
-      <Grid container spacing={2} sx={{ height: 620 }}>
-        <Grid item xs={12} md={3} sx={{ height: '100%' }}>
-          <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Grid container spacing={2} sx={{ height: { xs: 'auto', md: 640 } }}>
+        <Grid item xs={12} md={3} sx={{ height: { xs: 360, md: '100%' } }}>
+          <Panel padding={0} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="subtitle2">Conversations</Typography>
+              <Typography variant="overline" color='text.secondary'>Research history</Typography>
               <IconButton size="small" aria-label="New conversation" onClick={startNewConversation}>
                 <AddIcon fontSize="small" />
               </IconButton>
@@ -287,16 +323,12 @@ export default function AiPartnerPage() {
                   </IconButton>
                 </ListItemButton>
               ))}
-              {conversations.length === 0 && (
-                <Typography variant="caption" color="text.secondary" sx={{ px: 2 }}>
-                  No conversations yet.
-                </Typography>
-              )}
+              {conversations.length === 0 && <EmptyState compact title='No conversations yet' description='Start a research question to create a history.' />}
             </List>
             <Divider />
             <Box sx={{ p: 1.5 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Memories
+                Research memory
               </Typography>
               <Box sx={{ maxHeight: 140, overflowY: 'auto', mb: 1 }}>
                 {memories.length === 0 && (
@@ -328,17 +360,15 @@ export default function AiPartnerPage() {
                 </Button>
               </Box>
             </Box>
-          </Paper>
+          </Panel>
         </Grid>
 
-        <Grid item xs={12} md={9} sx={{ height: '100%' }}>
-          <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Grid item xs={12} md={9} sx={{ height: { xs: 640, md: '100%' } }}>
+          <Panel padding={0} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box ref={scrollRef} sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
               {messages.length === 0 && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Ask about your actual trading history — every answer is grounded in your logged trades.
-                  </Typography>
+                <Box sx={{ p: 2 }}>
+                  <SectionHeader eyebrow='Research prompt' title='Ask your trading record' description='Tortoise AI interprets the deterministic data supplied by your journal. It does not generate trading signals.' />
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {SUGGESTIONS.map((s) => (
                       <Chip key={s} label={s} size="small" onClick={() => handleSend(s)} sx={{ cursor: 'pointer' }} />
@@ -346,25 +376,12 @@ export default function AiPartnerPage() {
                   </Box>
                 </Box>
               )}
-              {messages.map((m, i) => (
-                <Box key={i} sx={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start', mb: 1.5 }}>
-                  <Paper
-                    sx={{
-                      p: 1.5,
-                      maxWidth: '75%',
-                      backgroundColor: m.role === 'user' ? 'action.selected' : 'background.paper',
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    <Typography variant="body2">{m.content}</Typography>
-                  </Paper>
-                </Box>
-              ))}
+              {messages.map((message, index) => <ConversationMessage key={`${message.createdAt || 'message'}-${index}`} message={message} />)}
               {sending && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CircularProgress size={14} />
                   <Typography variant="caption" color="text.secondary">
-                    Thinking…
+                    Reviewing the available evidence…
                   </Typography>
                 </Box>
               )}
@@ -388,7 +405,7 @@ export default function AiPartnerPage() {
                 </span>
               </Tooltip>
             </Box>
-          </Paper>
+          </Panel>
         </Grid>
       </Grid>
         </>
