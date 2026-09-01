@@ -2,15 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableHead from '@mui/material/TableHead';
-import TableBody from '@mui/material/TableBody';
-import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
 import IconButton from '@mui/material/IconButton';
-import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -19,14 +11,14 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Grid';
 import Alert from '@mui/material/Alert';
-import CircularProgress from '@mui/material/CircularProgress';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import PageHeader from '../../components/PageHeader';
 import { format } from 'date-fns';
 
 import * as journalApi from '../../services/journalService';
-import { ConfirmationDialog } from '../../components/ui';
+import { ConfirmationDialog, EmptyState, ErrorState, LoadingState, Panel, StatusBadge } from '../../components/ui';
 
 const TYPES = [
   { value: 'pre-market', label: 'Pre-Market Plan' },
@@ -37,13 +29,13 @@ const TYPES = [
   { value: 'freeform', label: 'Free-form Note' },
 ];
 
-const TYPE_COLORS = {
+const TYPE_TONES = {
   'pre-market': 'info',
-  daily: 'default',
+  daily: 'neutral',
   'post-market': 'warning',
-  weekly: 'secondary',
-  monthly: 'secondary',
-  freeform: 'default',
+  weekly: 'positive',
+  monthly: 'positive',
+  freeform: 'neutral',
 };
 
 const PRE_MARKET_FIELDS = [
@@ -182,10 +174,12 @@ export default function JournalPage() {
   const activeFields = templateFieldsFor(form.type);
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5">Journal</Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+    <Box sx={{ maxWidth: 1120, mx: 'auto' }}>
+      <PageHeader
+        eyebrow='Journal archive'
+        title='The Scroll'
+        description='A permanent chronological record of preparation, decisions, lessons, and progress.'
+        actions={<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <TextField
             select
             size="small"
@@ -204,88 +198,47 @@ export default function JournalPage() {
           <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => openCreate('daily')}>
             New entry
           </Button>
-        </Box>
-      </Box>
+        </Box>}
+      />
 
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {error && <ErrorState compact message={error} onClose={() => setError(null)} sx={{ mb: 4 }} />}
       {toast && (
         <Alert severity="success" onClose={() => setToast(null)} sx={{ mb: 2 }}>
           {toast}
         </Alert>
       )}
 
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <Button size="small" variant="outlined" onClick={() => openCreate('pre-market')}>
-          + Pre-Market Plan
-        </Button>
-        <Button size="small" variant="outlined" onClick={() => openCreate('post-market')}>
-          + Post-Market Review
-        </Button>
-      </Box>
+      <Panel sx={{ mb: 5 }}>
+        <Typography variant='overline' color='text.secondary'>Begin a record</Typography>
+        <Box sx={{ display: 'flex', gap: 1, mt: 1.5, flexWrap: 'wrap' }}>
+          <Button size='small' variant='outlined' onClick={() => openCreate('pre-market')}>Pre-market plan</Button>
+          <Button size='small' variant='outlined' onClick={() => openCreate('post-market')}>Post-market review</Button>
+          <Button size='small' variant='text' onClick={() => openCreate('weekly')}>Weekly review</Button>
+          <Button size='small' variant='text' onClick={() => openCreate('monthly')}>Monthly review</Button>
+        </Box>
+      </Panel>
 
-      <Paper>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Title</TableCell>
-                <TableCell>Preview</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={22} />
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading && entries.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No journal entries yet.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading &&
-                entries.map((entry) => (
-                  <TableRow key={entry._id} hover>
-                    <TableCell className="mono-data">{format(new Date(entry.date), 'MMM d, yyyy')}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={TYPES.find((t) => t.value === entry.type)?.label || entry.type}
-                        color={TYPE_COLORS[entry.type] || 'default'}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{entry.title || '—'}</TableCell>
-                    <TableCell sx={{ maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {(entry.content || '').replace(/\n/g, ' ')}
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" aria-label="Edit entry" onClick={() => openEdit(entry)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" aria-label="Delete entry" onClick={() => setDeleteTarget(entry)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+      {loading ? <LoadingState label='Opening The Scroll…' skeletonRows={4} /> : entries.length === 0 ? (
+        <EmptyState title='The Scroll is ready' description={typeFilter ? 'No entries match this type. Choose another filter or add a new entry.' : 'Record your first plan, review, or lesson to begin your trading history.'} action={<Button variant='contained' onClick={() => openCreate('daily')}>Create entry</Button>} />
+      ) : (
+        <Box component='section' aria-label='Journal chronology' sx={{ position: 'relative', '&::before': { content: '""', position: 'absolute', left: { xs: 17, sm: 91 }, top: 12, bottom: 12, width: '1px', bgcolor: 'divider' } }}>
+          {entries.map((entry, index) => {
+            const entryDate = new Date(entry.date);
+            const typeLabel = TYPES.find((type) => type.value === entry.type)?.label || entry.type;
+            return <Box key={entry._id} sx={{ position: 'relative', display: 'grid', gridTemplateColumns: { xs: '36px minmax(0, 1fr)', sm: '72px 20px minmax(0, 1fr)' }, gap: { xs: 1.5, sm: 2 }, mb: index === entries.length - 1 ? 0 : 3 }}>
+              <Box sx={{ display: { xs: 'none', sm: 'block' }, pt: 1.5, textAlign: 'right' }}><Typography variant='caption' className='mono-data' color='text.secondary'>{format(entryDate, 'MMM')}</Typography><Typography variant='h6' className='mono-data'>{format(entryDate, 'd')}</Typography><Typography variant='caption' className='mono-data' color='text.muted'>{format(entryDate, 'yyyy')}</Typography></Box>
+              <Box sx={{ width: 11, height: 11, borderRadius: '50%', bgcolor: 'primary.main', border: '3px solid', borderColor: 'background.default', boxSizing: 'content-box', mt: 2, ml: { xs: 1, sm: 0 }, zIndex: 1 }} />
+              <Panel interactive sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}><Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1 }}><StatusBadge label={typeLabel} tone={TYPE_TONES[entry.type]} /><Typography variant='caption' className='mono-data' color='text.secondary' sx={{ display: { sm: 'none' } }}>{format(entryDate, 'MMM d, yyyy')}</Typography></Box><Typography variant='h6' component='h2'>{entry.title || typeLabel}</Typography></Box>
+                  <Box sx={{ display: 'flex' }}><IconButton size='small' aria-label='Edit entry' onClick={() => openEdit(entry)}><EditIcon fontSize='small' /></IconButton><IconButton size='small' aria-label='Delete entry' onClick={() => setDeleteTarget(entry)}><DeleteIcon fontSize='small' /></IconButton></Box>
+                </Box>
+                <Typography component='div' variant='body2' color='text.secondary' sx={{ whiteSpace: 'pre-line', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.75 }}>{entry.content || 'No content recorded.'}</Typography>
+              </Panel>
+            </Box>;
+          })}
+        </Box>
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editingEntry ? 'Edit entry' : 'New journal entry'}</DialogTitle>

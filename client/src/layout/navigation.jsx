@@ -20,7 +20,7 @@ export const NAVIGATION_GROUPS = [
     items: [
       { to: '/trades', label: 'Trades', icon: ListAltIcon },
       { to: '/calendar', label: 'Calendar', icon: CalendarIcon },
-      { to: '/journal', label: 'Journal', icon: JournalIcon },
+      { to: '/journal', label: 'The Scroll', icon: JournalIcon },
     ],
   },
   {
@@ -51,7 +51,7 @@ export const NAVIGATION_GROUPS = [
 ];
 
 export const ROUTE_TITLES = {
-  '/': 'Dashboard', '/trades': 'Trades', '/calendar': 'Calendar', '/journal': 'Journal',
+  '/': 'Dashboard', '/trades': 'Trades', '/calendar': 'Calendar', '/journal': 'The Scroll',
   '/strategies': 'Strategies', '/playbooks': 'Playbooks', '/reports': 'Reports',
   '/analytics': 'Analytics', '/replay': 'Replay', '/backtesting': 'Backtesting',
   '/risk': 'Risk', '/ai-partner': 'Tortoise AI', '/import': 'Import', '/settings': 'Settings',
