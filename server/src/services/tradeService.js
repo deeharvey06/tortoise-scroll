@@ -1,5 +1,5 @@
-import Trade from '../models/Trade.js';
 import { computeTradeFinancials } from './calculationsService.js';
+import * as tradeRepository from '../repositories/tradeRepository.js';
 
 /**
  * Builds the persisted trade payload by merging user input with computed
@@ -84,8 +84,8 @@ export async function listTrades({
   const sort = { [sortBy]: sortDir === 'asc' ? 1 : -1 };
 
   const [items, total] = await Promise.all([
-    Trade.find(query).sort(sort).skip(skip).limit(limitNum).lean(),
-    Trade.countDocuments(query),
+    tradeRepository.findTrades(query, sort, skip, limitNum),
+    tradeRepository.countTrades(query),
   ]);
 
   return {
@@ -100,41 +100,34 @@ export async function listTrades({
 }
 
 export async function getTradeById(id) {
-  return Trade.findById(id).lean();
+  return tradeRepository.findTradeById(id);
 }
 
 export async function createTrade(input) {
   const payload = withComputedFields(input);
-  const trade = new Trade(payload);
-  await trade.save();
-  return trade.toObject();
+  return tradeRepository.createTrade(payload);
 }
 
 export async function updateTrade(id, input) {
-  const existing = await Trade.findById(id);
+  const existing = await tradeRepository.findTradeById(id);
   if (!existing) return null;
 
-  const merged = { ...existing.toObject(), ...input };
+  const merged = { ...existing, ...input };
   const payload = withComputedFields(merged);
 
-  Object.assign(existing, payload);
-  await existing.save();
-  return existing.toObject();
+  return tradeRepository.updateTradeDocument(id, payload);
 }
 
 export async function deleteTrade(id) {
-  return Trade.findByIdAndDelete(id);
+  return tradeRepository.deleteTradeById(id);
 }
 
 export async function bulkDeleteTrades(ids) {
-  return Trade.deleteMany({ _id: { $in: ids } });
+  return tradeRepository.deleteTradesByIds(ids);
 }
 
 export async function bulkTagTrades(ids, tagsToAdd) {
-  return Trade.updateMany(
-    { _id: { $in: ids } },
-    { $addToSet: { tags: { $each: tagsToAdd } } },
-  );
+  return tradeRepository.addTagsToTrades(ids, tagsToAdd);
 }
 
 /**
@@ -144,7 +137,7 @@ export async function bulkTagTrades(ids, tagsToAdd) {
  */
 export async function exportTrades(filters = {}) {
   const query = buildTradeQuery(filters);
-  return Trade.find(query).sort({ entryTime: -1 }).lean();
+  return tradeRepository.exportTradesByQuery(query);
 }
 
 export default {

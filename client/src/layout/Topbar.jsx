@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import { checkHealth } from '../services/api';
+import useAuthStore from '../store/useAuthStore';
 import GlobalFilterBar from '../components/GlobalFilterBar';
 
 export default function Topbar() {
   const [status, setStatus] = useState('checking');
+  const { user, clearSession } = useAuthStore();
 
   useEffect(() => {
     let cancelled = false;
@@ -37,12 +41,41 @@ export default function Topbar() {
       }}
     >
       <GlobalFilterBar />
-      <Chip
-        size="small"
-        label={status === 'online' ? 'API connected' : status === 'offline' ? 'API unreachable' : 'Checking…'}
-        color={status === 'online' ? 'success' : status === 'offline' ? 'error' : 'default'}
-        variant="outlined"
-      />
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Typography variant='caption' color='text.secondary'>
+          {user?.displayName || 'Guest'}
+        </Typography>
+        <Chip
+          size='small'
+          label={
+            status === 'online'
+              ? 'API connected'
+              : status === 'offline'
+                ? 'API unreachable'
+                : 'Checking…'
+          }
+          color={
+            status === 'online'
+              ? 'success'
+              : status === 'offline'
+                ? 'error'
+                : 'default'
+          }
+          variant='outlined'
+        />
+        {user && (
+          <Button size='small' variant='outlined' onClick={clearSession}>
+            Log out
+          </Button>
+        )}
+      </Box>
     </Box>
   );
 }

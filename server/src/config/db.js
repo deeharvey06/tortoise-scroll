@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getConfig } from './index.js';
 
 /**
  * Connects to MongoDB using the URI from environment variables.
@@ -6,10 +7,10 @@ import mongoose from 'mongoose';
  * silently run with no persistence.
  */
 export async function connectDB() {
-  const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/trading-journal';
+  const { mongoUri } = getConfig();
 
   mongoose.connection.on('connected', () => {
-    console.log(`[db] Connected to MongoDB at ${uri}`);
+    console.log(`[db] Connected to MongoDB at ${mongoUri}`);
   });
 
   mongoose.connection.on('error', (err) => {
@@ -20,7 +21,7 @@ export async function connectDB() {
     console.warn('[db] MongoDB disconnected');
   });
 
-  await mongoose.connect(uri, {
+  await mongoose.connect(mongoUri, {
     serverSelectionTimeoutMS: 5000,
   });
 
