@@ -10,6 +10,7 @@ const { Schema } = mongoose;
  */
 const appSettingsSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true, index: true },
     timezone: { type: String, default: 'UTC' },
     currency: { type: String, default: 'USD' },
     defaultAccountId: { type: Schema.Types.ObjectId, ref: 'Account', default: null },

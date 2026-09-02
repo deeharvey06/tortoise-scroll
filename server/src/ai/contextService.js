@@ -34,8 +34,8 @@ export async function buildContextBundle(filters = {}) {
   const closed = analyticsService.closedOnly(trades);
 
   const [strategies, playbooks] = await Promise.all([
-    Strategy.find().select('name').lean(),
-    Playbook.find().select('setupName').lean(),
+    Strategy.find({ userId: filters.userId }).select('name').lean(),
+    Playbook.find({ userId: filters.userId }).select('setupName').lean(),
   ]);
   const strategyNameById = Object.fromEntries(strategies.map((s) => [String(s._id), s.name]));
   const playbookNameById = Object.fromEntries(playbooks.map((p) => [String(p._id), p.setupName]));

@@ -31,6 +31,9 @@ import { uploadsRootPath } from './middleware/upload.js';
 import { requireAuth } from './middleware/auth.js';
 import requestLogger from './middleware/requestLogger.js';
 import { getConfig } from './config/index.js';
+import Trade from './models/Trade.js';
+import Strategy from './models/Strategy.js';
+import Playbook from './models/Playbook.js';
 
 // Register job handlers
 jobQueue.register('import-trades', jobHandlers.handleTradeImport);
@@ -38,18 +41,15 @@ jobQueue.register(
   'performance-analysis',
   jobHandlers.handlePerformanceAnalysis,
 );
-
 jobQueue.register('risk-assessment', jobHandlers.handleRiskAssessment);
 jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
 
 export function createApp(options = {}) {
   const app = express();
   const config = getConfig();
-
   if (config.nodeEnv !== 'test' && config.sessionSecret.length < 32) {
     throw new Error('SESSION_SECRET must contain at least 32 characters');
   }
-
   const sessionCookieName = 'tortoise.sid';
   const sessionCookieOptions = {
     httpOnly: true,
@@ -62,36 +62,26 @@ export function createApp(options = {}) {
   if (config.nodeEnv === 'production') app.set('trust proxy', 1);
 
   app.use(helmet({ crossOriginResourcePolicy: false }));
-  app.use(cors({ origin: config.allowedOrigins, credentials: true }));
   app.use(
-    session({
-      name: sessionCookieName,
-      secret:
-        config.sessionSecret || 'test-only-session-secret-at-least-32-chars',
-      resave: false,
-      saveUninitialized: false,
-      rolling: true,
-      store:
-        options.sessionStore ||
-        MongoStore.create({
-          mongoUrl: config.mongoUri,
-          ttl: Math.ceil(config.sessionTtlMs / 1000),
-          touchAfter: 300,
-        }),
-      cookie: sessionCookieOptions,
-    }),
+    cors({ origin: config.allowedOrigins, credentials: true }),
   );
-
+  app.use(session({
+    name: sessionCookieName,
+    secret: config.sessionSecret || 'test-only-session-secret-at-least-32-chars',
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    store: options.sessionStore || MongoStore.create({ mongoUrl: config.mongoUri, ttl: Math.ceil(config.sessionTtlMs / 1000), touchAfter: 300 }),
+    cookie: sessionCookieOptions,
+  }));
   app.locals.sessionCookieName = sessionCookieName;
   app.locals.sessionCookieOptions = sessionCookieOptions;
-
   const authLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: process.env.NODE_ENV === 'test' ? 100000 : 1000,
     standardHeaders: true,
     legacyHeaders: false,
   });
-
   const apiLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: process.env.NODE_ENV === 'test' ? 100000 : 200,
@@ -103,7 +93,6 @@ export function createApp(options = {}) {
     app.use('/api/auth', authLimiter);
     app.use(apiLimiter);
   }
-
   app.use(express.json({ limit: '25mb' }));
   app.use(express.urlencoded({ extended: true }));
 
@@ -141,10 +130,24 @@ export function createApp(options = {}) {
   app.use('/api/agents', requireAuth, agentsRoutes);
   app.use('/api/backup', requireAuth, backupRoutes);
   app.use('/api/settings', requireAuth, appSettingsRoutes);
-  app.use('/api/jobs', jobsRoutes);
+  app.use('/api/jobs', requireAuth, jobsRoutes);
 
   // Serves uploaded trade screenshots — /uploads/screenshots/<file>
-  app.use('/uploads', express.static(uploadsRootPath));
+  app.use('/uploads/screenshots/:filename', requireAuth, async (req, res, next) => {
+    try {
+      const url = `/uploads/screenshots/${req.params.filename}`;
+      if (!(await Trade.exists({ userId: req.user.id, 'screenshots.url': url }))) return res.status(404).json({ error: { message: 'Screenshot not found' } });
+      return res.sendFile(req.params.filename, { root: `${uploadsRootPath}/screenshots` });
+    } catch (error) { return next(error); }
+  });
+  app.use('/uploads/media/:filename', requireAuth, async (req, res, next) => {
+    try {
+      const url = `/uploads/media/${req.params.filename}`;
+      const owned = await Promise.all([Strategy.exists({ userId: req.user.id, 'screenshots.url': url }), Playbook.exists({ userId: req.user.id, 'screenshots.url': url })]);
+      if (!owned.some(Boolean)) return res.status(404).json({ error: { message: 'Media not found' } });
+      return res.sendFile(req.params.filename, { root: `${uploadsRootPath}/media` });
+    } catch (error) { return next(error); }
+  });
 
   app.use(notFound);
   app.use(errorHandler);

@@ -8,8 +8,8 @@ export async function countTrades(query) {
   return Trade.countDocuments(query);
 }
 
-export async function findTradeById(id) {
-  return Trade.findById(id).lean();
+export async function findTradeById(id, userId) {
+  return Trade.findOne({ _id: id, userId }).lean();
 }
 
 export async function createTrade(payload) {
@@ -18,8 +18,8 @@ export async function createTrade(payload) {
   return trade.toObject();
 }
 
-export async function updateTradeDocument(id, payload) {
-  const trade = await Trade.findById(id);
+export async function updateTradeDocument(id, userId, payload) {
+  const trade = await Trade.findOne({ _id: id, userId });
   if (!trade) return null;
 
   Object.assign(trade, payload);
@@ -27,17 +27,17 @@ export async function updateTradeDocument(id, payload) {
   return trade.toObject();
 }
 
-export async function deleteTradeById(id) {
-  return Trade.findByIdAndDelete(id);
+export async function deleteTradeById(id, userId) {
+  return Trade.findOneAndDelete({ _id: id, userId });
 }
 
-export async function deleteTradesByIds(ids) {
-  return Trade.deleteMany({ _id: { $in: ids } });
+export async function deleteTradesByIds(ids, userId) {
+  return Trade.deleteMany({ _id: { $in: ids }, userId });
 }
 
-export async function addTagsToTrades(ids, tagsToAdd) {
+export async function addTagsToTrades(ids, userId, tagsToAdd) {
   return Trade.updateMany(
-    { _id: { $in: ids } },
+    { _id: { $in: ids }, userId },
     { $addToSet: { tags: { $each: tagsToAdd } } },
   );
 }

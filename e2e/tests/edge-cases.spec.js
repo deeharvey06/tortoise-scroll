@@ -20,8 +20,8 @@ test.beforeEach(async ({ page, request }) => {
   await authenticateAsDemo(page, request);
 });
 
-async function createAccount(request, name) {
-  const response = await request.post('/api/accounts', { data: { name } });
+async function createAccount(page, name) {
+  const response = await page.request.post('/api/accounts', { data: { name } });
   expect(response.ok()).toBeTruthy();
   return response.json();
 }
@@ -50,10 +50,7 @@ test('invalid CSV reports row-level errors in the import result', async ({
   page,
   request,
 }) => {
-  const account = await createAccount(
-    request,
-    `E2E Invalid Import ${Date.now()}`,
-  );
+  const account = await createAccount(page, `E2E Invalid Import ${Date.now()}`);
 
   await page.goto('/import');
   await uploadViaLabelButton(page, 'Choose file', INVALID_CSV);
@@ -88,17 +85,29 @@ const RESPONSIVE_VIEWPORTS = [
 ];
 
 for (const viewport of RESPONSIVE_VIEWPORTS) {
-  test(`application shell remains usable at ${viewport.name}`, async ({ page }) => {
-    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+  test(`application shell remains usable at ${viewport.name}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({
+      width: viewport.width,
+      height: viewport.height,
+    });
     await page.goto('/trades');
     await expect(page.getByRole('heading', { name: 'Trades' })).toBeVisible();
 
     if (viewport.width < 900) {
       await page.getByRole('button', { name: 'Open navigation' }).click();
-      await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
-      await page.getByRole('button', { name: 'Close navigation' }).click({ force: true });
+      await expect(
+        page.getByRole('navigation', { name: 'Primary navigation' }),
+      ).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(
+        page.getByRole('navigation', { name: 'Primary navigation' }),
+      ).toBeHidden();
     } else {
-      await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+      await expect(
+        page.getByRole('navigation', { name: 'Primary navigation' }),
+      ).toBeVisible();
     }
 
     await expect(page.locator('#main-content')).toBeVisible();
@@ -110,7 +119,7 @@ test('re-importing the same CSV reports duplicate rows', async ({
   request,
 }) => {
   const account = await createAccount(
-    request,
+    page,
     `E2E Duplicate Import ${Date.now()}`,
   );
 
@@ -125,20 +134,37 @@ test('re-importing the same CSV reports duplicate rows', async ({
   await expect(page.getByText(/^2 duplicates skipped$/)).toBeVisible();
 });
 
-test('Tortoise AI exposes chat state and deterministic research tools', async ({ page, request }) => {
-  const statusResponse = await request.get('/api/ai/status');
+test('Tortoise AI exposes chat state and deterministic research tools', async ({
+  page,
+  request,
+}) => {
+  const statusResponse = await page.request.get('/api/ai/status');
   expect(statusResponse.ok()).toBeTruthy();
   const status = await statusResponse.json();
 
   await page.goto('/ai-partner');
-  await expect(page.getByRole('heading', { name: 'Tortoise AI' })).toBeVisible();
-  await expect(page.getByText(status.configured ? 'Configured' : 'Not configured', { exact: true })).toBeVisible();
-  const prompt = page.getByPlaceholder(/Ask about your trading|Configure AI above/);
+  await expect(
+    page.getByRole('heading', { name: 'Tortoise AI' }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(status.configured ? 'Configured' : 'Not configured', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  const prompt = page.getByPlaceholder(
+    /Ask about your trading|Configure AI above/,
+  );
   if (status.configured) await expect(prompt).toBeEnabled();
   else await expect(prompt).toBeDisabled();
 
   await page.getByRole('tab', { name: 'Research tools' }).click();
-  for (const name of ['Auto Trade Tagger', 'Session Review', 'Pre-Market Briefing', 'Risk Monitor', 'Performance Patterns']) {
+  for (const name of [
+    'Auto Trade Tagger',
+    'Session Review',
+    'Pre-Market Briefing',
+    'Risk Monitor',
+    'Performance Patterns',
+  ]) {
     await expect(page.getByText(name, { exact: true })).toBeVisible();
   }
 });

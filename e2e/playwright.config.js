@@ -12,6 +12,7 @@ export default defineConfig({
   testDir: './tests',
   timeout: 60_000,
   expect: { timeout: 10_000 },
+  workers: 1,
   fullyParallel: false, // the MVP flow spec is intentionally sequential/stateful
   retries: process.env.CI ? 1 : 0,
   reporter: [['html', { open: 'never' }], ['list']],
@@ -21,18 +22,18 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  ],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'NODE_ENV=test SESSION_SECRET=e2e-only-session-secret-at-least-32-characters ROOT_USER_EMAIL=e2e-root@tortoise-scroll.test ROOT_USER_INITIAL_PASSWORD=e2e-root-password-strong-123 npm run dev --prefix ../server',
+      command:
+        'NODE_ENV=test MONGO_URI=mongodb://localhost:27017/trading-journal-e2e SESSION_SECRET=e2e-only-session-secret-at-least-32-characters ROOT_USER_EMAIL=e2e-root@tortoise-scroll.test ROOT_USER_INITIAL_PASSWORD=e2e-root-password-strong-123 npm run dev --prefix ../server',
       url: 'http://localhost:5050/api/health',
       reuseExistingServer: false,
       timeout: 30_000,
     },
     {
-      command: 'NODE_ENV=test npm run dev --prefix ../client -- --host 127.0.0.1 --port 5174 --strictPort',
+      command:
+        'NODE_ENV=test npm run dev --prefix ../client -- --host 127.0.0.1 --port 5174 --strictPort',
       url: 'http://127.0.0.1:5174',
       reuseExistingServer: false,
       timeout: 30_000,

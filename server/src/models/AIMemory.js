@@ -11,6 +11,7 @@ const { Schema } = mongoose;
  */
 const aiMemorySchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     content: { type: String, required: true, trim: true },
     category: {
       type: String,
@@ -22,7 +23,7 @@ const aiMemorySchema = new Schema(
   { timestamps: true }
 );
 
-aiMemorySchema.index({ createdAt: -1 });
-aiMemorySchema.index({ category: 1 });
+aiMemorySchema.index({ userId: 1, createdAt: -1 });
+aiMemorySchema.index({ userId: 1, category: 1 });
 
 export default mongoose.model('AIMemory', aiMemorySchema);

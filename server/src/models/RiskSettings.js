@@ -9,7 +9,8 @@ const { Schema } = mongoose;
  */
 const riskSettingsSchema = new Schema(
   {
-    accountId: { type: Schema.Types.ObjectId, ref: 'Account', default: null, unique: true, sparse: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    accountId: { type: Schema.Types.ObjectId, ref: 'Account', default: null },
     maxDailyLoss: { type: Number, default: null },
     maxWeeklyLoss: { type: Number, default: null },
     maxPositionSize: { type: Number, default: null },
@@ -19,5 +20,7 @@ const riskSettingsSchema = new Schema(
   },
   { timestamps: true }
 );
+
+riskSettingsSchema.index({ userId: 1, accountId: 1 }, { unique: true });
 
 export default mongoose.model('RiskSettings', riskSettingsSchema);

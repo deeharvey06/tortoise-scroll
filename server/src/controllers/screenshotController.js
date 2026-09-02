@@ -2,13 +2,14 @@ import path from 'path';
 import fs from 'fs';
 import Trade from '../models/Trade.js';
 import { uploadsRootPath } from '../middleware/upload.js';
+import { ownedFilter } from '../utils/ownership.js';
 
 export async function uploadScreenshot(req, res) {
   if (!req.file) {
     res.status(400);
     throw new Error('No image uploaded (field name must be "file")');
   }
-  const trade = await Trade.findById(req.params.id);
+  const trade = await Trade.findOne(ownedFilter(req, { _id: req.params.id }));
   if (!trade) {
     res.status(404);
     throw new Error('Trade not found');
@@ -20,7 +21,7 @@ export async function uploadScreenshot(req, res) {
 }
 
 export async function updateScreenshotCaption(req, res) {
-  const trade = await Trade.findById(req.params.id);
+  const trade = await Trade.findOne(ownedFilter(req, { _id: req.params.id }));
   if (!trade) {
     res.status(404);
     throw new Error('Trade not found');
@@ -36,7 +37,7 @@ export async function updateScreenshotCaption(req, res) {
 }
 
 export async function deleteScreenshot(req, res) {
-  const trade = await Trade.findById(req.params.id);
+  const trade = await Trade.findOne(ownedFilter(req, { _id: req.params.id }));
   if (!trade) {
     res.status(404);
     throw new Error('Trade not found');

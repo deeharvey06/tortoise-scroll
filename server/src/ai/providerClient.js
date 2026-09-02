@@ -6,8 +6,8 @@ import AISettings from '../models/AISettings.js';
  * the app work out of the box from .env while still being editable from
  * the UI without a restart.
  */
-export async function getEffectiveSettings() {
-  const saved = await AISettings.findOne().lean();
+export async function getEffectiveSettings(userId) {
+  const saved = userId ? await AISettings.findOne({ userId }).lean() : null;
   if (saved) return saved;
   return {
     provider: process.env.AI_PROVIDER || 'disabled',
@@ -19,8 +19,8 @@ export async function getEffectiveSettings() {
   };
 }
 
-export async function isConfigured() {
-  const settings = await getEffectiveSettings();
+export async function isConfigured(userId) {
+  const settings = await getEffectiveSettings(userId);
   if (settings.provider === 'openai') return !!settings.openaiApiKey;
   if (settings.provider === 'ollama') return !!settings.ollamaBaseUrl;
   return false;
@@ -71,8 +71,8 @@ async function callOllama(settings, messages) {
  * `messages` is the standard [{role, content}] array; the caller is
  * responsible for building the system prompt with deterministic data.
  */
-export async function chatComplete(messages) {
-  const settings = await getEffectiveSettings();
+export async function chatComplete(messages, userId) {
+  const settings = await getEffectiveSettings(userId);
 
   if (settings.provider === 'openai') {
     if (!settings.openaiApiKey) throw new Error('OpenAI is selected but no API key is configured.');

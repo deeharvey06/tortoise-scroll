@@ -2,12 +2,12 @@ import RiskSettings from '../models/RiskSettings.js';
 import * as analyticsService from './analyticsService.js';
 
 /** Finds the account-specific settings, falling back to the global (accountId: null) document. */
-export async function resolveSettings(accountId) {
+export async function resolveSettings(accountId, userId) {
   if (accountId) {
-    const specific = await RiskSettings.findOne({ accountId }).lean();
+    const specific = await RiskSettings.findOne({ userId, accountId }).lean();
     if (specific) return specific;
   }
-  const global = await RiskSettings.findOne({ accountId: null }).lean();
+  const global = await RiskSettings.findOne({ userId, accountId: null }).lean();
   return global || null;
 }
 
@@ -49,8 +49,8 @@ export function buildWarnings(settings, current) {
  * never a separately-tracked counter. Shared by the Risk page and the Risk
  * Monitor agent so they can never disagree with each other.
  */
-export async function computeRiskDashboard(accountId) {
-  const settings = await resolveSettings(accountId || null);
+export async function computeRiskDashboard(accountId, userId) {
+  const settings = await resolveSettings(accountId || null, userId);
 
   const now = new Date();
   const startOfToday = new Date(now);
@@ -60,7 +60,7 @@ export async function computeRiskDashboard(accountId) {
   startOfWeek.setUTCDate(startOfWeek.getUTCDate() - day);
   startOfWeek.setUTCHours(0, 0, 0, 0);
 
-  const filters = accountId ? { accountId } : {};
+  const filters = { userId, ...(accountId ? { accountId } : {}) };
 
   const [allTrades, todayTrades, weekTrades] = await Promise.all([
     analyticsService.getFilteredTrades(filters),

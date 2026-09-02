@@ -18,7 +18,7 @@ const router = express.Router();
  */
 router.get('/:jobId', requireAuth, (req, res) => {
   const { jobId } = req.params;
-  const status = jobQueue.getJobStatus(jobId);
+  const status = jobQueue.getJobStatus(jobId, req.user.id);
 
   if (!status) {
     return res.status(404).json({ error: 'Job not found' });
@@ -37,10 +37,10 @@ router.get('/:jobId/wait', requireAuth, async (req, res) => {
   const timeout = parseInt(req.query.timeout || '300000', 10);
 
   try {
-    const result = await jobQueue.waitForJob(jobId, timeout);
+    const result = await jobQueue.waitForJob(jobId, timeout, req.user.id);
     res.json({ result });
   } catch (err) {
-    const status = jobQueue.getJobStatus(jobId);
+    const status = jobQueue.getJobStatus(jobId, req.user.id);
     if (!status) {
       res.status(404).json({ error: 'Job not found' });
     } else if (status.status === 'failed') {
@@ -57,7 +57,7 @@ router.get('/:jobId/wait', requireAuth, async (req, res) => {
  * Get queue statistics
  */
 router.get('/', requireAuth, (req, res) => {
-  const stats = jobQueue.getQueueStats();
+  const stats = jobQueue.getQueueStats(req.user.id);
   res.json(stats);
 });
 

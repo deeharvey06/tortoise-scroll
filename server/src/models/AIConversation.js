@@ -17,12 +17,13 @@ const messageSchema = new Schema(
 
 const aiConversationSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     title: { type: String, default: 'New conversation' },
     messages: { type: [messageSchema], default: [] },
   },
   { timestamps: true }
 );
 
-aiConversationSchema.index({ updatedAt: -1 });
+aiConversationSchema.index({ userId: 1, updatedAt: -1 });
 
 export default mongoose.model('AIConversation', aiConversationSchema);

@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "seed": "node scripts/seed.js",
+    "migrate:ownership": "node scripts/migrateOwnership.js",
     "smoke": "node scripts/apiSmokeTest.js",
     "test": "node --test tests/*.js"
   },

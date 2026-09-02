@@ -5,11 +5,15 @@ import { expect } from '@playwright/test';
  * The request fixture shares its cookie jar with the browser context.
  */
 export async function authenticateAsDemo(page, request) {
-  const credentials = { email: 'e2e-user@tortoise-scroll.test', password: 'e2e-password-strong-123' };
-  await request.post('/api/auth/register', {
+  const credentials = {
+    email: 'e2e-user@tortoise-scroll.test',
+    password: 'e2e-password-strong-123',
+  };
+  const api = page.request;
+  await api.post('/api/auth/register', {
     data: { ...credentials, displayName: 'E2E User' },
   });
-  const response = await request.post('/api/auth/login', {
+  const response = await api.post('/api/auth/login', {
     data: credentials,
   });
   expect(response.ok(), `E2E login failed: ${response.status()}`).toBeTruthy();
@@ -59,7 +63,7 @@ export async function uploadViaLabelButton(page, buttonText, filePath) {
  */
 export async function selectAccountFilter(page, accountName) {
   await page.getByRole('button', { name: /Filters/ }).click();
-  await page.getByLabel('Account').click();
+  await page.getByRole('combobox', { name: 'Account', exact: true }).click();
   await page.getByRole('option', { name: accountName, exact: true }).click();
   await page.keyboard.press('Escape');
 }

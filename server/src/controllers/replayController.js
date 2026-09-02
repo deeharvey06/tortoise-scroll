@@ -17,7 +17,7 @@ export async function getSession(req, res) {
   const dateFrom = new Date(`${date}T00:00:00.000Z`);
   const dateTo = new Date(`${date}T23:59:59.999Z`);
 
-  const query = buildTradeQuery({ ...rest, dateFrom: dateFrom.toISOString(), dateTo: dateTo.toISOString() });
+  const query = buildTradeQuery({ userId: req.user.id, ...rest, dateFrom: dateFrom.toISOString(), dateTo: dateTo.toISOString() });
   const trades = await Trade.find(query).sort({ entryTime: 1 }).lean();
 
   res.json({

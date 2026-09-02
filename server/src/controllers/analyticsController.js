@@ -8,7 +8,7 @@ import * as analyticsService from '../services/analyticsService.js';
  */
 function extractFilters(req) {
   const { accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo } = req.query;
-  return { accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo };
+  return { userId: req.user.id, accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo };
 }
 
 export async function getDashboard(req, res) {
@@ -19,7 +19,7 @@ export async function getDashboard(req, res) {
   // across accounts with different starting capital isn't meaningful).
   let startingBalance = 0;
   if (filters.accountId) {
-    const account = await Account.findById(filters.accountId).lean();
+    const account = await Account.findOne({ _id: filters.accountId, userId: req.user.id }).lean();
     startingBalance = account?.startingBalance || 0;
   }
 

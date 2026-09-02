@@ -9,6 +9,7 @@ const imageSchema = new Schema(
 
 const strategySchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     name: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
     market: { type: String, default: '' },
@@ -25,6 +26,6 @@ const strategySchema = new Schema(
   { timestamps: true }
 );
 
-strategySchema.index({ isActive: 1, name: 1 });
+strategySchema.index({ userId: 1, isActive: 1, name: 1 });
 
 export default mongoose.model('Strategy', strategySchema);

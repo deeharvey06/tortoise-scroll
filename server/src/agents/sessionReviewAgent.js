@@ -87,7 +87,7 @@ export async function computeSessionReview(date, filters = {}) {
 
 export async function generateSessionReview(date, filters = {}) {
   const review = await computeSessionReview(date, filters);
-  const narrative = await narrate(review.findings, { title: 'Session Review' });
+  const narrative = await narrate(review.findings, { title: 'Session Review', userId: filters.userId });
   return { ...review, narrative };
 }
 

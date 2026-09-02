@@ -21,9 +21,9 @@ export async function computePreMarketBriefing(filters = {}) {
   const mistakes = analyticsService.computeTagBreakdown(recent30, 'mistake').slice(0, 3);
 
   const [strategies, riskSettings, lastPostMarket] = await Promise.all([
-    Strategy.find({ isActive: true }).select('name').lean(),
-    RiskSettings.findOne(filters.accountId ? { accountId: filters.accountId } : { accountId: null }).lean(),
-    JournalEntry.findOne({ type: 'post-market' }).sort({ date: -1 }).lean(),
+    Strategy.find({ userId: filters.userId, isActive: true }).select('name').lean(),
+    RiskSettings.findOne({ userId: filters.userId, ...(filters.accountId ? { accountId: filters.accountId } : { accountId: null }) }).lean(),
+    JournalEntry.findOne({ userId: filters.userId, type: 'post-market' }).sort({ date: -1 }).lean(),
   ]);
 
   const findings = [
@@ -54,7 +54,7 @@ export async function computePreMarketBriefing(filters = {}) {
 
 export async function generatePreMarketBriefing(filters = {}) {
   const briefing = await computePreMarketBriefing(filters);
-  const narrative = await narrate(briefing.findings, { title: 'Pre-Market Briefing' });
+  const narrative = await narrate(briefing.findings, { title: 'Pre-Market Briefing', userId: filters.userId });
   return { ...briefing, narrative };
 }
 

@@ -7,8 +7,8 @@ import * as analyticsService from './analyticsService.js';
  * ('strategy' or 'playbook') and reuses the exact same computation the
  * dashboard uses — no separate/divergent math.
  */
-export async function getPerformanceFor(field, id) {
-  const filters = field === 'strategy' ? { strategy: id } : { playbook: id };
+export async function getPerformanceFor(field, id, userId) {
+  const filters = { userId, ...(field === 'strategy' ? { strategy: id } : { playbook: id }) };
   const trades = await analyticsService.getFilteredTrades(filters);
   const closed = analyticsService.closedOnly(trades);
   const summary = analyticsService.computeSummary(trades);

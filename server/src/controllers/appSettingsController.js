@@ -1,8 +1,11 @@
 import AppSettings from '../models/AppSettings.js';
 import { appSettingsSchema } from '../schemas/settings.schema.js';
+import { ownedFilter } from '../utils/ownership.js';
+import Account from '../models/Account.js';
+import Strategy from '../models/Strategy.js';
 
 export async function getAppSettings(req, res) {
-  const settings = await AppSettings.findOne().lean();
+  const settings = await AppSettings.findOne(ownedFilter(req)).lean();
   res.json(
     settings || {
       timezone: 'UTC',
@@ -20,14 +23,16 @@ export async function getAppSettings(req, res) {
 export async function saveAppSettings(req, res) {
   // Validate request body before persistence
   const validated = appSettingsSchema.parse(req.body);
+  if (validated.defaultAccountId && !(await Account.exists(ownedFilter(req, { _id: validated.defaultAccountId })))) { res.status(404); throw new Error('Default account not found'); }
+  if (validated.defaultStrategyId && !(await Strategy.exists(ownedFilter(req, { _id: validated.defaultStrategyId })))) { res.status(404); throw new Error('Default strategy not found'); }
 
-  const existing = await AppSettings.findOne();
+  const existing = await AppSettings.findOne(ownedFilter(req));
   const settings = existing
-    ? await AppSettings.findByIdAndUpdate(existing._id, validated, {
+    ? await AppSettings.findOneAndUpdate(ownedFilter(req, { _id: existing._id }), validated, {
         new: true,
         runValidators: true,
       })
-    : await AppSettings.create(validated);
+    : await AppSettings.create({ ...validated, userId: req.user.id });
   res.json(settings);
 }
 

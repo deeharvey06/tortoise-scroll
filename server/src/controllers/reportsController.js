@@ -2,7 +2,7 @@ import * as analyticsService from '../services/analyticsService.js';
 
 function extractFilters(req) {
   const { accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo } = req.query;
-  return { accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo };
+  return { userId: req.user.id, accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo };
 }
 
 /**

@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
  */
 const tagSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     category: {
       type: String,
       enum: ['Setup', 'Mistake', 'Emotion', 'Custom'],
@@ -20,6 +21,6 @@ const tagSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-tagSchema.index({ category: 1, name: 1 }, { unique: true });
+tagSchema.index({ userId: 1, category: 1, name: 1 }, { unique: true });
 
 export default mongoose.model('Tag', tagSchema);

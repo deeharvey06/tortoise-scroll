@@ -152,7 +152,7 @@ test.describe.serial('MVP end-to-end flow', () => {
 
   test('06 — create a strategy and a playbook', async ({ page }) => {
     await page.goto('/strategies');
-    await page.getByRole('button', { name: 'New strategy' }).click();
+    await page.getByRole('button', { name: 'New strategy' }).first().click();
     await page.getByRole('dialog').getByLabel('Name').fill(STRATEGY_NAME);
     await page
       .getByRole('dialog')
@@ -165,7 +165,7 @@ test.describe.serial('MVP end-to-end flow', () => {
     ).toBeVisible();
 
     await page.goto('/playbooks');
-    await page.getByRole('button', { name: 'New playbook' }).click();
+    await page.getByRole('button', { name: 'New playbook' }).first().click();
     await page.getByRole('dialog').getByLabel('Setup name').fill(PLAYBOOK_NAME);
     await page
       .getByRole('dialog')
@@ -232,7 +232,9 @@ test.describe.serial('MVP end-to-end flow', () => {
     page,
   }) => {
     await page.goto('/');
-    await expect(page.getByTestId('kpi-total-trades').getByText('Total trades')).toBeVisible();
+    await expect(
+      page.getByTestId('kpi-total-trades').getByText('Total trades'),
+    ).toBeVisible();
 
     await page.getByRole('button', { name: /^Filters/ }).click();
     await page.getByRole('textbox', { name: 'Symbol' }).fill('AAPL');
@@ -271,7 +273,9 @@ test.describe.serial('MVP end-to-end flow', () => {
 
   test('11 — review a trading day on the Calendar', async ({ page }) => {
     await page.goto('/calendar');
-    await expect(page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 }),
+    ).toBeVisible();
 
     // The fixture's AAPL trade is dated 2026-08-20. The calendar defaults to
     // the current month; this searches backward up to 24 months to find
@@ -281,13 +285,15 @@ test.describe.serial('MVP end-to-end flow', () => {
     // some reason, change fixtures/sample-trades.csv dates to match instead.
     const targetMonthLabel = 'August 2026';
     for (let i = 0; i < 24; i += 1) {
-      const label = await page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 }).textContent();
+      const label = await page
+        .getByRole('heading', { name: /\w+ \d{4}/, level: 6 })
+        .textContent();
       if (label === targetMonthLabel) break;
       await page.getByRole('button', { name: 'Previous month' }).click();
     }
-    await expect(page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 })).toHaveText(
-      targetMonthLabel,
-    );
+    await expect(
+      page.getByRole('heading', { name: /\w+ \d{4}/, level: 6 }),
+    ).toHaveText(targetMonthLabel);
 
     await page.getByRole('button', { name: /August 20:.*trades/ }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -311,8 +317,12 @@ test.describe.serial('MVP end-to-end flow', () => {
     await page.getByLabel('Risk Limit').fill('$300');
     await page.getByRole('button', { name: 'Create entry' }).click();
     await expect(page.getByRole('dialog')).toBeHidden();
-    await expect(page.getByText('SPY gapping up on CPI data').first()).toBeVisible();
-    await expect(page.getByText('Pre-Market Plan', { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByText('SPY gapping up on CPI data').first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Pre-Market Plan', { exact: true }).first(),
+    ).toBeVisible();
   });
 
   test('13 — save risk settings and confirm they persist', async ({ page }) => {
@@ -368,7 +378,9 @@ test.describe.serial('MVP end-to-end flow', () => {
     await page.keyboard.press('Escape');
   });
 
-  test('15 — unassign and delete the strategy and playbook', async ({ page }) => {
+  test('15 — unassign and delete the strategy and playbook', async ({
+    page,
+  }) => {
     // Deletion is intentionally protected while a trade references either
     // record. Clear both assignments through the same Trade form a user uses.
     await page.goto('/trades');
@@ -383,16 +395,24 @@ test.describe.serial('MVP end-to-end flow', () => {
     await page.goto('/strategies');
     await page.getByRole('button', { name: new RegExp(STRATEGY_NAME) }).click();
     await page.getByRole('button', { name: 'Delete strategy' }).click();
-    const strategyDialog = page.getByRole('dialog', { name: 'Delete strategy?' });
-    await strategyDialog.getByRole('button', { name: 'Delete strategy' }).click();
+    const strategyDialog = page.getByRole('dialog', {
+      name: 'Delete strategy?',
+    });
+    await strategyDialog
+      .getByRole('button', { name: 'Delete strategy' })
+      .click();
     await expect(strategyDialog).toBeHidden();
     await expect(page.getByText(STRATEGY_NAME)).toHaveCount(0);
 
     await page.goto('/playbooks');
     await page.getByRole('button', { name: new RegExp(PLAYBOOK_NAME) }).click();
     await page.getByRole('button', { name: 'Delete playbook' }).click();
-    const playbookDialog = page.getByRole('dialog', { name: 'Delete playbook?' });
-    await playbookDialog.getByRole('button', { name: 'Delete playbook' }).click();
+    const playbookDialog = page.getByRole('dialog', {
+      name: 'Delete playbook?',
+    });
+    await playbookDialog
+      .getByRole('button', { name: 'Delete playbook' })
+      .click();
     await expect(playbookDialog).toBeHidden();
     await expect(page.getByText(PLAYBOOK_NAME)).toHaveCount(0);
   });

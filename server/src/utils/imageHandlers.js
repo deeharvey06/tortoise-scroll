@@ -10,7 +10,7 @@ import { uploadsRootPath } from '../middleware/upload.js';
  */
 export function createImageHandlers(Model) {
   async function upload(req, res) {
-    const doc = await Model.findById(req.params.id);
+    const doc = await Model.findOne({ _id: req.params.id, userId: req.user.id });
     if (!doc) {
       res.status(404);
       throw new Error('Not found');
@@ -26,7 +26,7 @@ export function createImageHandlers(Model) {
   }
 
   async function updateCaption(req, res) {
-    const doc = await Model.findById(req.params.id);
+    const doc = await Model.findOne({ _id: req.params.id, userId: req.user.id });
     if (!doc) {
       res.status(404);
       throw new Error('Not found');
@@ -42,7 +42,7 @@ export function createImageHandlers(Model) {
   }
 
   async function remove(req, res) {
-    const doc = await Model.findById(req.params.id);
+    const doc = await Model.findOne({ _id: req.params.id, userId: req.user.id });
     if (!doc) {
       res.status(404);
       throw new Error('Not found');

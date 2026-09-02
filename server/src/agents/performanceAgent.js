@@ -103,7 +103,7 @@ export async function computePerformancePatterns(filters = {}) {
 
 export async function generatePerformancePatterns(filters = {}) {
   const result = await computePerformancePatterns(filters);
-  const narrative = await narrate(result.findings, { title: 'Performance Patterns' });
+  const narrative = await narrate(result.findings, { title: 'Performance Patterns', userId: filters.userId });
   return { ...result, narrative };
 }
 
