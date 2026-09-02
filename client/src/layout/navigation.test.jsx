@@ -28,6 +28,7 @@ describe('application navigation', () => {
       '/ai-partner',
       '/import',
       '/settings',
+      '/security',
       '/administration',
     ]);
   });
@@ -37,5 +38,6 @@ describe('application navigation', () => {
     expect(getRouteTitle('/trades/123')).toBe('Trade Detail');
     expect(getRouteTitle('/ai-partner')).toBe('Tortoise AI');
     expect(getRouteTitle('/administration')).toBe('Administration');
+    expect(getRouteTitle('/security')).toBe('Account & Security');
   });
 });

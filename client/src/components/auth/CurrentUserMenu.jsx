@@ -75,7 +75,7 @@ export default function CurrentUserMenu() {
           </Typography>
         </Box>
         <Divider />
-        <MenuItem onClick={() => go('/settings')}>
+        <MenuItem onClick={() => go('/security')}>
           <ListItemIcon>
             <SettingsOutlined fontSize='small' />
           </ListItemIcon>

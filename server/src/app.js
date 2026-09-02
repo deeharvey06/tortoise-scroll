@@ -25,6 +25,7 @@ import appSettingsRoutes from './routes/appSettingsRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import jobsRoutes from './routes/jobsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import accountSecurityRoutes from './routes/accountSecurityRoutes.js';
 import { jobQueue } from './queue/jobQueue.js';
 import * as jobHandlers from './queue/handlers.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
@@ -63,18 +64,25 @@ export function createApp(options = {}) {
   if (config.nodeEnv === 'production') app.set('trust proxy', 1);
 
   app.use(helmet({ crossOriginResourcePolicy: false }));
+  app.use(cors({ origin: config.allowedOrigins, credentials: true }));
   app.use(
-    cors({ origin: config.allowedOrigins, credentials: true }),
+    session({
+      name: sessionCookieName,
+      secret:
+        config.sessionSecret || 'test-only-session-secret-at-least-32-chars',
+      resave: false,
+      saveUninitialized: false,
+      rolling: true,
+      store:
+        options.sessionStore ||
+        MongoStore.create({
+          mongoUrl: config.mongoUri,
+          ttl: Math.ceil(config.sessionTtlMs / 1000),
+          touchAfter: 300,
+        }),
+      cookie: sessionCookieOptions,
+    }),
   );
-  app.use(session({
-    name: sessionCookieName,
-    secret: config.sessionSecret || 'test-only-session-secret-at-least-32-chars',
-    resave: false,
-    saveUninitialized: false,
-    rolling: true,
-    store: options.sessionStore || MongoStore.create({ mongoUrl: config.mongoUri, ttl: Math.ceil(config.sessionTtlMs / 1000), touchAfter: 300 }),
-    cookie: sessionCookieOptions,
-  }));
   app.locals.sessionCookieName = sessionCookieName;
   app.locals.sessionCookieOptions = sessionCookieOptions;
   const authLimiter = rateLimit({
@@ -133,22 +141,44 @@ export function createApp(options = {}) {
   app.use('/api/settings', requireAuth, appSettingsRoutes);
   app.use('/api/jobs', requireAuth, jobsRoutes);
   app.use('/api/admin', requireAuth, adminRoutes);
+  app.use('/api/account-security', requireAuth, accountSecurityRoutes);
 
   // Serves uploaded trade screenshots — /uploads/screenshots/<file>
-  app.use('/uploads/screenshots/:filename', requireAuth, async (req, res, next) => {
-    try {
-      const url = `/uploads/screenshots/${req.params.filename}`;
-      if (!(await Trade.exists({ userId: req.user.id, 'screenshots.url': url }))) return res.status(404).json({ error: { message: 'Screenshot not found' } });
-      return res.sendFile(req.params.filename, { root: `${uploadsRootPath}/screenshots` });
-    } catch (error) { return next(error); }
-  });
+  app.use(
+    '/uploads/screenshots/:filename',
+    requireAuth,
+    async (req, res, next) => {
+      try {
+        const url = `/uploads/screenshots/${req.params.filename}`;
+        if (
+          !(await Trade.exists({ userId: req.user.id, 'screenshots.url': url }))
+        )
+          return res
+            .status(404)
+            .json({ error: { message: 'Screenshot not found' } });
+        return res.sendFile(req.params.filename, {
+          root: `${uploadsRootPath}/screenshots`,
+        });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
   app.use('/uploads/media/:filename', requireAuth, async (req, res, next) => {
     try {
       const url = `/uploads/media/${req.params.filename}`;
-      const owned = await Promise.all([Strategy.exists({ userId: req.user.id, 'screenshots.url': url }), Playbook.exists({ userId: req.user.id, 'screenshots.url': url })]);
-      if (!owned.some(Boolean)) return res.status(404).json({ error: { message: 'Media not found' } });
-      return res.sendFile(req.params.filename, { root: `${uploadsRootPath}/media` });
-    } catch (error) { return next(error); }
+      const owned = await Promise.all([
+        Strategy.exists({ userId: req.user.id, 'screenshots.url': url }),
+        Playbook.exists({ userId: req.user.id, 'screenshots.url': url }),
+      ]);
+      if (!owned.some(Boolean))
+        return res.status(404).json({ error: { message: 'Media not found' } });
+      return res.sendFile(req.params.filename, {
+        root: `${uploadsRootPath}/media`,
+      });
+    } catch (error) {
+      return next(error);
+    }
   });
 
   app.use(notFound);

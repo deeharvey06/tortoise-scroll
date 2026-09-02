@@ -13,6 +13,7 @@ import RiskIcon from '@mui/icons-material/GppMaybeOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import ImportIcon from '@mui/icons-material/UploadFileOutlined';
 import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import SecurityIcon from '@mui/icons-material/ShieldOutlined';
 
 export const NAVIGATION_GROUPS = [
   {
@@ -53,6 +54,7 @@ export const NAVIGATION_GROUPS = [
     items: [
       { to: '/import', label: 'Import', icon: ImportIcon },
       { to: '/settings', label: 'Settings', icon: SettingsIcon },
+      { to: '/security', label: 'Security', icon: SecurityIcon },
       {
         to: '/administration',
         label: 'Administration',
@@ -78,6 +80,7 @@ export const ROUTE_TITLES = {
   '/ai-partner': 'Tortoise AI',
   '/import': 'Import',
   '/settings': 'Settings',
+  '/security': 'Account & Security',
   '/administration': 'Administration',
 };
 

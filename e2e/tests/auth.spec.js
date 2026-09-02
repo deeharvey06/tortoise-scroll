@@ -10,12 +10,8 @@ async function registerFromUi(page, user) {
   await page.goto('/register');
   await page.getByLabel('Display name').fill(user.displayName);
   await page.getByLabel('Email').fill(user.email);
-  await page
-    .getByRole('textbox', { name: 'Password', exact: true })
-    .fill(user.password);
-  await page
-    .getByRole('textbox', { name: 'Confirm password', exact: true })
-    .fill(user.password);
+  await page.getByLabel('Password', { exact: true }).fill(user.password);
+  await page.getByLabel('Confirm password').fill(user.password);
   await page.getByRole('button', { name: 'Create account' }).click();
 }
 
@@ -47,9 +43,7 @@ test('valid login persists through refresh and logout protects the app', async (
   await request.post('/api/auth/register', { data: user });
   await page.goto('/login');
   await page.getByLabel('Email').fill(user.email);
-  await page
-    .getByRole('textbox', { name: 'Password', exact: true })
-    .fill(user.password);
+  await page.getByLabel('Password').fill(user.password);
   await page.getByRole('button', { name: 'Log in' }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.reload();
@@ -66,9 +60,7 @@ test('invalid credentials show an error and do not redirect', async ({
 }) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill('unknown@example.test');
-  await page
-    .getByRole('textbox', { name: 'Password', exact: true })
-    .fill('incorrect');
+  await page.getByLabel('Password').fill('incorrect');
   await page.getByRole('button', { name: 'Log in' }).click();
   await expect(page.getByRole('alert')).toContainText(
     'Invalid email or password',
@@ -86,32 +78,80 @@ test('unauthenticated visitor cannot see protected content', async ({
   ).toBeVisible();
 });
 
-test('USER is denied admin and root routes', async ({ page, request }) => {
+test('USER is denied administration', async ({ page, request }) => {
   const user = uniqueUser();
   await request.post('/api/auth/register', { data: user });
-  await page.request.post('/api/auth/login', {
+  await request.post('/api/auth/login', {
     data: { email: user.email, password: user.password },
   });
-  for (const path of ['/administration', '/root']) {
-    await page.goto(path);
-    await expect(
-      page.getByRole('heading', { name: 'Access denied' }),
-    ).toBeVisible();
-  }
+  await page.goto('/administration');
+  await expect(
+    page.getByRole('heading', { name: 'Access denied' }),
+  ).toBeVisible();
 });
 
-test('test ROOT may access the root UX route', async ({ page, request }) => {
-  const login = await page.request.post('/api/auth/login', {
+test('test ROOT may access administration', async ({ page, request }) => {
+  const login = await request.post('/api/auth/login', {
     data: {
       email: 'e2e-root@tortoise-scroll.test',
       password: 'e2e-root-password-strong-123',
     },
   });
   expect(login.ok()).toBeTruthy();
-  await page.goto('/root');
+  await page.goto('/administration');
   await expect(
-    page.getByRole('heading', { name: 'Root administration' }),
+    page.getByRole('heading', { name: 'Administration' }),
   ).toBeVisible();
+});
+
+test('authenticated user changes password and keeps only the rotated current session', async ({
+  page,
+  request,
+}) => {
+  const user = uniqueUser();
+  await request.post('/api/auth/register', { data: user });
+  await page.goto('/login');
+  await page.getByLabel('Email').fill(user.email);
+  await page.getByLabel('Password').fill(user.password);
+  await page.getByRole('button', { name: 'Log in' }).click();
+  await page.goto('/security');
+  await expect(
+    page.getByRole('heading', { name: 'Account & security' }),
+  ).toBeVisible();
+  await page.getByLabel('Current password').fill(user.password);
+  await page.getByLabel('New password').fill('phase-five-new-password-123');
+  await page
+    .getByLabel('Confirm new password')
+    .fill('phase-five-new-password-123');
+  await page.getByRole('button', { name: 'Change password' }).click();
+  await expect(page.getByRole('alert')).toContainText('Password changed');
+  await page.reload();
+  await expect(page).toHaveURL(/\/security$/);
+});
+
+test('development password-reset link is single-use and resets the password', async ({
+  page,
+  request,
+}) => {
+  const user = uniqueUser();
+  await request.post('/api/auth/register', { data: user });
+  await page.goto('/forgot-password');
+  await page.getByLabel('Email').fill(user.email);
+  await page.getByRole('button', { name: 'Request password reset' }).click();
+  await page.getByRole('link', { name: 'Open development reset link' }).click();
+  await page.getByLabel('New password').fill('phase-five-reset-password-123');
+  await page
+    .getByLabel('Confirm new password')
+    .fill('phase-five-reset-password-123');
+  await page.getByRole('button', { name: 'Reset password' }).click();
+  await expect(
+    page.getByText(/All existing sessions were signed out/),
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Sign in' }).click();
+  await page.getByLabel('Email').fill(user.email);
+  await page.getByLabel('Password').fill('phase-five-reset-password-123');
+  await page.getByRole('button', { name: 'Log in' }).click();
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test.describe('auth themes and responsive layout', () => {
@@ -128,12 +168,7 @@ test.describe('auth themes and responsive layout', () => {
   }) => {
     const errors = [];
     page.on('console', (message) => {
-      if (
-        message.type() === 'error' &&
-        !message.text().includes('status of 401 (Unauthorized)')
-      ) {
-        errors.push(message.text());
-      }
+      if (message.type() === 'error') errors.push(message.text());
     });
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/login');
