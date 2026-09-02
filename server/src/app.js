@@ -24,6 +24,7 @@ import backupRoutes from './routes/backupRoutes.js';
 import appSettingsRoutes from './routes/appSettingsRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import jobsRoutes from './routes/jobsRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { jobQueue } from './queue/jobQueue.js';
 import * as jobHandlers from './queue/handlers.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
@@ -131,6 +132,7 @@ export function createApp(options = {}) {
   app.use('/api/backup', requireAuth, backupRoutes);
   app.use('/api/settings', requireAuth, appSettingsRoutes);
   app.use('/api/jobs', requireAuth, jobsRoutes);
+  app.use('/api/admin', requireAuth, adminRoutes);
 
   // Serves uploaded trade screenshots — /uploads/screenshots/<file>
   app.use('/uploads/screenshots/:filename', requireAuth, async (req, res, next) => {

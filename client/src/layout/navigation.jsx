@@ -12,9 +12,13 @@ import AiIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import RiskIcon from '@mui/icons-material/GppMaybeOutlined';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import ImportIcon from '@mui/icons-material/UploadFileOutlined';
+import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 
 export const NAVIGATION_GROUPS = [
-  { label: 'Overview', items: [{ to: '/', label: 'Dashboard', icon: DashboardIcon }] },
+  {
+    label: 'Overview',
+    items: [{ to: '/', label: 'Dashboard', icon: DashboardIcon }],
+  },
   {
     label: 'Trading',
     items: [
@@ -40,21 +44,41 @@ export const NAVIGATION_GROUPS = [
       { to: '/risk', label: 'Risk', icon: RiskIcon },
     ],
   },
-  { label: 'Intelligence', items: [{ to: '/ai-partner', label: 'Tortoise AI', icon: AiIcon }] },
+  {
+    label: 'Intelligence',
+    items: [{ to: '/ai-partner', label: 'Tortoise AI', icon: AiIcon }],
+  },
   {
     label: 'System',
     items: [
       { to: '/import', label: 'Import', icon: ImportIcon },
       { to: '/settings', label: 'Settings', icon: SettingsIcon },
+      {
+        to: '/administration',
+        label: 'Administration',
+        icon: AdminIcon,
+        roles: ['ADMIN', 'ROOT'],
+      },
     ],
   },
 ];
 
 export const ROUTE_TITLES = {
-  '/': 'Dashboard', '/trades': 'Trades', '/calendar': 'Calendar', '/journal': 'The Scroll',
-  '/strategies': 'Strategies', '/playbooks': 'Playbooks', '/reports': 'Reports',
-  '/analytics': 'Analytics', '/replay': 'Replay', '/backtesting': 'Backtesting',
-  '/risk': 'Risk', '/ai-partner': 'Tortoise AI', '/import': 'Import', '/settings': 'Settings',
+  '/': 'Dashboard',
+  '/trades': 'Trades',
+  '/calendar': 'Calendar',
+  '/journal': 'The Scroll',
+  '/strategies': 'Strategies',
+  '/playbooks': 'Playbooks',
+  '/reports': 'Reports',
+  '/analytics': 'Analytics',
+  '/replay': 'Replay',
+  '/backtesting': 'Backtesting',
+  '/risk': 'Risk',
+  '/ai-partner': 'Tortoise AI',
+  '/import': 'Import',
+  '/settings': 'Settings',
+  '/administration': 'Administration',
 };
 
 export function getRouteTitle(pathname) {

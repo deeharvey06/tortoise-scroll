@@ -4,15 +4,24 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import AppShell from './layout/AppShell';
 import useAuthStore from './store/useAuthStore';
-import PhasePlaceholder from './components/PhasePlaceholder';
-import { AdminRoute, AuthLoadingState, ProtectedRoute, RootRoute } from './components/auth/RouteGuards';
+import {
+  AdminRoute,
+  AuthLoadingState,
+  ProtectedRoute,
+} from './components/auth/RouteGuards';
 
 const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/Auth/RegisterPage'));
-const ForgotPasswordPage = lazy(() => import('./pages/Auth/ForgotPasswordPage'));
+const ForgotPasswordPage = lazy(
+  () => import('./pages/Auth/ForgotPasswordPage'),
+);
 const AccessDeniedPage = lazy(() => import('./pages/Auth/AccessDeniedPage'));
-const SessionExpiredPage = lazy(() => import('./pages/Auth/SessionExpiredPage'));
-const AccountSuspendedPage = lazy(() => import('./pages/Auth/AccountSuspendedPage'));
+const SessionExpiredPage = lazy(
+  () => import('./pages/Auth/SessionExpiredPage'),
+);
+const AccountSuspendedPage = lazy(
+  () => import('./pages/Auth/AccountSuspendedPage'),
+);
 const NetworkErrorPage = lazy(() => import('./pages/Auth/NetworkErrorPage'));
 
 // Route-level code splitting: each page (and its dependencies, e.g. the
@@ -38,12 +47,28 @@ const AiPartnerPage = lazy(() => import('./pages/AiPartner/AiPartnerPage'));
 const RiskPage = lazy(() => import('./pages/Risk/RiskPage'));
 const ImportPage = lazy(() => import('./pages/Import/ImportPage'));
 const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage'));
+const AdministrationPage = lazy(
+  () => import('./pages/Administration/AdministrationPage'),
+);
 
 function PageFallback() {
   return (
-    <Box role="status" aria-live="polite" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, minHeight: 180, color: 'text.secondary' }}>
+    <Box
+      role='status'
+      aria-live='polite'
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 3,
+        minHeight: 180,
+        color: 'text.secondary',
+      }}
+    >
       <CircularProgress size={20} thickness={4} />
-      <Box component="span" sx={{ fontSize: 13 }}>Opening workspace…</Box>
+      <Box component='span' sx={{ fontSize: 13 }}>
+        Opening workspace…
+      </Box>
     </Box>
   );
 }
@@ -71,7 +96,11 @@ export function createRouter() {
       element: <PublicOnlyLayout />,
       children: [{ index: true, element: withSuspense(LoginPage) }],
     },
-    { path: '/register', element: <PublicOnlyLayout />, children: [{ index: true, element: withSuspense(RegisterPage) }] },
+    {
+      path: '/register',
+      element: <PublicOnlyLayout />,
+      children: [{ index: true, element: withSuspense(RegisterPage) }],
+    },
     { path: '/forgot-password', element: withSuspense(ForgotPasswordPage) },
     { path: '/403', element: withSuspense(AccessDeniedPage) },
     { path: '/session-expired', element: withSuspense(SessionExpiredPage) },
@@ -79,7 +108,11 @@ export function createRouter() {
     { path: '/network-error', element: withSuspense(NetworkErrorPage) },
     {
       path: '/',
-      element: <ProtectedRoute><AppShell /></ProtectedRoute>,
+      element: (
+        <ProtectedRoute>
+          <AppShell />
+        </ProtectedRoute>
+      ),
       children: [
         { index: true, element: withSuspense(DashboardPage) },
         { path: 'trades', element: withSuspense(TradesPage) },
@@ -96,8 +129,10 @@ export function createRouter() {
         { path: 'risk', element: withSuspense(RiskPage) },
         { path: 'import', element: withSuspense(ImportPage) },
         { path: 'settings', element: withSuspense(SettingsPage) },
-        { path: 'administration', element: <AdminRoute><PhasePlaceholder title='Administration' phase='4' description='Administrative APIs and user management are not available yet.' /></AdminRoute> },
-        { path: 'root', element: <RootRoute><PhasePlaceholder title='Root administration' phase='4' description='Root administration is intentionally deferred until its backend policy is approved.' /></RootRoute> },
+        {
+          path: 'administration',
+          element: <AdminRoute>{withSuspense(AdministrationPage)}</AdminRoute>,
+        },
       ],
     },
   ]);
