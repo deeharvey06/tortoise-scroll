@@ -4,8 +4,16 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import AppShell from './layout/AppShell';
 import useAuthStore from './store/useAuthStore';
+import PhasePlaceholder from './components/PhasePlaceholder';
+import { AdminRoute, AuthLoadingState, ProtectedRoute, RootRoute } from './components/auth/RouteGuards';
 
 const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/Auth/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/Auth/ForgotPasswordPage'));
+const AccessDeniedPage = lazy(() => import('./pages/Auth/AccessDeniedPage'));
+const SessionExpiredPage = lazy(() => import('./pages/Auth/SessionExpiredPage'));
+const AccountSuspendedPage = lazy(() => import('./pages/Auth/AccountSuspendedPage'));
+const NetworkErrorPage = lazy(() => import('./pages/Auth/NetworkErrorPage'));
 
 // Route-level code splitting: each page (and its dependencies, e.g. the
 // Dashboard/Analytics/Backtesting pages all pull in Recharts) loads only
@@ -48,18 +56,10 @@ function withSuspense(Component) {
   );
 }
 
-function ProtectedLayout() {
-  const user = useAuthStore((state) => state.user);
-  const status = useAuthStore((state) => state.status);
-  if (status === 'INITIALIZING') return <PageFallback />;
-  if (status !== 'AUTHENTICATED' || !user) return <Navigate to='/login' replace />;
-  return <AppShell />;
-}
-
 function PublicOnlyLayout() {
   const user = useAuthStore((state) => state.user);
   const status = useAuthStore((state) => state.status);
-  if (status === 'INITIALIZING') return <PageFallback />;
+  if (status === 'INITIALIZING') return <AuthLoadingState />;
   if (status === 'AUTHENTICATED' && user) return <Navigate to='/' replace />;
   return <Outlet />;
 }
@@ -68,16 +68,18 @@ export function createRouter() {
   return createBrowserRouter([
     {
       path: '/login',
-      element: (
-        <PublicOnlyLayout>
-          <Outlet />
-        </PublicOnlyLayout>
-      ),
+      element: <PublicOnlyLayout />,
       children: [{ index: true, element: withSuspense(LoginPage) }],
     },
+    { path: '/register', element: <PublicOnlyLayout />, children: [{ index: true, element: withSuspense(RegisterPage) }] },
+    { path: '/forgot-password', element: withSuspense(ForgotPasswordPage) },
+    { path: '/403', element: withSuspense(AccessDeniedPage) },
+    { path: '/session-expired', element: withSuspense(SessionExpiredPage) },
+    { path: '/account-suspended', element: withSuspense(AccountSuspendedPage) },
+    { path: '/network-error', element: withSuspense(NetworkErrorPage) },
     {
       path: '/',
-      element: <ProtectedLayout />,
+      element: <ProtectedRoute><AppShell /></ProtectedRoute>,
       children: [
         { index: true, element: withSuspense(DashboardPage) },
         { path: 'trades', element: withSuspense(TradesPage) },
@@ -94,6 +96,8 @@ export function createRouter() {
         { path: 'risk', element: withSuspense(RiskPage) },
         { path: 'import', element: withSuspense(ImportPage) },
         { path: 'settings', element: withSuspense(SettingsPage) },
+        { path: 'administration', element: <AdminRoute><PhasePlaceholder title='Administration' phase='4' description='Administrative APIs and user management are not available yet.' /></AdminRoute> },
+        { path: 'root', element: <RootRoute><PhasePlaceholder title='Root administration' phase='4' description='Root administration is intentionally deferred until its backend policy is approved.' /></RootRoute> },
       ],
     },
   ]);

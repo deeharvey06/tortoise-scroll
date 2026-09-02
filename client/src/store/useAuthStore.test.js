@@ -14,8 +14,14 @@ describe('authentication bootstrap', () => {
     expect(localStorage.getItem('tortoise-scroll-auth')).toBeNull();
   });
   it('becomes unauthenticated when bootstrap fails', async () => {
-    authService.me.mockRejectedValue(new Error('unauthenticated'));
+    authService.me.mockRejectedValue({ response: { status: 401 } });
     await useAuthStore.getState().initialize();
     expect(useAuthStore.getState()).toMatchObject({ status: 'UNAUTHENTICATED', user: null });
+  });
+
+  it('distinguishes network errors from unauthenticated responses', async () => {
+    authService.me.mockRejectedValue(new Error('network down'));
+    await useAuthStore.getState().initialize();
+    expect(useAuthStore.getState()).toMatchObject({ status: 'NETWORK_ERROR', user: null });
   });
 });

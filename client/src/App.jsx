@@ -18,6 +18,12 @@ export default function App() {
   useEffect(() => { initializeAuth(); }, [initializeAuth]);
 
   useEffect(() => {
+    const handleAuthEvent = (event) => useAuthStore.getState().setAuthStatus(event.detail);
+    window.addEventListener('tortoise:auth', handleAuthEvent);
+    return () => window.removeEventListener('tortoise:auth', handleAuthEvent);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.dataset.theme = resolvedMode;
     document.documentElement.style.colorScheme = resolvedMode;
   }, [resolvedMode]);

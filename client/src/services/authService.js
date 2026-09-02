@@ -6,5 +6,6 @@ export async function login(email, password) {
 }
 export async function me() { const { data } = await api.get('/auth/me'); return data; }
 export async function logout() { await api.post('/auth/logout'); }
+export async function register(payload) { const { data } = await api.post('/auth/register', payload); return data; }
 
-export default { login, me, logout };
+export default { login, me, logout, register };

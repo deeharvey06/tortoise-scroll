@@ -1,27 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import MenuIcon from '@mui/icons-material/Menu';
-import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import { checkHealth } from '../services/api';
 import useAuthStore from '../store/useAuthStore';
 import GlobalFilterBar from '../components/GlobalFilterBar';
 import ThemeModeSelector from '../components/ThemeModeSelector';
 import StatusBadge from '../components/ui/StatusBadge';
 import { getRouteTitle } from './navigation';
-import authService from '../services/authService';
+import CurrentUserMenu from '../components/auth/CurrentUserMenu';
 
 export default function Topbar({ mobile = false, onOpenNavigation }) {
   const [status, setStatus] = useState('checking');
-  const { user, clearSession } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const { pathname } = useLocation();
-  const handleLogout = async () => {
-    try { await authService.logout(); } finally { clearSession(); }
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -70,11 +65,7 @@ export default function Topbar({ mobile = false, onOpenNavigation }) {
           </Tooltip>
           <ThemeModeSelector />
           {!mobile && <Typography variant="caption" color="text.secondary">{user?.displayName || 'Guest'}</Typography>}
-          {user && (mobile ? (
-            <Tooltip title="Log out"><IconButton size="small" aria-label="Log out" onClick={handleLogout}><LogoutIcon sx={{ fontSize: 19 }} /></IconButton></Tooltip>
-          ) : (
-            <Button size="small" color="inherit" startIcon={<LogoutIcon fontSize="small" />} onClick={handleLogout}>Log out</Button>
-          ))}
+          {user && <CurrentUserMenu />}
         </Box>
       </Box>
       <Box sx={{ px: { xs: 3, sm: 5, lg: 6 }, py: 2, borderTop: '1px solid', borderColor: 'var(--ts-border-subtle)', overflow: 'hidden' }}>
