@@ -16,15 +16,12 @@ const INVALID_CSV = path.join(
   'invalid-trades.csv',
 );
 const VALID_CSV = path.join(__dirname, '..', 'fixtures', 'sample-trades.csv');
-let authHeaders;
-
 test.beforeEach(async ({ page, request }) => {
-  const session = await authenticateAsDemo(page, request);
-  authHeaders = { Authorization: `Bearer ${session.token}` };
+  await authenticateAsDemo(page, request);
 });
 
 async function createAccount(request, name) {
-  const response = await request.post('/api/accounts', { data: { name }, headers: authHeaders });
+  const response = await request.post('/api/accounts', { data: { name } });
   expect(response.ok()).toBeTruthy();
   return response.json();
 }
@@ -129,7 +126,7 @@ test('re-importing the same CSV reports duplicate rows', async ({
 });
 
 test('Tortoise AI exposes chat state and deterministic research tools', async ({ page, request }) => {
-  const statusResponse = await request.get('/api/ai/status', { headers: authHeaders });
+  const statusResponse = await request.get('/api/ai/status');
   expect(statusResponse.ok()).toBeTruthy();
   const status = await statusResponse.json();
 

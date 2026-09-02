@@ -6,12 +6,16 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { createTortoiseTheme } from './theme/theme';
 import useUIStore from './store/useUIStore';
 import router from './router';
+import useAuthStore from './store/useAuthStore';
 
 export default function App() {
   const themeMode = useUIStore((state) => state.themeMode);
   const systemPrefersDark = useMediaQuery('(prefers-color-scheme: dark)', { noSsr: true });
   const resolvedMode = themeMode === 'system' ? (systemPrefersDark ? 'dark' : 'light') : themeMode;
   const theme = useMemo(() => createTortoiseTheme(resolvedMode), [resolvedMode]);
+  const initializeAuth = useAuthStore((state) => state.initialize);
+
+  useEffect(() => { initializeAuth(); }, [initializeAuth]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolvedMode;

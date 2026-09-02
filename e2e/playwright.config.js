@@ -26,7 +26,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'NODE_ENV=test JWT_SECRET=test-secret npm run dev --prefix ../server',
+      command: 'NODE_ENV=test SESSION_SECRET=e2e-only-session-secret-at-least-32-characters npm run dev --prefix ../server',
       url: 'http://localhost:5050/api/health',
       reuseExistingServer: false,
       timeout: 30_000,

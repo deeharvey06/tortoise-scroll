@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
 
 import tradeRoutes from './routes/tradeRoutes.js';
 import accountRoutes from './routes/accountRoutes.js';
@@ -28,6 +30,7 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { uploadsRootPath } from './middleware/upload.js';
 import { requireAuth } from './middleware/auth.js';
 import requestLogger from './middleware/requestLogger.js';
+import { getConfig } from './config/index.js';
 
 // Register job handlers
 jobQueue.register('import-trades', jobHandlers.handleTradeImport);
@@ -35,24 +38,60 @@ jobQueue.register(
   'performance-analysis',
   jobHandlers.handlePerformanceAnalysis,
 );
+
 jobQueue.register('risk-assessment', jobHandlers.handleRiskAssessment);
 jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
 
-export function createApp() {
+export function createApp(options = {}) {
   const app = express();
+  const config = getConfig();
+
+  if (config.nodeEnv !== 'test' && config.sessionSecret.length < 32) {
+    throw new Error('SESSION_SECRET must contain at least 32 characters');
+  }
+
+  const sessionCookieName = 'tortoise.sid';
+  const sessionCookieOptions = {
+    httpOnly: true,
+    secure: config.nodeEnv === 'production',
+    sameSite: 'lax',
+    maxAge: config.sessionTtlMs,
+    path: '/',
+  };
+
+  if (config.nodeEnv === 'production') app.set('trust proxy', 1);
 
   app.use(helmet({ crossOriginResourcePolicy: false }));
+  app.use(cors({ origin: config.allowedOrigins, credentials: true }));
   app.use(
-    cors({
-      origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    session({
+      name: sessionCookieName,
+      secret:
+        config.sessionSecret || 'test-only-session-secret-at-least-32-chars',
+      resave: false,
+      saveUninitialized: false,
+      rolling: true,
+      store:
+        options.sessionStore ||
+        MongoStore.create({
+          mongoUrl: config.mongoUri,
+          ttl: Math.ceil(config.sessionTtlMs / 1000),
+          touchAfter: 300,
+        }),
+      cookie: sessionCookieOptions,
     }),
   );
+
+  app.locals.sessionCookieName = sessionCookieName;
+  app.locals.sessionCookieOptions = sessionCookieOptions;
+
   const authLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: process.env.NODE_ENV === 'test' ? 100000 : 1000,
     standardHeaders: true,
     legacyHeaders: false,
   });
+
   const apiLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: process.env.NODE_ENV === 'test' ? 100000 : 200,
@@ -64,6 +103,7 @@ export function createApp() {
     app.use('/api/auth', authLimiter);
     app.use(apiLimiter);
   }
+
   app.use(express.json({ limit: '25mb' }));
   app.use(express.urlencoded({ extended: true }));
 

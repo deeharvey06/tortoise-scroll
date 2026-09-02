@@ -13,8 +13,8 @@ import { Panel } from '../../components/ui';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const setSession = useAuthStore((state) => state.setSession);
-  const [username, setUsername] = useState('');
+  const setAuthenticatedUser = useAuthStore((state) => state.setAuthenticatedUser);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,8 +25,8 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const data = await authService.login(username, password);
-      setSession(data.user, data.token);
+      const data = await authService.login(email, password);
+      setAuthenticatedUser(data.user);
       navigate('/', { replace: true });
     } catch (err) {
       setError(
@@ -66,9 +66,10 @@ export default function LoginPage() {
           <Box component='form' onSubmit={handleSubmit} noValidate>
             <Stack spacing={2}>
               <TextField
-                label='Username'
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                label='Email'
+                type='email'
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 fullWidth
                 autoFocus
               />
@@ -94,7 +95,7 @@ export default function LoginPage() {
             by Tortoise Trader
             <br />
             <br />
-            Demo account: demo / demo123
+            Sign in with your registered email address.
           </Typography>
         </Stack>
       </Panel>

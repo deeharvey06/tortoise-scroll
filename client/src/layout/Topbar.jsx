@@ -13,11 +13,15 @@ import GlobalFilterBar from '../components/GlobalFilterBar';
 import ThemeModeSelector from '../components/ThemeModeSelector';
 import StatusBadge from '../components/ui/StatusBadge';
 import { getRouteTitle } from './navigation';
+import authService from '../services/authService';
 
 export default function Topbar({ mobile = false, onOpenNavigation }) {
   const [status, setStatus] = useState('checking');
   const { user, clearSession } = useAuthStore();
   const { pathname } = useLocation();
+  const handleLogout = async () => {
+    try { await authService.logout(); } finally { clearSession(); }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -67,9 +71,9 @@ export default function Topbar({ mobile = false, onOpenNavigation }) {
           <ThemeModeSelector />
           {!mobile && <Typography variant="caption" color="text.secondary">{user?.displayName || 'Guest'}</Typography>}
           {user && (mobile ? (
-            <Tooltip title="Log out"><IconButton size="small" aria-label="Log out" onClick={clearSession}><LogoutIcon sx={{ fontSize: 19 }} /></IconButton></Tooltip>
+            <Tooltip title="Log out"><IconButton size="small" aria-label="Log out" onClick={handleLogout}><LogoutIcon sx={{ fontSize: 19 }} /></IconButton></Tooltip>
           ) : (
-            <Button size="small" color="inherit" startIcon={<LogoutIcon fontSize="small" />} onClick={clearSession}>Log out</Button>
+            <Button size="small" color="inherit" startIcon={<LogoutIcon fontSize="small" />} onClick={handleLogout}>Log out</Button>
           ))}
         </Box>
       </Box>

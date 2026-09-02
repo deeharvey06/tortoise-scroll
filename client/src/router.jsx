@@ -50,13 +50,17 @@ function withSuspense(Component) {
 
 function ProtectedLayout() {
   const user = useAuthStore((state) => state.user);
-  if (!user) return <Navigate to='/login' replace />;
+  const status = useAuthStore((state) => state.status);
+  if (status === 'INITIALIZING') return <PageFallback />;
+  if (status !== 'AUTHENTICATED' || !user) return <Navigate to='/login' replace />;
   return <AppShell />;
 }
 
 function PublicOnlyLayout() {
   const user = useAuthStore((state) => state.user);
-  if (user) return <Navigate to='/' replace />;
+  const status = useAuthStore((state) => state.status);
+  if (status === 'INITIALIZING') return <PageFallback />;
+  if (status === 'AUTHENTICATED' && user) return <Navigate to='/' replace />;
   return <Outlet />;
 }
 
