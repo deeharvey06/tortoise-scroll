@@ -106,6 +106,8 @@ export async function changePassword(req, res) {
   user.passwordHash = await hashPassword(newPassword);
   user.passwordChangedAt = new Date();
   user.sessionVersion = Number(user.sessionVersion || 0) + 1;
+  user.failedLoginAttempts = 0;
+  user.lockedUntil = null;
   await user.save();
   const oldSessionId = req.sessionID;
   const revoked = await revokeOtherSessions(req, user._id, oldSessionId);
@@ -170,6 +172,8 @@ export async function resetPassword(req, res) {
   user.passwordHash = await hashPassword(newPassword);
   user.passwordChangedAt = new Date();
   user.sessionVersion = Number(user.sessionVersion || 0) + 1;
+  user.failedLoginAttempts = 0;
+  user.lockedUntil = null;
   await user.save();
   const revoked = await revokeAllSessions(req, user._id);
   if (req.session?.userId) {

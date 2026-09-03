@@ -10,6 +10,7 @@ process.env.SESSION_SECRET = 'test-only-session-secret-at-least-32-characters';
 let app;
 let User;
 let SessionRecord;
+let AuditLog;
 let passwordApi;
 let middleware;
 const users = new Map();
@@ -20,8 +21,10 @@ const query = (value) => ({
 before(async () => {
   ({ default: User } = await import('../src/models/User.js'));
   ({ default: SessionRecord } = await import('../src/models/SessionRecord.js'));
+  ({ default: AuditLog } = await import('../src/models/AuditLog.js'));
   SessionRecord.findOneAndUpdate = async () => null;
   SessionRecord.deleteOne = async () => ({ deletedCount: 1 });
+  AuditLog.create = async () => null;
   User.exists = async ({ emailNormalized }) => users.has(emailNormalized);
   User.create = async (data) => {
     const user = {
@@ -140,6 +143,33 @@ test('invalid password and unknown email use the same generic response', async (
   assert.equal(bad.status, 401);
   assert.equal(unknown.status, 401);
   assert.equal(bad.body.error.message, unknown.body.error.message);
+});
+
+test('repeated invalid passwords temporarily lock the account and a later successful login clears the lock', async () => {
+  await request(app).post('/api/auth/register').send(valid);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ email: valid.email, password: 'wrong-password' });
+    assert.equal(response.status, 401);
+  }
+  const stored = users.get('trader@example.com');
+  assert.ok(stored.lockedUntil > new Date());
+  assert.equal(
+    (
+      await request(app)
+        .post('/api/auth/login')
+        .send({ email: valid.email, password: valid.password })
+    ).status,
+    401,
+  );
+  stored.lockedUntil = new Date(Date.now() - 1);
+  const success = await request(app)
+    .post('/api/auth/login')
+    .send({ email: valid.email, password: valid.password });
+  assert.equal(success.status, 200);
+  assert.equal(stored.failedLoginAttempts, 0);
+  assert.equal(stored.lockedUntil, null);
 });
 
 test('/me is unauthenticated without a session; logout destroys an existing session', async () => {

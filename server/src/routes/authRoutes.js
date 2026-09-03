@@ -13,6 +13,8 @@ import {
   resetPassword,
 } from '../controllers/accountSecurityController.js';
 import { registerSession } from '../services/sessionSecurityService.js';
+import AuditLog from '../models/AuditLog.js';
+import { getConfig } from '../config/index.js';
 
 const router = Router();
 
@@ -32,6 +34,17 @@ function regenerateSession(req) {
     req.session.regenerate((error) => (error ? reject(error) : resolve())),
   );
 }
+
+const loginAudit = (req, user, action, reason) =>
+  AuditLog.create({
+    actorUserId: user._id,
+    targetUserId: user._id,
+    action,
+    before: {},
+    after: { reason },
+    ipAddress: String(req.ip || '').slice(0, 128),
+    userAgent: String(req.get?.('user-agent') || '').slice(0, 512),
+  });
 
 router.post(
   '/register',
@@ -63,16 +76,46 @@ router.post(
     const { email, password } = parse(loginSchema, req.body, res);
     const user = await User.findOne({
       emailNormalized: normalizeEmail(email),
-    }).select('+passwordHash +sessionVersion');
+    }).select(
+      '+passwordHash +sessionVersion +failedLoginAttempts +lockedUntil',
+    );
+    const config = getConfig();
+    const isLocked = Boolean(
+      user?.lockedUntil && user.lockedUntil > new Date(),
+    );
     const passwordIsValid = await verifyPassword(
       user?.passwordHash || DUMMY_PASSWORD_HASH,
       password,
     );
-    if (!user || !passwordIsValid) {
+    if (!user || !passwordIsValid || isLocked) {
+      if (user) {
+        if (!isLocked) {
+          user.failedLoginAttempts = Number(user.failedLoginAttempts || 0) + 1;
+          const lockedNow =
+            user.failedLoginAttempts >= config.loginFailureLimit;
+          if (lockedNow)
+            user.lockedUntil = new Date(Date.now() + config.loginLockMs);
+          await user.save();
+          await loginAudit(
+            req,
+            user,
+            lockedNow ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
+            lockedNow ? 'FAILURE_LIMIT_REACHED' : 'INVALID_CREDENTIALS',
+          );
+        } else {
+          await loginAudit(
+            req,
+            user,
+            'LOGIN_FAILED',
+            'ACCOUNT_TEMPORARILY_LOCKED',
+          );
+        }
+      }
       res.status(401);
       throw new Error('Invalid email or password');
     }
     if (user.status !== 'ACTIVE') {
+      await loginAudit(req, user, 'LOGIN_FAILED', 'ACCOUNT_NOT_ACTIVE');
       res.status(403);
       throw new Error('Account is not active');
     }
@@ -81,7 +124,10 @@ router.post(
     req.session.sessionVersion = Number(user.sessionVersion || 0);
     await registerSession(req, user._id);
     user.lastLoginAt = new Date();
+    user.failedLoginAttempts = 0;
+    user.lockedUntil = null;
     await user.save();
+    await loginAudit(req, user, 'LOGIN_SUCCEEDED', 'PASSWORD_AUTHENTICATION');
     res.json({ user: toSafeUser(user) });
   }),
 );

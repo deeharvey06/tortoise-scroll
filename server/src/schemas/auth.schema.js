@@ -27,13 +27,8 @@ export const registerSchema = z
     password,
     displayName: z.string().trim().min(1).max(80),
   })
-  .passthrough()
-  .superRefine(rejectPrivileges)
-  .transform(({ email, password: safePassword, displayName }) => ({
-    email,
-    password: safePassword,
-    displayName,
-  }));
+  .strict()
+  .superRefine(rejectPrivileges);
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1).max(128),

@@ -15,6 +15,7 @@ const RegisterPage = lazy(() => import('./pages/Auth/RegisterPage'));
 const ForgotPasswordPage = lazy(
   () => import('./pages/Auth/ForgotPasswordPage'),
 );
+const ResetPasswordPage = lazy(() => import('./pages/Auth/ResetPasswordPage'));
 const AccessDeniedPage = lazy(() => import('./pages/Auth/AccessDeniedPage'));
 const SessionExpiredPage = lazy(
   () => import('./pages/Auth/SessionExpiredPage'),
@@ -49,6 +50,9 @@ const ImportPage = lazy(() => import('./pages/Import/ImportPage'));
 const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage'));
 const AdministrationPage = lazy(
   () => import('./pages/Administration/AdministrationPage'),
+);
+const AccountSecurityPage = lazy(
+  () => import('./pages/Security/AccountSecurityPage'),
 );
 
 function PageFallback() {
@@ -102,6 +106,7 @@ export function createRouter() {
       children: [{ index: true, element: withSuspense(RegisterPage) }],
     },
     { path: '/forgot-password', element: withSuspense(ForgotPasswordPage) },
+    { path: '/reset-password', element: withSuspense(ResetPasswordPage) },
     { path: '/403', element: withSuspense(AccessDeniedPage) },
     { path: '/session-expired', element: withSuspense(SessionExpiredPage) },
     { path: '/account-suspended', element: withSuspense(AccountSuspendedPage) },
@@ -129,6 +134,7 @@ export function createRouter() {
         { path: 'risk', element: withSuspense(RiskPage) },
         { path: 'import', element: withSuspense(ImportPage) },
         { path: 'settings', element: withSuspense(SettingsPage) },
+        { path: 'security', element: withSuspense(AccountSecurityPage) },
         {
           path: 'administration',
           element: <AdminRoute>{withSuspense(AdministrationPage)}</AdminRoute>,

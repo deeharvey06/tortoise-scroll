@@ -7,11 +7,6 @@ import { provisionRootUser } from './src/auth/rootProvisioning.js';
 
 const PORT = process.env.PORT || 5050;
 
-if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
-  console.error('[startup] SESSION_SECRET must contain at least 32 characters');
-  process.exit(1);
-}
-
 async function start() {
   try {
     await connectDB();

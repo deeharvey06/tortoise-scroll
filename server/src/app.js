@@ -32,6 +32,8 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { uploadsRootPath } from './middleware/upload.js';
 import { requireAuth } from './middleware/auth.js';
 import requestLogger from './middleware/requestLogger.js';
+import csrfProtection from './middleware/csrfProtection.js';
+import inputSafety from './middleware/inputSafety.js';
 import { getConfig } from './config/index.js';
 import Trade from './models/Trade.js';
 import Strategy from './models/Strategy.js';
@@ -49,10 +51,10 @@ jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
 export function createApp(options = {}) {
   const app = express();
   const config = getConfig();
-  if (config.nodeEnv !== 'test' && config.sessionSecret.length < 32) {
-    throw new Error('SESSION_SECRET must contain at least 32 characters');
-  }
-  const sessionCookieName = 'tortoise.sid';
+  app.disable('x-powered-by');
+  app.set('query parser', 'simple');
+  const sessionCookieName =
+    config.nodeEnv === 'production' ? '__Host-tortoise.sid' : 'tortoise.sid';
   const sessionCookieOptions = {
     httpOnly: true,
     secure: config.nodeEnv === 'production',
@@ -63,8 +65,45 @@ export function createApp(options = {}) {
 
   if (config.nodeEnv === 'production') app.set('trust proxy', 1);
 
-  app.use(helmet({ crossOriginResourcePolicy: false }));
-  app.use(cors({ origin: config.allowedOrigins, credentials: true }));
+  app.use(requestLogger);
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+      referrerPolicy: { policy: 'no-referrer' },
+    }),
+  );
+  app.use(
+    cors({
+      origin(origin, callback) {
+        if (!origin || config.allowedOrigins.includes(origin))
+          return callback(null, true);
+        return callback(
+          Object.assign(new Error('CORS origin denied'), {
+            statusCode: 403,
+            publicMessage: 'Request origin is not allowed',
+            isOperational: true,
+          }),
+        );
+      },
+      credentials: true,
+      methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'X-CSRF-Protection', 'X-Request-Id'],
+      exposedHeaders: [
+        'X-Request-Id',
+        'RateLimit',
+        'RateLimit-Policy',
+        'Retry-After',
+      ],
+      maxAge: 600,
+    }),
+  );
+  app.use(
+    '/api',
+    csrfProtection({
+      allowedOrigins: config.allowedOrigins,
+      enforce: options.enforceCsrf ?? config.csrfProtectionEnabled,
+    }),
+  );
   app.use(
     session({
       name: sessionCookieName,
@@ -85,31 +124,70 @@ export function createApp(options = {}) {
   );
   app.locals.sessionCookieName = sessionCookieName;
   app.locals.sessionCookieOptions = sessionCookieOptions;
-  const authLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 100000 : 1000,
+  const loginLimiter = rateLimit({
+    windowMs: config.authRateLimitWindowMs,
+    max: config.authRateLimitMax,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => req.method !== 'POST',
+    handler: (_req, _res, next) =>
+      next(
+        Object.assign(
+          new Error('Too many authentication attempts. Try again later.'),
+          {
+            statusCode: 429,
+            publicMessage: 'Too many authentication attempts. Try again later.',
+            isOperational: true,
+          },
+        ),
+      ),
+  });
+  const resetLimiter = rateLimit({
+    windowMs: config.authRateLimitWindowMs,
+    max: config.passwordResetRateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.method !== 'POST',
+    handler: (_req, _res, next) =>
+      next(
+        Object.assign(
+          new Error('Too many password reset attempts. Try again later.'),
+          {
+            statusCode: 429,
+            publicMessage: 'Too many password reset attempts. Try again later.',
+            isOperational: true,
+          },
+        ),
+      ),
   });
   const apiLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 100000 : 200,
+    max: 300,
     standardHeaders: true,
     legacyHeaders: false,
   });
 
-  if (process.env.NODE_ENV !== 'test') {
-    app.use('/api/auth', authLimiter);
+  if (options.enforceRateLimit ?? config.nodeEnv !== 'test') {
+    app.use(['/api/auth/login', '/api/auth/register'], loginLimiter);
+    app.use(
+      ['/api/auth/forgot-password', '/api/auth/reset-password'],
+      resetLimiter,
+    );
     app.use(apiLimiter);
   }
-  app.use(express.json({ limit: '25mb' }));
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: '10mb', strict: true }));
+  app.use(
+    express.urlencoded({
+      extended: false,
+      limit: '100kb',
+      parameterLimit: 100,
+    }),
+  );
+  app.use('/api', inputSafety);
 
   if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
   }
-
-  app.use(requestLogger);
 
   // Export the job queue for testing and direct access
   app.locals.jobQueue = jobQueue;
