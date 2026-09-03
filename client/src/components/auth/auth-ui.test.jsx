@@ -127,6 +127,22 @@ describe('Phase 2 authentication UI', () => {
     expect(screen.getByText('Sign in destination')).toBeVisible();
   });
 
+  it.each(['USER', 'ADMIN', 'ROOT'])(
+    'allows authenticated %s through ProtectedRoute',
+    (role) => {
+      useAuthStore.setState({
+        status: 'AUTHENTICATED',
+        user: { ...user, role },
+      });
+      renderAt(
+        <ProtectedRoute>
+          <div>Private content</div>
+        </ProtectedRoute>,
+      );
+      expect(screen.getByText('Private content')).toBeVisible();
+    },
+  );
+
   it.each([
     ['USER', '/admin', 'AdminRoute'],
     ['USER', '/root', 'RootRoute'],
@@ -153,6 +169,7 @@ describe('Phase 2 authentication UI', () => {
 
   it.each([
     ['ADMIN', AdminRoute],
+    ['ROOT', AdminRoute],
     ['ROOT', RootRoute],
   ])('allows %s through its authorized route', (role, Gate) => {
     useAuthStore.setState({ status: 'AUTHENTICATED', user: { ...user, role } });
@@ -163,6 +180,33 @@ describe('Phase 2 authentication UI', () => {
     );
     expect(screen.getByText('Allowed')).toBeVisible();
   });
+
+  it.each([
+    ['NETWORK_ERROR', '/network-error', 'Network error destination'],
+    ['ACCOUNT_SUSPENDED', '/account-suspended', 'Suspended destination'],
+    ['SESSION_EXPIRED', '/session-expired', 'Expired destination'],
+    ['FORBIDDEN', '/403', 'Forbidden destination'],
+  ])(
+    'routes %s authentication state to its dedicated page',
+    (status, destination, label) => {
+      useAuthStore.setState({ status, user: null });
+      renderAt(
+        <Routes>
+          <Route
+            path='/private'
+            element={
+              <ProtectedRoute>
+                <div>Private</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path={destination} element={<div>{label}</div>} />
+        </Routes>,
+        { path: '/private' },
+      );
+      expect(screen.getByText(label)).toBeVisible();
+    },
+  );
 
   it('shows current user data and signs out from the account menu', async () => {
     useAuthStore.setState({ status: 'AUTHENTICATED', user });

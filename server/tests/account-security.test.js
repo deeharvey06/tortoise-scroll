@@ -261,44 +261,36 @@ test('password change requires current password, rotates current session, and re
   sessions.clear();
   assert.equal(
     (
-      await first
-        .patch('/api/account-security/password')
-        .send({
-          currentPassword: 'wrong',
-          newPassword: 'new-password-value-123',
-        })
+      await first.patch('/api/account-security/password').send({
+        currentPassword: 'wrong',
+        newPassword: 'new-password-value-123',
+      })
     ).status,
     400,
   );
-  const changed = await first
-    .patch('/api/account-security/password')
-    .send({
-      currentPassword: 'original-password-123',
-      newPassword: 'new-password-value-123',
-    });
+  const changed = await first.patch('/api/account-security/password').send({
+    currentPassword: 'original-password-123',
+    newPassword: 'new-password-value-123',
+  });
   assert.equal(changed.status, 200);
   assert.equal(changed.body.otherSessionsRevoked, 0);
   assert.equal((await first.get('/api/auth/me')).status, 200);
   assert.equal((await second.get('/api/auth/me')).status, 401);
   assert.equal(
     (
-      await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'trader@example.test',
-          password: 'original-password-123',
-        })
+      await request(app).post('/api/auth/login').send({
+        email: 'trader@example.test',
+        password: 'original-password-123',
+      })
     ).status,
     401,
   );
   assert.equal(
     (
-      await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'trader@example.test',
-          password: 'new-password-value-123',
-        })
+      await request(app).post('/api/auth/login').send({
+        email: 'trader@example.test',
+        password: 'new-password-value-123',
+      })
     ).status,
     200,
   );
@@ -320,6 +312,15 @@ test('password reset is non-enumerating, single-use, expiring, and revokes every
   assert.equal(unknown.body.message, known.body.message);
   assert.ok(known.body.developmentResetToken);
   assert.equal(unknown.body.developmentResetToken, undefined);
+  assert.equal(
+    resets.has(known.body.developmentResetToken),
+    false,
+    'raw reset token must never be stored',
+  );
+  assert.ok(
+    [...resets.keys()].every((hash) => /^[a-f0-9]{64}$/.test(hash)),
+    'only SHA-256 token hashes are stored',
+  );
   const payload = {
     token: known.body.developmentResetToken,
     newPassword: 'reset-password-value-123',
@@ -343,13 +344,26 @@ test('password reset is non-enumerating, single-use, expiring, and revokes every
   activeToken.expiresAt = new Date(0);
   assert.equal(
     (
-      await request(app)
-        .post('/api/auth/reset-password')
-        .send({
-          token: expiring.body.developmentResetToken,
-          newPassword: 'another-password-123',
-        })
+      await request(app).post('/api/auth/reset-password').send({
+        token: expiring.body.developmentResetToken,
+        newPassword: 'another-password-123',
+      })
     ).status,
     400,
   );
+  assert.ok(audits.some((event) => event.action === 'PASSWORD_RESET'));
+});
+
+test('password change rejects password reuse and records security audit events without secrets', async () => {
+  const agent = request.agent(app);
+  await registerAndLogin(agent);
+  const response = await agent.patch('/api/account-security/password').send({
+    currentPassword: 'original-password-123',
+    newPassword: 'original-password-123',
+  });
+  assert.equal(response.status, 400);
+  await agent.post('/api/account-security/sessions/logout-others');
+  const serialized = JSON.stringify(audits);
+  assert.ok(audits.some((event) => event.action === 'OTHER_SESSIONS_REVOKED'));
+  assert.equal(serialized.includes('original-password-123'), false);
 });

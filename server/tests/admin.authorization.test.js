@@ -49,7 +49,13 @@ after(() => {
 });
 
 function stubTarget(targetRole = 'USER', targetStatus = 'ACTIVE') {
-  calls = { find: 0, update: 0, audit: 0 };
+  calls = {
+    find: 0,
+    update: 0,
+    audit: 0,
+    updateDocument: null,
+    deletedSessions: 0,
+  };
   const target = {
     _id: ids.user,
     email: 'user@example.test',
@@ -70,12 +76,16 @@ function stubTarget(targetRole = 'USER', targetStatus = 'ACTIVE') {
   };
   User.findOneAndUpdate = async (_filter, update) => {
     calls.update += 1;
+    calls.updateDocument = update;
     return { ...target, ...update.$set };
   };
   AuditLog.create = async () => {
     calls.audit += 1;
   };
-  SessionRecord.deleteMany = async () => ({ deletedCount: 2 });
+  SessionRecord.deleteMany = async () => {
+    calls.deletedSessions += 1;
+    return { deletedCount: 2 };
+  };
 }
 
 test('USER has no administration access', async () => {
@@ -152,6 +162,22 @@ test('no caller can promote a user to ROOT', async () => {
   assert.equal(calls.audit, 0);
 });
 
+test('ROOT role/status endpoints reject extra privilege and operator-shaped fields', async () => {
+  stubTarget();
+  const extra = await request(globalThis.adminTestApp)
+    .patch(`/api/admin/users/${ids.user}/role`)
+    .set('x-test-role', 'ROOT')
+    .send({ role: 'ADMIN', permissions: ['ROOT'] });
+  const operator = await request(globalThis.adminTestApp)
+    .patch(`/api/admin/users/${ids.user}/status`)
+    .set('x-test-role', 'ROOT')
+    .send({ status: { $ne: 'ACTIVE' } });
+  assert.equal(extra.status, 400);
+  assert.equal(operator.status, 400);
+  assert.equal(calls.update, 0);
+  assert.equal(calls.audit, 0);
+});
+
 test('ROOT cannot demote or suspend ROOT through administration APIs', async () => {
   stubTarget('ROOT');
   const role = await request(globalThis.adminTestApp)
@@ -202,4 +228,6 @@ test('ROOT can suspend a non-ROOT user and writes an audit event', async () => {
   assert.equal(response.body.user.status, 'SUSPENDED');
   assert.equal(calls.update, 1);
   assert.equal(calls.audit, 1);
+  assert.deepEqual(calls.updateDocument.$inc, { sessionVersion: 1 });
+  assert.equal(calls.deletedSessions, 1);
 });

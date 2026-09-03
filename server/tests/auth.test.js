@@ -14,6 +14,7 @@ let AuditLog;
 let passwordApi;
 let middleware;
 const users = new Map();
+const audits = [];
 const query = (value) => ({
   select: async () => value,
   then: (resolve, reject) => Promise.resolve(value).then(resolve, reject),
@@ -24,7 +25,10 @@ before(async () => {
   ({ default: AuditLog } = await import('../src/models/AuditLog.js'));
   SessionRecord.findOneAndUpdate = async () => null;
   SessionRecord.deleteOne = async () => ({ deletedCount: 1 });
-  AuditLog.create = async () => null;
+  AuditLog.create = async (event) => {
+    audits.push(event);
+    return event;
+  };
   User.exists = async ({ emailNormalized }) => users.has(emailNormalized);
   User.create = async (data) => {
     const user = {
@@ -54,6 +58,7 @@ before(async () => {
 });
 beforeEach(() => {
   users.clear();
+  audits.length = 0;
 });
 
 const valid = {
@@ -71,6 +76,34 @@ test('Argon2id hashes and verifies passwords', async () => {
     await passwordApi.verifyPassword(hash, 'incorrect-password'),
     false,
   );
+});
+
+test('User schema restricts roles, protects credential fields, and permits only one ROOT', () => {
+  assert.deepEqual(User.schema.path('role').enumValues, [
+    'USER',
+    'ADMIN',
+    'ROOT',
+  ]);
+  for (const field of [
+    'passwordHash',
+    'sessionVersion',
+    'failedLoginAttempts',
+    'lockedUntil',
+  ]) {
+    assert.equal(
+      User.schema.path(field).options.select,
+      false,
+      `${field} must not be selected by default`,
+    );
+  }
+  const rootIndex = User.schema
+    .indexes()
+    .find(
+      ([fields, options]) =>
+        fields.role === 1 && options.partialFilterExpression?.role === 'ROOT',
+    );
+  assert.ok(rootIndex);
+  assert.equal(rootIndex[1].unique, true);
 });
 
 test('registration creates only a safe USER and rejects duplicates', async () => {
@@ -93,6 +126,26 @@ test('registration creates only a safe USER and rejects duplicates', async () =>
     (await request(app).post('/api/auth/register').send(valid)).status,
     409,
   );
+});
+
+test('registration rejects weak passwords and unknown fields', async () => {
+  assert.equal(
+    (
+      await request(app)
+        .post('/api/auth/register')
+        .send({ ...valid, password: 'too-short' })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request(app)
+        .post('/api/auth/register')
+        .send({ ...valid, unexpected: true })
+    ).status,
+    400,
+  );
+  assert.equal(users.size, 0);
 });
 
 for (const attack of [
@@ -170,6 +223,40 @@ test('repeated invalid passwords temporarily lock the account and a later succes
   assert.equal(success.status, 200);
   assert.equal(stored.failedLoginAttempts, 0);
   assert.equal(stored.lockedUntil, null);
+  assert.ok(audits.some((event) => event.action === 'ACCOUNT_LOCKED'));
+  assert.ok(audits.some((event) => event.action === 'LOGIN_SUCCEEDED'));
+});
+
+test('suspended and disabled accounts cannot create sessions', async () => {
+  await request(app).post('/api/auth/register').send(valid);
+  const stored = users.get('trader@example.com');
+  for (const status of ['SUSPENDED', 'DISABLED']) {
+    stored.status = status;
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ email: valid.email, password: valid.password });
+    assert.equal(response.status, 403);
+    assert.equal(response.body.error.message, 'Account is not active');
+  }
+  assert.equal(
+    audits.filter((event) => event.action === 'LOGIN_FAILED').length,
+    2,
+  );
+});
+
+test('direct USER session cannot access administration APIs', async () => {
+  await request(app).post('/api/auth/register').send(valid);
+  const agent = request.agent(app);
+  await agent
+    .post('/api/auth/login')
+    .send({ email: valid.email, password: valid.password });
+  const id = [...users.values()][0]._id;
+  assert.equal((await agent.get('/api/admin/users')).status, 403);
+  assert.equal(
+    (await agent.patch(`/api/admin/users/${id}/role`).send({ role: 'ADMIN' }))
+      .status,
+    403,
+  );
 });
 
 test('/me is unauthenticated without a session; logout destroys an existing session', async () => {

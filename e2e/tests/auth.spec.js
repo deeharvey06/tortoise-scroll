@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request as playwrightRequest } from '@playwright/test';
 
 const uniqueUser = () => ({
   displayName: 'Phase Two User',
@@ -110,6 +110,17 @@ test('authenticated user changes password and keeps only the rotated current ses
 }) => {
   const user = uniqueUser();
   await request.post('/api/auth/register', { data: user });
+  const otherSession = await playwrightRequest.newContext({
+    baseURL: 'http://localhost:5050',
+    extraHTTPHeaders: { 'X-CSRF-Protection': '1' },
+  });
+  expect(
+    (
+      await otherSession.post('/api/auth/login', {
+        data: { email: user.email, password: user.password },
+      })
+    ).status(),
+  ).toBe(200);
   await page.goto('/login');
   await page.getByLabel('Email').fill(user.email);
   await page.getByLabel('Password').fill(user.password);
@@ -127,6 +138,8 @@ test('authenticated user changes password and keeps only the rotated current ses
   await expect(page.getByRole('alert')).toContainText('Password changed');
   await page.reload();
   await expect(page).toHaveURL(/\/security$/);
+  expect((await otherSession.get('/api/auth/me')).status()).toBe(401);
+  await otherSession.dispose();
 });
 
 test('development password-reset link is single-use and resets the password', async ({
@@ -138,6 +151,12 @@ test('development password-reset link is single-use and resets the password', as
   await page.goto('/forgot-password');
   await page.getByLabel('Email').fill(user.email);
   await page.getByRole('button', { name: 'Request password reset' }).click();
+  const resetHref = await page
+    .getByRole('link', { name: 'Open development reset link' })
+    .getAttribute('href');
+  const token = new URL(resetHref, 'http://localhost').searchParams.get(
+    'token',
+  );
   await page.getByRole('link', { name: 'Open development reset link' }).click();
   await page.getByLabel('New password').fill('phase-five-reset-password-123');
   await page
@@ -147,6 +166,13 @@ test('development password-reset link is single-use and resets the password', as
   await expect(
     page.getByText(/All existing sessions were signed out/),
   ).toBeVisible();
+  expect(
+    (
+      await request.post('/api/auth/reset-password', {
+        data: { token, newPassword: 'another-reset-password-123' },
+      })
+    ).status(),
+  ).toBe(400);
   await page.getByRole('link', { name: 'Sign in' }).click();
   await page.getByLabel('Email').fill(user.email);
   await page.getByLabel('Password').fill('phase-five-reset-password-123');
