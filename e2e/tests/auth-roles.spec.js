@@ -24,6 +24,7 @@ test('direct API rejects CSRF-less and cross-origin authentication requests', as
   });
   try {
     const missing = await api.post('/api/auth/login', {
+      headers: { 'X-CSRF-Protection': '' },
       data: { email: 'nobody@example.test', password: 'invalid' },
     });
     expect(missing.status()).toBe(403);
@@ -85,30 +86,30 @@ test('direct API rejects public privilege escalation and every ROOT mutation', a
 
 test('ADMIN has read-only administration UI and cannot target ROOT through direct APIs', async ({
   page,
-  request,
 }) => {
-  const root = await loginRoot(request);
+  const api = page.request;
+  const root = await loginRoot(api);
   const admin = uniqueUser('E2E Admin');
   const regular = uniqueUser('E2E Regular');
-  const adminCreated = await request.post('/api/auth/register', {
+  const adminCreated = await api.post('/api/auth/register', {
     data: admin,
   });
-  const regularCreated = await request.post('/api/auth/register', {
+  const regularCreated = await api.post('/api/auth/register', {
     data: regular,
   });
   const adminId = (await adminCreated.json()).user.id;
   const regularId = (await regularCreated.json()).user.id;
   expect(
     (
-      await request.patch(`/api/admin/users/${adminId}/role`, {
+      await api.patch(`/api/admin/users/${adminId}/role`, {
         data: { role: 'ADMIN' },
       })
     ).ok(),
   ).toBeTruthy();
-  await request.post('/api/auth/logout');
+  await api.post('/api/auth/logout');
   expect(
     (
-      await request.post('/api/auth/login', {
+      await api.post('/api/auth/login', {
         data: { email: admin.email, password: admin.password },
       })
     ).ok(),
@@ -118,27 +119,27 @@ test('ADMIN has read-only administration UI and cannot target ROOT through direc
   await expect(
     page.getByRole('heading', { name: 'Administration' }),
   ).toBeVisible();
-  await expect(page.getByText(regular.displayName)).toBeVisible();
+  await expect(page.getByText(regular.email, { exact: true })).toBeVisible();
   await expect(page.getByText('Read only').first()).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Audit log' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Suspend' })).toHaveCount(0);
 
   expect(
     (
-      await request.patch(`/api/admin/users/${regularId}/role`, {
+      await api.patch(`/api/admin/users/${regularId}/role`, {
         data: { role: 'ADMIN' },
       })
     ).status(),
   ).toBe(403);
   expect(
     (
-      await request.patch(`/api/admin/users/${regularId}/status`, {
+      await api.patch(`/api/admin/users/${regularId}/status`, {
         data: { status: 'SUSPENDED' },
       })
     ).status(),
   ).toBe(403);
-  expect((await request.get('/api/admin/audit-log')).status()).toBe(403);
-  expect((await request.get(`/api/admin/users/${root.user.id}`)).status()).toBe(
+  expect((await api.get('/api/admin/audit-log')).status()).toBe(403);
+  expect((await api.get(`/api/admin/users/${root.user.id}`)).status()).toBe(
     404,
   );
 });
@@ -223,6 +224,7 @@ test('USER B cannot read, edit, or delete USER A trade through direct APIs', asy
         direction: 'long',
         quantity: 1,
         entryPrice: 6000,
+        entryTime: new Date().toISOString(),
         notes: 'owned by A',
       },
     });
@@ -249,9 +251,8 @@ test('USER B cannot read, edit, or delete USER A trade through direct APIs', asy
 
 test('ROOT administration UI renders in explicit light and dark themes', async ({
   page,
-  request,
 }) => {
-  await loginRoot(request);
+  await loginRoot(page.request);
   await page.goto('/administration');
   for (const mode of ['light', 'dark']) {
     await page.evaluate(

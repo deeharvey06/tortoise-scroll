@@ -51,10 +51,13 @@ jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
 export function createApp(options = {}) {
   const app = express();
   const config = getConfig();
+
   app.disable('x-powered-by');
   app.set('query parser', 'simple');
+
   const sessionCookieName =
     config.nodeEnv === 'production' ? '__Host-tortoise.sid' : 'tortoise.sid';
+
   const sessionCookieOptions = {
     httpOnly: true,
     secure: config.nodeEnv === 'production',
@@ -72,9 +75,17 @@ export function createApp(options = {}) {
       referrerPolicy: { policy: 'no-referrer' },
     }),
   );
+
   app.use(
     cors({
       origin(origin, callback) {
+        console.log('origin :>>>>>>>>', origin);
+        console.log(
+          'config.allowedOrigins[0] :>>>>>>>>',
+          config.allowedOrigins[0],
+        );
+
+        console.log('IF :>>>>>>>>', origin === config.allowedOrigins[0]);
         if (!origin || config.allowedOrigins.includes(origin))
           return callback(null, true);
         return callback(

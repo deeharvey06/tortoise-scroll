@@ -19,6 +19,7 @@ export function getConfig() {
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
+
   const sessionSecret = process.env.SESSION_SECRET || '';
   const config = {
     port: Number(process.env.PORT || 5050),
@@ -30,24 +31,29 @@ export function getConfig() {
       min: 300_000,
       max: 2_592_000_000,
     }),
+
     allowedOrigins,
     nodeEnv,
     passwordResetTtlMs: integer('PASSWORD_RESET_TTL', 1_800_000, {
       min: 300_000,
       max: 86_400_000,
     }),
+
     authRateLimitWindowMs: integer('AUTH_RATE_LIMIT_WINDOW_MS', 900_000, {
       min: 60_000,
       max: 86_400_000,
     }),
+
     authRateLimitMax: integer('AUTH_RATE_LIMIT_MAX', 10, {
       min: 1,
       max: 1_000,
     }),
+
     passwordResetRateLimitMax: integer('PASSWORD_RESET_RATE_LIMIT_MAX', 5, {
       min: 1,
       max: 1_000,
     }),
+
     loginFailureLimit: integer('LOGIN_FAILURE_LIMIT', 5, { min: 2, max: 100 }),
     loginLockMs: integer('LOGIN_LOCK_MS', 900_000, {
       min: 60_000,

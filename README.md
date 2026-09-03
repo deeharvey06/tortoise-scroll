@@ -85,6 +85,10 @@ npm run install:all
 ```
 
 `install:all` runs `npm install` in both `server/` and `client/`.
+The first `npm run dev` generates a unique local `SESSION_SECRET` if the copied
+value is blank, too short, or still a placeholder. It preserves every other
+setting in `server/.env` and never prints the secret. Production still requires
+an explicitly configured secret and fails closed when it is unsafe.
 
 ## Run (both client and server together)
 

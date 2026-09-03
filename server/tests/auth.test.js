@@ -128,6 +128,18 @@ test('registration creates only a safe USER and rejects duplicates', async () =>
   );
 });
 
+test('registration rejects the configured ROOT email', async () => {
+  const originalRootEmail = process.env.ROOT_USER_EMAIL;
+  process.env.ROOT_USER_EMAIL = valid.email;
+  try {
+    const response = await request(app).post('/api/auth/register').send(valid);
+    assert.equal(response.status, 400);
+    assert.equal(users.size, 0);
+  } finally {
+    process.env.ROOT_USER_EMAIL = originalRootEmail;
+  }
+});
+
 test('registration rejects weak passwords and unknown fields', async () => {
   assert.equal(
     (

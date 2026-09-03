@@ -78,10 +78,10 @@ test('unauthenticated visitor cannot see protected content', async ({
   ).toBeVisible();
 });
 
-test('USER is denied administration', async ({ page, request }) => {
+test('USER is denied administration', async ({ page }) => {
   const user = uniqueUser();
-  await request.post('/api/auth/register', { data: user });
-  await request.post('/api/auth/login', {
+  await page.request.post('/api/auth/register', { data: user });
+  await page.request.post('/api/auth/login', {
     data: { email: user.email, password: user.password },
   });
   await page.goto('/administration');
@@ -90,8 +90,8 @@ test('USER is denied administration', async ({ page, request }) => {
   ).toBeVisible();
 });
 
-test('test ROOT may access administration', async ({ page, request }) => {
-  const login = await request.post('/api/auth/login', {
+test('test ROOT may access administration', async ({ page }) => {
+  const login = await page.request.post('/api/auth/login', {
     data: {
       email: 'e2e-root@tortoise-scroll.test',
       password: 'e2e-root-password-strong-123',

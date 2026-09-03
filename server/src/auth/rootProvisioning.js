@@ -12,11 +12,12 @@ export async function provisionRootUser() {
     throw new Error('ROOT_USER_EMAIL conflicts with an existing ROOT account');
   let user = await User.findOne({ emailNormalized }).select('+passwordHash');
   if (user) {
-    if (user.role !== 'ROOT' || user.status !== 'ACTIVE') {
-      user.role = 'ROOT';
-      user.status = 'ACTIVE';
-      await user.save();
-    }
+    if (user.role !== 'ROOT')
+      throw new Error(
+        'ROOT_USER_EMAIL belongs to a non-ROOT account; refusing promotion',
+      );
+    if (user.status !== 'ACTIVE')
+      throw new Error('Configured ROOT account must be ACTIVE');
     if (process.env.ROOT_USER_INITIAL_PASSWORD)
       console.warn(
         '[startup] ROOT_USER_INITIAL_PASSWORD is still configured; remove it after initial provisioning',

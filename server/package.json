@@ -5,6 +5,7 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
+    "predev": "node scripts/ensureLocalEnv.js",
     "dev": "nodemon server.js",
     "start": "node server.js",
     "seed": "node scripts/seed.js",

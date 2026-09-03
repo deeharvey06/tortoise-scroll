@@ -55,6 +55,10 @@ router.post(
       res,
     );
     const emailNormalized = normalizeEmail(email);
+    if (emailNormalized === normalizeEmail(process.env.ROOT_USER_EMAIL)) {
+      res.status(400);
+      throw new Error('This email address is reserved');
+    }
     if (await User.exists({ emailNormalized })) {
       res.status(409);
       throw new Error('An account with that email already exists');

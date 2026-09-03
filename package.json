@@ -13,8 +13,8 @@
     "test:server": "npm test --prefix server",
     "smoke": "npm run smoke --prefix server",
     "e2e:install": "npm install --prefix e2e && npm run install-browsers --prefix e2e",
-    "e2e": "npm test --prefix e2e",
-    "e2e:headed": "npm run test:headed --prefix e2e"
+    "e2e": "cd e2e && npm test",
+    "e2e:headed": "cd e2e && npm run test:headed"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

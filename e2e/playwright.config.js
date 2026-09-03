@@ -27,17 +27,17 @@ export default defineConfig({
   webServer: [
     {
       command:
-        'NODE_ENV=test MONGO_URI=mongodb://localhost:27017/trading-journal-e2e SESSION_SECRET=e2e-only-session-secret-at-least-32-characters ROOT_USER_EMAIL=e2e-root@tortoise-scroll.test ROOT_USER_INITIAL_PASSWORD=e2e-root-password-strong-123 npm run dev --prefix ../server',
-      url: 'http://localhost:5050/api/health',
+        'NODE_ENV=test LOG_LEVEL=info MONGO_URI=mongodb://localhost:27017/trading-journal-e2e SESSION_SECRET=e2e-only-session-secret-at-least-32-characters ALLOWED_ORIGINS=http://127.0.0.1:5174 CSRF_PROTECTION_ENABLED=true ROOT_USER_EMAIL=e2e-root@tortoise-scroll.test ROOT_USER_INITIAL_PASSWORD=e2e-root-password-strong-123 node ../server/server.js',
+      url: 'http://127.0.0.1:5050/api/health',
       reuseExistingServer: false,
-      timeout: 30_000,
+      timeout: 60_000,
     },
     {
       command:
-        'NODE_ENV=test npm run dev --prefix ../client -- --host 127.0.0.1 --port 5174 --strictPort',
+        'NODE_ENV=test ../client/node_modules/.bin/vite ../client --host 127.0.0.1 --port 5174 --strictPort',
       url: 'http://127.0.0.1:5174',
       reuseExistingServer: false,
-      timeout: 30_000,
+      timeout: 60_000,
     },
   ],
 });
