@@ -8,9 +8,14 @@
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "pretest": "node ../server/scripts/resetTestDatabase.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.46.0"
+  },
+  "engines": {
+    "node": ">=20 <23",
+    "npm": ">=10"
   }
 }
