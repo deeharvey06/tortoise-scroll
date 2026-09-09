@@ -10,6 +10,7 @@ const { Schema } = mongoose;
  */
 const aiSettingsSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true, index: true },
     provider: { type: String, enum: ['disabled', 'openai', 'ollama'], default: 'disabled' },
     openaiApiKey: { type: String, default: '' },
     openaiModel: { type: String, default: 'gpt-4o-mini' },

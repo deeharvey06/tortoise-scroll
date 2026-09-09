@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const journalEntrySchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     accountId: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', default: null, index: true },
     type: {
       type: String,
@@ -17,6 +18,6 @@ const journalEntrySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-journalEntrySchema.index({ type: 1, date: -1 });
+journalEntrySchema.index({ userId: 1, type: 1, date: -1 });
 
 export default mongoose.model('JournalEntry', journalEntrySchema);

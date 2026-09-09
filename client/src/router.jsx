@@ -4,8 +4,26 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import AppShell from './layout/AppShell';
 import useAuthStore from './store/useAuthStore';
+import {
+  AdminRoute,
+  AuthLoadingState,
+  ProtectedRoute,
+} from './components/auth/RouteGuards';
 
 const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/Auth/RegisterPage'));
+const ForgotPasswordPage = lazy(
+  () => import('./pages/Auth/ForgotPasswordPage'),
+);
+const ResetPasswordPage = lazy(() => import('./pages/Auth/ResetPasswordPage'));
+const AccessDeniedPage = lazy(() => import('./pages/Auth/AccessDeniedPage'));
+const SessionExpiredPage = lazy(
+  () => import('./pages/Auth/SessionExpiredPage'),
+);
+const AccountSuspendedPage = lazy(
+  () => import('./pages/Auth/AccountSuspendedPage'),
+);
+const NetworkErrorPage = lazy(() => import('./pages/Auth/NetworkErrorPage'));
 
 // Route-level code splitting: each page (and its dependencies, e.g. the
 // Dashboard/Analytics/Backtesting pages all pull in Recharts) loads only
@@ -30,12 +48,31 @@ const AiPartnerPage = lazy(() => import('./pages/AiPartner/AiPartnerPage'));
 const RiskPage = lazy(() => import('./pages/Risk/RiskPage'));
 const ImportPage = lazy(() => import('./pages/Import/ImportPage'));
 const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage'));
+const AdministrationPage = lazy(
+  () => import('./pages/Administration/AdministrationPage'),
+);
+const AccountSecurityPage = lazy(
+  () => import('./pages/Security/AccountSecurityPage'),
+);
 
 function PageFallback() {
   return (
-    <Box role="status" aria-live="polite" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, minHeight: 180, color: 'text.secondary' }}>
+    <Box
+      role='status'
+      aria-live='polite'
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 3,
+        minHeight: 180,
+        color: 'text.secondary',
+      }}
+    >
       <CircularProgress size={20} thickness={4} />
-      <Box component="span" sx={{ fontSize: 13 }}>Opening workspace…</Box>
+      <Box component='span' sx={{ fontSize: 13 }}>
+        Opening workspace…
+      </Box>
     </Box>
   );
 }
@@ -48,15 +85,11 @@ function withSuspense(Component) {
   );
 }
 
-function ProtectedLayout() {
-  const user = useAuthStore((state) => state.user);
-  if (!user) return <Navigate to='/login' replace />;
-  return <AppShell />;
-}
-
 function PublicOnlyLayout() {
   const user = useAuthStore((state) => state.user);
-  if (user) return <Navigate to='/' replace />;
+  const status = useAuthStore((state) => state.status);
+  if (status === 'INITIALIZING') return <AuthLoadingState />;
+  if (status === 'AUTHENTICATED' && user) return <Navigate to='/' replace />;
   return <Outlet />;
 }
 
@@ -64,16 +97,27 @@ export function createRouter() {
   return createBrowserRouter([
     {
       path: '/login',
-      element: (
-        <PublicOnlyLayout>
-          <Outlet />
-        </PublicOnlyLayout>
-      ),
+      element: <PublicOnlyLayout />,
       children: [{ index: true, element: withSuspense(LoginPage) }],
     },
     {
+      path: '/register',
+      element: <PublicOnlyLayout />,
+      children: [{ index: true, element: withSuspense(RegisterPage) }],
+    },
+    { path: '/forgot-password', element: withSuspense(ForgotPasswordPage) },
+    { path: '/reset-password', element: withSuspense(ResetPasswordPage) },
+    { path: '/403', element: withSuspense(AccessDeniedPage) },
+    { path: '/session-expired', element: withSuspense(SessionExpiredPage) },
+    { path: '/account-suspended', element: withSuspense(AccountSuspendedPage) },
+    { path: '/network-error', element: withSuspense(NetworkErrorPage) },
+    {
       path: '/',
-      element: <ProtectedLayout />,
+      element: (
+        <ProtectedRoute>
+          <AppShell />
+        </ProtectedRoute>
+      ),
       children: [
         { index: true, element: withSuspense(DashboardPage) },
         { path: 'trades', element: withSuspense(TradesPage) },
@@ -90,6 +134,11 @@ export function createRouter() {
         { path: 'risk', element: withSuspense(RiskPage) },
         { path: 'import', element: withSuspense(ImportPage) },
         { path: 'settings', element: withSuspense(SettingsPage) },
+        { path: 'security', element: withSuspense(AccountSecurityPage) },
+        {
+          path: 'administration',
+          element: <AdminRoute>{withSuspense(AdministrationPage)}</AdminRoute>,
+        },
       ],
     },
   ]);

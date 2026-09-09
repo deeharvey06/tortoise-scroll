@@ -1,5 +1,9 @@
 import { computeTradeFinancials } from './calculationsService.js';
 import * as tradeRepository from '../repositories/tradeRepository.js';
+import Account from '../models/Account.js';
+import Strategy from '../models/Strategy.js';
+import Playbook from '../models/Playbook.js';
+import { requireOwnedReference } from '../utils/ownership.js';
 
 /**
  * Builds the persisted trade payload by merging user input with computed
@@ -11,6 +15,7 @@ function withComputedFields(input) {
 }
 
 export function buildTradeQuery({
+  userId,
   accountId,
   symbol,
   strategy,
@@ -23,7 +28,7 @@ export function buildTradeQuery({
   dateTo,
   search,
 }) {
-  const query = {};
+  const query = userId ? { userId } : {};
   if (accountId) query.accountId = accountId;
   if (symbol) query.symbol = symbol.toUpperCase();
   if (strategy) query.strategy = strategy;
@@ -47,7 +52,7 @@ export function buildTradeQuery({
   return query;
 }
 
-export async function listTrades({
+export async function listTrades(userId, {
   page = 1,
   limit = 50,
   accountId,
@@ -64,7 +69,7 @@ export async function listTrades({
   sortBy = 'entryTime',
   sortDir = 'desc',
 } = {}) {
-  const query = buildTradeQuery({
+  const query = { userId, ...buildTradeQuery({
     accountId,
     symbol,
     strategy,
@@ -76,7 +81,7 @@ export async function listTrades({
     dateFrom,
     dateTo,
     search,
-  });
+  }) };
 
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
   const limitNum = Math.min(500, Math.max(1, parseInt(limit, 10) || 50));
@@ -99,35 +104,43 @@ export async function listTrades({
   };
 }
 
-export async function getTradeById(id) {
-  return tradeRepository.findTradeById(id);
+export async function getTradeById(id, userId) {
+  return tradeRepository.findTradeById(id, userId);
 }
 
-export async function createTrade(input) {
-  const payload = withComputedFields(input);
+async function assertOwnedRelationships(userId, input) {
+  const checks = [[Account, input.accountId, 'Account'], [Strategy, input.strategy, 'Strategy'], [Playbook, input.playbook, 'Playbook']];
+  for (const [Model, id, label] of checks) await requireOwnedReference(Model, id, userId, label);
+}
+
+export async function createTrade(input, userId) {
+  await assertOwnedRelationships(userId, input);
+  const { userId: _ignored, ...safeInput } = input;
+  const payload = withComputedFields({ ...safeInput, userId });
   return tradeRepository.createTrade(payload);
 }
 
-export async function updateTrade(id, input) {
-  const existing = await tradeRepository.findTradeById(id);
+export async function updateTrade(id, input, userId) {
+  const existing = await tradeRepository.findTradeById(id, userId);
   if (!existing) return null;
-
-  const merged = { ...existing, ...input };
+  await assertOwnedRelationships(userId, input);
+  const { userId: _ignored, ...safeInput } = input;
+  const merged = { ...existing, ...safeInput, userId };
   const payload = withComputedFields(merged);
 
-  return tradeRepository.updateTradeDocument(id, payload);
+  return tradeRepository.updateTradeDocument(id, userId, payload);
 }
 
-export async function deleteTrade(id) {
-  return tradeRepository.deleteTradeById(id);
+export async function deleteTrade(id, userId) {
+  return tradeRepository.deleteTradeById(id, userId);
 }
 
-export async function bulkDeleteTrades(ids) {
-  return tradeRepository.deleteTradesByIds(ids);
+export async function bulkDeleteTrades(ids, userId) {
+  return tradeRepository.deleteTradesByIds(ids, userId);
 }
 
-export async function bulkTagTrades(ids, tagsToAdd) {
-  return tradeRepository.addTagsToTrades(ids, tagsToAdd);
+export async function bulkTagTrades(ids, tagsToAdd, userId) {
+  return tradeRepository.addTagsToTrades(ids, userId, tagsToAdd);
 }
 
 /**
@@ -135,8 +148,8 @@ export async function bulkTagTrades(ids, tagsToAdd) {
  * export — the export must reflect the full filtered set, not just the
  * currently visible page.
  */
-export async function exportTrades(filters = {}) {
-  const query = buildTradeQuery(filters);
+export async function exportTrades(filters = {}, userId) {
+  const query = { userId, ...buildTradeQuery(filters) };
   return tradeRepository.exportTradesByQuery(query);
 }
 

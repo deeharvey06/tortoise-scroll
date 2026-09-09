@@ -1,6 +1,8 @@
 import { previewImport, commitImport } from '../services/importService.js';
 import { listAdapters } from '../utils/csvAdapters.js';
 import ImportJob from '../models/ImportJob.js';
+import Account from '../models/Account.js';
+import { ownedFilter } from '../utils/ownership.js';
 import {
   importPreviewSchema,
   importCommitSchema,
@@ -53,6 +55,7 @@ export async function postCommit(req, res) {
   if (validated.mapping) {
     mapping = validated.mapping;
   }
+  if (!(await Account.exists(ownedFilter(req, { _id: validated.accountId })))) { res.status(404); throw new Error('Account not found'); }
 
   const job = await commitImport({
     accountId: validated.accountId,
@@ -60,13 +63,14 @@ export async function postCommit(req, res) {
     mapping,
     buffer: req.file.buffer,
     originalFilename: req.file.originalname,
+    userId: req.user.id,
   });
 
   res.status(201).json(job);
 }
 
 export async function getImportJob(req, res) {
-  const job = await ImportJob.findById(req.params.id).lean();
+  const job = await ImportJob.findOne(ownedFilter(req, { _id: req.params.id })).lean();
   if (!job) {
     res.status(404);
     throw new Error('Import job not found');
@@ -75,7 +79,7 @@ export async function getImportJob(req, res) {
 }
 
 export async function listImportJobs(req, res) {
-  const jobs = await ImportJob.find().sort({ createdAt: -1 }).limit(50).lean();
+  const jobs = await ImportJob.find(ownedFilter(req)).sort({ createdAt: -1 }).limit(50).lean();
   res.json(jobs);
 }
 

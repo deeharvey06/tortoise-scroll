@@ -41,17 +41,21 @@ export function ruleMatches(trade, rule) {
  * $addToSet, never overwriting existing tags); autoApply=false rules are
  * returned as suggestions for the user to approve manually.
  */
-export async function runAutoTagger(tradeIds) {
-  const rules = await TaggingRule.find({ isActive: true }).lean();
+export async function runAutoTagger(tradeIds, userId) {
+  const rules = await TaggingRule.find({ userId, isActive: true }).lean();
   if (rules.length === 0) {
-    return { applied: [], suggestions: [], note: 'No active tagging rules are configured.' };
+    return {
+      applied: [],
+      suggestions: [],
+      note: 'No active tagging rules are configured.',
+    };
   }
 
   const applied = [];
   const suggestions = [];
 
   for (const tradeId of tradeIds) {
-    const trade = await tradeService.getTradeById(tradeId);
+    const trade = await tradeService.getTradeById(tradeId, userId);
     if (!trade) continue;
 
     const tagsToAdd = new Set();
@@ -67,12 +71,22 @@ export async function runAutoTagger(tradeIds) {
     }
 
     if (tagsToAdd.size > 0) {
-      const newTags = Array.from(new Set([...(trade.tags || []), ...tagsToAdd]));
-      await tradeService.updateTrade(tradeId, { tags: newTags });
-      applied.push({ tradeId, symbol: trade.symbol, tagsApplied: Array.from(tagsToAdd) });
+      const newTags = Array.from(
+        new Set([...(trade.tags || []), ...tagsToAdd]),
+      );
+      await tradeService.updateTrade(tradeId, { tags: newTags }, userId);
+      applied.push({
+        tradeId,
+        symbol: trade.symbol,
+        tagsApplied: Array.from(tagsToAdd),
+      });
     }
     if (suggestedForTrade.length > 0) {
-      suggestions.push({ tradeId, symbol: trade.symbol, matches: suggestedForTrade });
+      suggestions.push({
+        tradeId,
+        symbol: trade.symbol,
+        matches: suggestedForTrade,
+      });
     }
   }
 
@@ -80,11 +94,17 @@ export async function runAutoTagger(tradeIds) {
 }
 
 /** Applies one specific suggested rule's tags to one trade — the "approve" action. */
-export async function approveSuggestion(tradeId, tags) {
-  const trade = await tradeService.getTradeById(tradeId);
-  if (!trade) throw new Error('Trade not found');
+export async function approveSuggestion(tradeId, tags, userId) {
+  const trade = await tradeService.getTradeById(tradeId, userId);
+  if (!trade)
+    throw Object.assign(new Error('Trade not found'), { statusCode: 404 });
   const newTags = Array.from(new Set([...(trade.tags || []), ...tags]));
-  return tradeService.updateTrade(tradeId, { tags: newTags });
+  return tradeService.updateTrade(tradeId, { tags: newTags }, userId);
 }
 
-export default { evaluateCondition, ruleMatches, runAutoTagger, approveSuggestion };
+export default {
+  evaluateCondition,
+  ruleMatches,
+  runAutoTagger,
+  approveSuggestion,
+};

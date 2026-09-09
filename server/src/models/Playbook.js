@@ -19,6 +19,7 @@ const CHECKLIST_DEFAULTS = [
 
 const playbookSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     setupName: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
     idealConditions: { type: String, default: '' },
@@ -37,6 +38,6 @@ const playbookSchema = new Schema(
   { timestamps: true }
 );
 
-playbookSchema.index({ isActive: 1, setupName: 1 });
+playbookSchema.index({ userId: 1, isActive: 1, setupName: 1 });
 
 export default mongoose.model('Playbook', playbookSchema);

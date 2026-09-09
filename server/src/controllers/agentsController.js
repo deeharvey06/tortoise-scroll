@@ -7,23 +7,25 @@ import * as performanceAgent from '../agents/performanceAgent.js';
 
 function extractFilters(req) {
   const { accountId, symbol, strategy, playbook, setup, direction, session, tags, dateFrom, dateTo } = req.query;
-  return { accountId, symbol, strategy, playbook, setup, direction, session, tags, dateFrom, dateTo };
+  return { userId: req.user.id, accountId, symbol, strategy, playbook, setup, direction, session, tags, dateFrom, dateTo };
 }
 
 // --- Tagging rules (Agent 1 config) ---
 
 export async function listTaggingRules(req, res) {
-  const rules = await TaggingRule.find().sort({ createdAt: -1 }).lean();
+  const rules = await TaggingRule.find({ userId: req.user.id }).sort({ createdAt: -1 }).lean();
   res.json(rules);
 }
 
 export async function createTaggingRule(req, res) {
-  const rule = await TaggingRule.create(req.body);
+  const { userId: _ignored, ...safe } = req.body;
+  const rule = await TaggingRule.create({ ...safe, userId: req.user.id });
   res.status(201).json(rule);
 }
 
 export async function updateTaggingRule(req, res) {
-  const rule = await TaggingRule.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const { userId: _ignored, ...safe } = req.body;
+  const rule = await TaggingRule.findOneAndUpdate({ _id: req.params.id, userId: req.user.id }, safe, { new: true, runValidators: true });
   if (!rule) {
     res.status(404);
     throw new Error('Tagging rule not found');
@@ -32,7 +34,7 @@ export async function updateTaggingRule(req, res) {
 }
 
 export async function deleteTaggingRule(req, res) {
-  const deleted = await TaggingRule.findByIdAndDelete(req.params.id);
+  const deleted = await TaggingRule.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
   if (!deleted) {
     res.status(404);
     throw new Error('Tagging rule not found');
@@ -46,7 +48,7 @@ export async function runAutoTagger(req, res) {
     res.status(400);
     throw new Error('tradeIds must be a non-empty array');
   }
-  const result = await autoTaggerAgent.runAutoTagger(tradeIds);
+  const result = await autoTaggerAgent.runAutoTagger(tradeIds, req.user.id);
   res.json(result);
 }
 
@@ -56,7 +58,7 @@ export async function approveSuggestion(req, res) {
     res.status(400);
     throw new Error('tradeId and a non-empty tags array are required');
   }
-  const trade = await autoTaggerAgent.approveSuggestion(tradeId, tags);
+  const trade = await autoTaggerAgent.approveSuggestion(tradeId, tags, req.user.id);
   res.json(trade);
 }
 
@@ -83,7 +85,7 @@ export async function getPreMarketBriefing(req, res) {
 
 export async function getRiskAlert(req, res) {
   const { accountId } = req.query;
-  const alert = await riskAgent.generateRiskAlert(accountId || null);
+  const alert = await riskAgent.generateRiskAlert(accountId || null, req.user.id);
   res.json(alert);
 }
 

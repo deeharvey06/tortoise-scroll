@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
  */
 const importJobSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     accountId: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
     broker: { type: String, default: 'generic' },
     originalFilename: { type: String, default: '' },
@@ -32,6 +33,6 @@ const importJobSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-importJobSchema.index({ createdAt: -1 });
+importJobSchema.index({ userId: 1, createdAt: -1 });
 
 export default mongoose.model('ImportJob', importJobSchema);

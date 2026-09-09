@@ -33,6 +33,7 @@ const screenshotSchema = new Schema(
 const tradeSchema = new Schema(
   {
     // Identity / linkage
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     accountId: { type: Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
     strategy: { type: Schema.Types.ObjectId, ref: 'Strategy', default: null, index: true },
     playbook: { type: Schema.Types.ObjectId, ref: 'Playbook', default: null, index: true },
@@ -112,9 +113,9 @@ const tradeSchema = new Schema(
 );
 
 // Compound indexes for the query patterns the dashboard/analytics need most
-tradeSchema.index({ accountId: 1, entryTime: -1 });
-tradeSchema.index({ accountId: 1, symbol: 1, entryTime: -1 });
-tradeSchema.index({ accountId: 1, strategy: 1 });
-tradeSchema.index({ accountId: 1, tags: 1 });
+tradeSchema.index({ userId: 1, accountId: 1, entryTime: -1 });
+tradeSchema.index({ userId: 1, accountId: 1, symbol: 1, entryTime: -1 });
+tradeSchema.index({ userId: 1, strategy: 1 });
+tradeSchema.index({ userId: 1, tags: 1 });
 
 export default mongoose.model('Trade', tradeSchema);

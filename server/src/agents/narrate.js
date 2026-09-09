@@ -7,10 +7,10 @@ import * as providerClient from '../ai/providerClient.js';
  * the list. If AI isn't configured (the default), findings are rendered as
  * a clean bullet list instead, so every agent works with AI fully disabled.
  */
-export async function narrate(findings, { title } = {}) {
+export async function narrate(findings, { title, userId } = {}) {
   const bullets = findings.map((f) => `- ${f}`).join('\n');
 
-  const configured = await providerClient.isConfigured();
+  const configured = await providerClient.isConfigured(userId);
   if (!configured || findings.length === 0) {
     return bullets || 'No findings to report.';
   }
@@ -26,7 +26,7 @@ export async function narrate(findings, { title } = {}) {
         (title ? ` This is for a "${title}" report.` : '') },
       { role: 'user', content: `Findings:\n${bullets}` },
     ];
-    const text = await providerClient.chatComplete(prompt);
+    const text = await providerClient.chatComplete(prompt, userId);
     return text || bullets;
   } catch (err) {
     // Narration is a nice-to-have; never let it break an agent that

@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
 
 import tradeRoutes from './routes/tradeRoutes.js';
 import accountRoutes from './routes/accountRoutes.js';
@@ -22,12 +24,20 @@ import backupRoutes from './routes/backupRoutes.js';
 import appSettingsRoutes from './routes/appSettingsRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import jobsRoutes from './routes/jobsRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import accountSecurityRoutes from './routes/accountSecurityRoutes.js';
 import { jobQueue } from './queue/jobQueue.js';
 import * as jobHandlers from './queue/handlers.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { uploadsRootPath } from './middleware/upload.js';
 import { requireAuth } from './middleware/auth.js';
 import requestLogger from './middleware/requestLogger.js';
+import csrfProtection from './middleware/csrfProtection.js';
+import inputSafety from './middleware/inputSafety.js';
+import { getConfig } from './config/index.js';
+import Trade from './models/Trade.js';
+import Strategy from './models/Strategy.js';
+import Playbook from './models/Playbook.js';
 
 // Register job handlers
 jobQueue.register('import-trades', jobHandlers.handleTradeImport);
@@ -38,40 +48,158 @@ jobQueue.register(
 jobQueue.register('risk-assessment', jobHandlers.handleRiskAssessment);
 jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
 
-export function createApp() {
+export function createApp(options = {}) {
   const app = express();
+  const config = getConfig();
 
-  app.use(helmet({ crossOriginResourcePolicy: false }));
+  app.disable('x-powered-by');
+  app.set('query parser', 'simple');
+
+  const sessionCookieName =
+    config.nodeEnv === 'production' ? '__Host-tortoise.sid' : 'tortoise.sid';
+
+  const sessionCookieOptions = {
+    httpOnly: true,
+    secure: config.nodeEnv === 'production',
+    sameSite: 'lax',
+    maxAge: config.sessionTtlMs,
+    path: '/',
+  };
+
+  if (config.nodeEnv === 'production') app.set('trust proxy', 1);
+
+  app.use(requestLogger);
   app.use(
-    cors({
-      origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    helmet({
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+      referrerPolicy: { policy: 'no-referrer' },
     }),
   );
-  const authLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 100000 : 1000,
+
+  app.use(
+    cors({
+      origin(origin, callback) {
+        if (!origin || config.allowedOrigins.includes(origin))
+          return callback(null, true);
+        return callback(
+          Object.assign(new Error('CORS origin denied'), {
+            statusCode: 403,
+            publicMessage: 'Request origin is not allowed',
+            isOperational: true,
+          }),
+        );
+      },
+      credentials: true,
+      methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'X-CSRF-Protection', 'X-Request-Id'],
+      exposedHeaders: [
+        'X-Request-Id',
+        'RateLimit',
+        'RateLimit-Policy',
+        'Retry-After',
+      ],
+      maxAge: 600,
+    }),
+  );
+
+  app.use(
+    '/api',
+    csrfProtection({
+      allowedOrigins: config.allowedOrigins,
+      enforce: options.enforceCsrf ?? config.csrfProtectionEnabled,
+    }),
+  );
+
+  app.use(
+    session({
+      name: sessionCookieName,
+      secret:
+        config.sessionSecret || 'test-only-session-secret-at-least-32-chars',
+      resave: false,
+      saveUninitialized: false,
+      rolling: true,
+      store:
+        options.sessionStore ||
+        MongoStore.create({
+          mongoUrl: config.mongoUri,
+          ttl: Math.ceil(config.sessionTtlMs / 1000),
+          touchAfter: 300,
+        }),
+      cookie: sessionCookieOptions,
+    }),
+  );
+
+  app.locals.sessionCookieName = sessionCookieName;
+  app.locals.sessionCookieOptions = sessionCookieOptions;
+
+  const loginLimiter = rateLimit({
+    windowMs: config.authRateLimitWindowMs,
+    max: config.authRateLimitMax,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => req.method !== 'POST',
+    handler: (_req, _res, next) =>
+      next(
+        Object.assign(
+          new Error('Too many authentication attempts. Try again later.'),
+          {
+            statusCode: 429,
+            publicMessage: 'Too many authentication attempts. Try again later.',
+            isOperational: true,
+          },
+        ),
+      ),
   });
+
+  const resetLimiter = rateLimit({
+    windowMs: config.authRateLimitWindowMs,
+    max: config.passwordResetRateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.method !== 'POST',
+    handler: (_req, _res, next) =>
+      next(
+        Object.assign(
+          new Error('Too many password reset attempts. Try again later.'),
+          {
+            statusCode: 429,
+            publicMessage: 'Too many password reset attempts. Try again later.',
+            isOperational: true,
+          },
+        ),
+      ),
+  });
+
   const apiLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: process.env.NODE_ENV === 'test' ? 100000 : 200,
+    max: 300,
     standardHeaders: true,
     legacyHeaders: false,
   });
 
-  if (process.env.NODE_ENV !== 'test') {
-    app.use('/api/auth', authLimiter);
+  if (options.enforceRateLimit ?? config.nodeEnv !== 'test') {
+    app.use(['/api/auth/login', '/api/auth/register'], loginLimiter);
+    app.use(
+      ['/api/auth/forgot-password', '/api/auth/reset-password'],
+      resetLimiter,
+    );
     app.use(apiLimiter);
   }
-  app.use(express.json({ limit: '25mb' }));
-  app.use(express.urlencoded({ extended: true }));
+
+  app.use(express.json({ limit: '10mb', strict: true }));
+  app.use(
+    express.urlencoded({
+      extended: false,
+      limit: '100kb',
+      parameterLimit: 100,
+    }),
+  );
+
+  app.use('/api', inputSafety);
 
   if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
   }
-
-  app.use(requestLogger);
 
   // Export the job queue for testing and direct access
   app.locals.jobQueue = jobQueue;
@@ -101,10 +229,48 @@ export function createApp() {
   app.use('/api/agents', requireAuth, agentsRoutes);
   app.use('/api/backup', requireAuth, backupRoutes);
   app.use('/api/settings', requireAuth, appSettingsRoutes);
-  app.use('/api/jobs', jobsRoutes);
+  app.use('/api/jobs', requireAuth, jobsRoutes);
+  app.use('/api/admin', requireAuth, adminRoutes);
+  app.use('/api/account-security', requireAuth, accountSecurityRoutes);
 
   // Serves uploaded trade screenshots — /uploads/screenshots/<file>
-  app.use('/uploads', express.static(uploadsRootPath));
+  app.use(
+    '/uploads/screenshots/:filename',
+    requireAuth,
+    async (req, res, next) => {
+      try {
+        const url = `/uploads/screenshots/${req.params.filename}`;
+        if (
+          !(await Trade.exists({ userId: req.user.id, 'screenshots.url': url }))
+        )
+          return res
+            .status(404)
+            .json({ error: { message: 'Screenshot not found' } });
+        return res.sendFile(req.params.filename, {
+          root: `${uploadsRootPath}/screenshots`,
+        });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  app.use('/uploads/media/:filename', requireAuth, async (req, res, next) => {
+    try {
+      const url = `/uploads/media/${req.params.filename}`;
+      const owned = await Promise.all([
+        Strategy.exists({ userId: req.user.id, 'screenshots.url': url }),
+        Playbook.exists({ userId: req.user.id, 'screenshots.url': url }),
+      ]);
+      if (!owned.some(Boolean))
+        return res.status(404).json({ error: { message: 'Media not found' } });
+      return res.sendFile(req.params.filename, {
+        root: `${uploadsRootPath}/media`,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
 
   app.use(notFound);
   app.use(errorHandler);

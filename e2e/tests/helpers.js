@@ -1,24 +1,23 @@
 import { expect } from '@playwright/test';
 
-const AUTH_STORAGE_KEY = 'tortoise-scroll-auth';
-
 /**
- * Authenticates through the real API, then seeds the same localStorage entry
- * consumed by useAuthStore before the first protected route is rendered.
- * Every Playwright test receives a fresh browser context, so this must run in
- * beforeEach rather than relying on state from an earlier serial test.
+ * Registers (when needed) and authenticates through the real cookie-session API.
+ * The request fixture shares its cookie jar with the browser context.
  */
 export async function authenticateAsDemo(page, request) {
-  const response = await request.post('/api/auth/login', {
-    data: { username: 'demo', password: 'demo123' },
+  const credentials = {
+    email: 'e2e-user@tortoise-scroll.test',
+    password: 'e2e-password-strong-123',
+  };
+  const api = page.request;
+  await api.post('/api/auth/register', {
+    data: { ...credentials, displayName: 'E2E User' },
   });
-  expect(response.ok(), `Demo login failed: ${response.status()}`).toBeTruthy();
-  const session = await response.json();
-  await page.addInitScript(
-    ({ storageKey, value }) => localStorage.setItem(storageKey, value),
-    { storageKey: AUTH_STORAGE_KEY, value: JSON.stringify(session) },
-  );
-  return session;
+  const response = await api.post('/api/auth/login', {
+    data: credentials,
+  });
+  expect(response.ok(), `E2E login failed: ${response.status()}`).toBeTruthy();
+  return response.json();
 }
 
 /**
@@ -64,7 +63,7 @@ export async function uploadViaLabelButton(page, buttonText, filePath) {
  */
 export async function selectAccountFilter(page, accountName) {
   await page.getByRole('button', { name: /Filters/ }).click();
-  await page.getByLabel('Account').click();
+  await page.getByRole('combobox', { name: 'Account', exact: true }).click();
   await page.getByRole('option', { name: accountName, exact: true }).click();
   await page.keyboard.press('Escape');
 }

@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 
 const backtestConfigSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     name: { type: String, required: true, trim: true },
     symbol: { type: String, required: true, uppercase: true, trim: true },
     timeframe: { type: String, default: '1d' },
@@ -28,6 +29,6 @@ const backtestConfigSchema = new Schema(
   { timestamps: true }
 );
 
-backtestConfigSchema.index({ updatedAt: -1 });
+backtestConfigSchema.index({ userId: 1, updatedAt: -1 });
 
 export default mongoose.model('BacktestConfig', backtestConfigSchema);

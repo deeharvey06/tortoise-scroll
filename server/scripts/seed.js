@@ -7,6 +7,7 @@ import Strategy from '../src/models/Strategy.js';
 import Tag from '../src/models/Tag.js';
 import JournalEntry from '../src/models/JournalEntry.js';
 import { computeTradeFinancials } from '../src/services/calculationsService.js';
+import User, { normalizeEmail } from '../src/models/User.js';
 
 /**
  * Generates realistic-looking DEMO data so a new install has something to
@@ -166,25 +167,29 @@ function buildJournalEntry() {
 async function seed() {
   console.log('[seed] Connecting to MongoDB...');
   await connectDB();
+  const root = await User.findOne({ role: 'ROOT', emailNormalized: normalizeEmail(process.env.ROOT_USER_EMAIL), status: 'ACTIVE' });
+  if (!root) throw new Error('Configured active ROOT account is required before seeding');
+  const userId = root._id;
 
   console.log('[seed] Clearing previously seeded [DEMO] data (real data is untouched)...');
-  await Trade.deleteMany({ isDemoData: true });
-  await Account.deleteMany({ name: /^\[DEMO\]/ });
-  await Strategy.deleteMany({ name: /^\[DEMO\]/ });
-  await Tag.deleteMany({ name: /^\[DEMO\]/ });
-  await JournalEntry.deleteMany({ title: /^\[DEMO\]/ });
+  await Trade.deleteMany({ userId, isDemoData: true });
+  await Account.deleteMany({ userId, name: /^\[DEMO\]/ });
+  await Strategy.deleteMany({ userId, name: /^\[DEMO\]/ });
+  await Tag.deleteMany({ userId, name: /^\[DEMO\]/ });
+  await JournalEntry.deleteMany({ userId, title: /^\[DEMO\]/ });
 
   console.log('[seed] Creating 3 demo accounts...');
   const accounts = await Account.insertMany([
-    { name: '[DEMO] Main Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 25000 },
-    { name: '[DEMO] Swing Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 50000 },
-    { name: '[DEMO] Small Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 5000 },
+    { userId, name: '[DEMO] Main Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 25000 },
+    { userId, name: '[DEMO] Swing Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 50000 },
+    { userId, name: '[DEMO] Small Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 5000 },
   ]);
 
   console.log('[seed] Creating 10 demo strategies...');
   const strategies = await Strategy.insertMany(
     STRATEGY_DEFS.map((s) => ({
       ...s,
+      userId,
       description: `[DEMO] Sample strategy definition for ${s.name.replace('[DEMO] ', '')}.`,
       entryRules: 'Enter on confirmation of setup with volume above average.',
       exitRules: 'Exit at target or on opposite signal.',
@@ -196,12 +201,12 @@ async function seed() {
 
   console.log('[seed] Creating 30 demo tags...');
   const demoTagNames = [
-    ...SETUPS.slice(0, 10).map((s) => ({ name: `[DEMO] ${s}`, category: 'setup' })),
-    ...MISTAKE_OPTIONS.map((m) => ({ name: `[DEMO] ${m}`, category: 'mistake' })),
-    ...EMOTION_OPTIONS.map((e) => ({ name: `[DEMO] ${e}`, category: 'emotion' })),
+    ...SETUPS.slice(0, 10).map((s) => ({ userId, name: `[DEMO] ${s}`, category: 'Setup' })),
+    ...MISTAKE_OPTIONS.map((m) => ({ userId, name: `[DEMO] ${m}`, category: 'Mistake' })),
+    ...EMOTION_OPTIONS.map((e) => ({ userId, name: `[DEMO] ${e}`, category: 'Emotion' })),
     ...Array.from({ length: 30 - 10 - MISTAKE_OPTIONS.length - EMOTION_OPTIONS.length }, (_, i) => ({
       name: `[DEMO] Custom Tag ${i + 1}`,
-      category: 'custom',
+      userId, category: 'Custom',
     })),
   ];
   await Tag.insertMany(demoTagNames);
@@ -211,7 +216,7 @@ async function seed() {
   const strategyIds = strategies.map((s) => s._id);
   const tradeDocs = [];
   for (let i = 0; i < TRADE_COUNT; i += 1) {
-    tradeDocs.push(buildRandomTrade({ accountId: pick(accountIds), strategyIds }));
+    tradeDocs.push({ ...buildRandomTrade({ accountId: pick(accountIds), strategyIds }), userId });
   }
   // insertMany in batches to avoid one giant payload
   const BATCH_SIZE = 200;
@@ -221,7 +226,7 @@ async function seed() {
   }
 
   console.log('[seed] Creating 60 demo journal entries...');
-  const journalDocs = Array.from({ length: 60 }, () => buildJournalEntry());
+  const journalDocs = Array.from({ length: 60 }, () => ({ ...buildJournalEntry(), userId }));
   await JournalEntry.insertMany(journalDocs);
 
   console.log('\n[seed] Done. Summary:');

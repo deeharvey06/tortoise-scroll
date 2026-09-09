@@ -1,34 +1,22 @@
 import { create } from 'zustand';
-
-const STORAGE_KEY = 'tortoise-scroll-auth';
-
-const readStoredAuth = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { user: null, token: null };
-
-    const parsed = JSON.parse(raw);
-    return {
-      user: parsed.user || null,
-      token: parsed.token || null,
-    };
-  } catch {
-    return { user: null, token: null };
-  }
-};
+import authService from '../services/authService';
 
 export const useAuthStore = create((set) => ({
-  user: readStoredAuth().user,
-  token: readStoredAuth().token,
-  setSession: (user, token) => {
-    const payload = { user, token };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    set({ user, token });
+  status: 'INITIALIZING',
+  user: null,
+  initialize: async () => {
+    try {
+      const { user } = await authService.me();
+      set({ user, status: 'AUTHENTICATED' });
+    } catch (error) {
+      if (!error?.response) set({ user: null, status: 'NETWORK_ERROR' });
+      else if (error.response.status === 403) set({ user: null, status: 'ACCOUNT_SUSPENDED' });
+      else set({ user: null, status: 'UNAUTHENTICATED' });
+    }
   },
-  clearSession: () => {
-    localStorage.removeItem(STORAGE_KEY);
-    set({ user: null, token: null });
-  },
+  setAuthenticatedUser: (user) => set({ user, status: 'AUTHENTICATED' }),
+  setAuthStatus: (status) => set((state) => ({ user: status === 'FORBIDDEN' ? state.user : null, status })),
+  clearSession: () => set({ user: null, status: 'UNAUTHENTICATED' }),
 }));
 
 export default useAuthStore;

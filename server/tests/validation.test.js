@@ -7,8 +7,8 @@ import {
   tradeUpdateSchema,
 } from '../src/schemas/trade.schema.js';
 
-test('loginSchema rejects empty username/password before business logic', () => {
-  const result = loginSchema.safeParse({ username: '', password: '' });
+test('loginSchema rejects empty email/password before business logic', () => {
+  const result = loginSchema.safeParse({ email: '', password: '' });
 
   assert.equal(result.success, false);
 });

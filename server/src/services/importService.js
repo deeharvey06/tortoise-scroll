@@ -112,7 +112,7 @@ function buildRowPayload(row, mapping, adapter, accountId) {
  * broker exports) and returns a saved ImportJob with a per-row outcome —
  * imported / duplicate / error — so nothing is ever silently dropped.
  */
-export async function commitImport({ accountId, broker, mapping, buffer, originalFilename }) {
+export async function commitImport({ accountId, broker, mapping, buffer, originalFilename, userId }) {
   const adapter = getAdapter(broker);
   const effectiveMapping = { ...adapter.defaultMapping, ...mapping };
 
@@ -141,7 +141,7 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
       continue;
     }
 
-    const existing = await Trade.findOne({ accountId, sourceRowHash: payload.sourceRowHash }).lean();
+    const existing = await Trade.findOne({ userId, accountId, sourceRowHash: payload.sourceRowHash }).lean();
     if (existing) {
       duplicates += 1;
       jobRows.push({
@@ -154,7 +154,7 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
     }
 
     try {
-      const trade = await createTrade(payload);
+      const trade = await createTrade(payload, userId);
       imported += 1;
       jobRows.push({ rowNumber, outcome: 'imported', message: 'Imported', tradeId: trade._id });
     } catch (err) {
@@ -164,6 +164,7 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
   }
 
   const job = await ImportJob.create({
+    userId,
     accountId,
     broker,
     originalFilename,
@@ -175,7 +176,7 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
 
   // Tag every imported trade with its import batch for provenance/audit
   await Trade.updateMany(
-    { _id: { $in: jobRows.filter((r) => r.tradeId && r.outcome === 'imported').map((r) => r.tradeId) } },
+    { userId, _id: { $in: jobRows.filter((r) => r.tradeId && r.outcome === 'imported').map((r) => r.tradeId) } },
     { $set: { importBatchId: job._id } }
   );
 

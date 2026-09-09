@@ -17,6 +17,7 @@ const conditionSchema = new Schema(
 
 const taggingRuleSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     name: { type: String, required: true, trim: true },
     isActive: { type: Boolean, default: true },
     // If true, matching trades get the tags applied automatically when the
@@ -30,6 +31,6 @@ const taggingRuleSchema = new Schema(
   { timestamps: true }
 );
 
-taggingRuleSchema.index({ isActive: 1 });
+taggingRuleSchema.index({ userId: 1, isActive: 1 });
 
 export default mongoose.model('TaggingRule', taggingRuleSchema);

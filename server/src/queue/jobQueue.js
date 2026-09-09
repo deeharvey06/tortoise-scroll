@@ -31,7 +31,7 @@ class JobQueue extends EventEmitter {
     this.handlers.set(jobType, handler);
   }
 
-  async enqueue(jobType, payload = {}) {
+  async enqueue(jobType, payload = {}, userId = null) {
     if (!this.handlers.has(jobType)) {
       throw new Error(`No handler registered for job type: ${jobType}`);
     }
@@ -48,6 +48,7 @@ class JobQueue extends EventEmitter {
       startedAt: null,
       completedAt: null,
       progress: 0,
+      userId: userId ? String(userId) : null,
     };
 
     this.jobs.set(jobId, job);
@@ -110,9 +111,9 @@ class JobQueue extends EventEmitter {
     });
   }
 
-  getJobStatus(jobId) {
+  getJobStatus(jobId, userId = undefined) {
     const job = this.jobs.get(jobId);
-    if (!job) return null;
+    if (!job || (userId !== undefined && job.userId !== String(userId))) return null;
 
     return {
       id: job.id,
@@ -127,13 +128,13 @@ class JobQueue extends EventEmitter {
     };
   }
 
-  async waitForJob(jobId, timeoutMs = 300000) {
+  async waitForJob(jobId, timeoutMs = 300000, userId = undefined) {
     const startTime = Date.now();
 
     return new Promise((resolve, reject) => {
       const checkStatus = () => {
         const job = this.jobs.get(jobId);
-        if (!job) {
+        if (!job || (userId !== undefined && job.userId !== String(userId))) {
           reject(new Error(`Job not found: ${jobId}`));
           return;
         }
@@ -153,21 +154,22 @@ class JobQueue extends EventEmitter {
     });
   }
 
-  getQueueStats() {
+  getQueueStats(userId = undefined) {
+    const jobs = userId === undefined ? Array.from(this.jobs.values()) : Array.from(this.jobs.values()).filter((job) => job.userId === String(userId));
     return {
-      pending: Array.from(this.jobs.values()).filter(
+      pending: jobs.filter(
         (j) => j.status === 'pending',
       ).length,
-      running: Array.from(this.jobs.values()).filter(
+      running: jobs.filter(
         (j) => j.status === 'running',
       ).length,
-      completed: Array.from(this.jobs.values()).filter(
+      completed: jobs.filter(
         (j) => j.status === 'completed',
       ).length,
-      failed: Array.from(this.jobs.values()).filter(
+      failed: jobs.filter(
         (j) => j.status === 'failed',
       ).length,
-      total: this.jobs.size,
+      total: jobs.length,
     };
   }
 
