@@ -79,13 +79,6 @@ export function createApp(options = {}) {
   app.use(
     cors({
       origin(origin, callback) {
-        console.log('origin :>>>>>>>>', origin);
-        console.log(
-          'config.allowedOrigins[0] :>>>>>>>>',
-          config.allowedOrigins[0],
-        );
-
-        console.log('IF :>>>>>>>>', origin === config.allowedOrigins[0]);
         if (!origin || config.allowedOrigins.includes(origin))
           return callback(null, true);
         return callback(
@@ -108,6 +101,7 @@ export function createApp(options = {}) {
       maxAge: 600,
     }),
   );
+
   app.use(
     '/api',
     csrfProtection({
@@ -115,6 +109,7 @@ export function createApp(options = {}) {
       enforce: options.enforceCsrf ?? config.csrfProtectionEnabled,
     }),
   );
+
   app.use(
     session({
       name: sessionCookieName,
@@ -133,8 +128,10 @@ export function createApp(options = {}) {
       cookie: sessionCookieOptions,
     }),
   );
+
   app.locals.sessionCookieName = sessionCookieName;
   app.locals.sessionCookieOptions = sessionCookieOptions;
+
   const loginLimiter = rateLimit({
     windowMs: config.authRateLimitWindowMs,
     max: config.authRateLimitMax,
@@ -153,6 +150,7 @@ export function createApp(options = {}) {
         ),
       ),
   });
+
   const resetLimiter = rateLimit({
     windowMs: config.authRateLimitWindowMs,
     max: config.passwordResetRateLimitMax,
@@ -171,6 +169,7 @@ export function createApp(options = {}) {
         ),
       ),
   });
+
   const apiLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 300,
@@ -186,6 +185,7 @@ export function createApp(options = {}) {
     );
     app.use(apiLimiter);
   }
+
   app.use(express.json({ limit: '10mb', strict: true }));
   app.use(
     express.urlencoded({
@@ -194,6 +194,7 @@ export function createApp(options = {}) {
       parameterLimit: 100,
     }),
   );
+
   app.use('/api', inputSafety);
 
   if (process.env.NODE_ENV !== 'test') {
@@ -253,6 +254,7 @@ export function createApp(options = {}) {
       }
     },
   );
+
   app.use('/uploads/media/:filename', requireAuth, async (req, res, next) => {
     try {
       const url = `/uploads/media/${req.params.filename}`;
