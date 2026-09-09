@@ -380,7 +380,7 @@ export default function ReportsPage() {
       .catch(
         (err) =>
           !cancelled &&
-          setError(err.response?.data?.error?.message || err.message),
+          setError(err.response?.data?.error?.message || err.message)
       )
       .finally(() => !cancelled && setLoading(false));
     return () => {

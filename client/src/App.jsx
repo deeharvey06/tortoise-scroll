@@ -10,15 +10,24 @@ import useAuthStore from './store/useAuthStore';
 
 export default function App() {
   const themeMode = useUIStore((state) => state.themeMode);
-  const systemPrefersDark = useMediaQuery('(prefers-color-scheme: dark)', { noSsr: true });
-  const resolvedMode = themeMode === 'system' ? (systemPrefersDark ? 'dark' : 'light') : themeMode;
-  const theme = useMemo(() => createTortoiseTheme(resolvedMode), [resolvedMode]);
+  const systemPrefersDark = useMediaQuery('(prefers-color-scheme: dark)', {
+    noSsr: true,
+  });
+  const resolvedMode =
+    themeMode === 'system' ? (systemPrefersDark ? 'dark' : 'light') : themeMode;
+  const theme = useMemo(
+    () => createTortoiseTheme(resolvedMode),
+    [resolvedMode]
+  );
   const initializeAuth = useAuthStore((state) => state.initialize);
 
-  useEffect(() => { initializeAuth(); }, [initializeAuth]);
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   useEffect(() => {
-    const handleAuthEvent = (event) => useAuthStore.getState().setAuthStatus(event.detail);
+    const handleAuthEvent = (event) =>
+      useAuthStore.getState().setAuthStatus(event.detail);
     window.addEventListener('tortoise:auth', handleAuthEvent);
     return () => window.removeEventListener('tortoise:auth', handleAuthEvent);
   }, []);

@@ -6,10 +6,24 @@ const conditionSchema = new Schema(
   {
     field: {
       type: String,
-      enum: ['setup', 'session', 'direction', 'symbol', 'assetType', 'followedPlan', 'rMultiple', 'netPnL', 'holdingTimeSeconds'],
+      enum: [
+        'setup',
+        'session',
+        'direction',
+        'symbol',
+        'assetType',
+        'followedPlan',
+        'rMultiple',
+        'netPnL',
+        'holdingTimeSeconds',
+      ],
       required: true,
     },
-    operator: { type: String, enum: ['equals', 'contains', 'gt', 'gte', 'lt', 'lte'], required: true },
+    operator: {
+      type: String,
+      enum: ['equals', 'contains', 'gt', 'gte', 'lt', 'lte'],
+      required: true,
+    },
     value: { type: Schema.Types.Mixed, required: true },
   },
   { _id: false }
@@ -17,7 +31,12 @@ const conditionSchema = new Schema(
 
 const taggingRuleSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     name: { type: String, required: true, trim: true },
     isActive: { type: Boolean, default: true },
     // If true, matching trades get the tags applied automatically when the

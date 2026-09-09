@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
-const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/trading-journal-e2e';
+const uri =
+  process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/trading-journal-e2e';
 let dbName;
 try {
   dbName = new URL(uri).pathname.replace(/^\//, '').split('?')[0];
@@ -10,7 +11,9 @@ try {
 }
 
 if (!dbName || !/(^|[-_])(test|e2e)([-_]|$)/i.test(dbName)) {
-  console.error(`[test-db] Refusing to drop non-test database: ${dbName || '(missing database name)'}`);
+  console.error(
+    `[test-db] Refusing to drop non-test database: ${dbName || '(missing database name)'}`
+  );
   process.exit(1);
 }
 

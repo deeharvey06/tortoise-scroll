@@ -21,13 +21,18 @@ export async function runAutoTagger(tradeIds) {
   return data;
 }
 export async function approveTagSuggestion(tradeId, tags) {
-  const { data } = await api.post('/agents/auto-tagger/approve', { tradeId, tags });
+  const { data } = await api.post('/agents/auto-tagger/approve', {
+    tradeId,
+    tags,
+  });
   return data;
 }
 
 // Agent 2 — Session Review
 export async function fetchSessionReview(date, params = {}) {
-  const { data } = await api.get('/agents/session-review', { params: { ...params, date } });
+  const { data } = await api.get('/agents/session-review', {
+    params: { ...params, date },
+  });
   return data;
 }
 
@@ -39,7 +44,9 @@ export async function fetchPreMarketBriefing(params = {}) {
 
 // Agent 4 — Risk Monitor
 export async function fetchRiskAlert(accountId) {
-  const { data } = await api.get('/agents/risk-monitor', { params: accountId ? { accountId } : {} });
+  const { data } = await api.get('/agents/risk-monitor', {
+    params: accountId ? { accountId } : {},
+  });
   return data;
 }
 

@@ -12,7 +12,7 @@ const passwordResetTokenSchema = new mongoose.Schema(
     expiresAt: { type: Date, required: true, index: { expires: 0 } },
     usedAt: { type: Date, default: null },
   },
-  { timestamps: { createdAt: true, updatedAt: false } },
+  { timestamps: { createdAt: true, updatedAt: false } }
 );
 
 export default mongoose.models.PasswordResetToken ||

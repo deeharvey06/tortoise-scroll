@@ -8,14 +8,24 @@ import Playbook from '../models/Playbook.js';
  * style questions with real numbers instead of the model guessing.
  */
 function compareRecentBatches(closedTrades, n = 30) {
-  const sorted = [...closedTrades].sort((a, b) => new Date(a.exitTime) - new Date(b.exitTime));
+  const sorted = [...closedTrades].sort(
+    (a, b) => new Date(a.exitTime) - new Date(b.exitTime)
+  );
   const recent = sorted.slice(-n);
   const previous = sorted.slice(-2 * n, -n);
   if (recent.length === 0) return null;
   return {
     batchSize: n,
-    recent: { ...analyticsService.computeSummary(recent), sampleSize: recent.length },
-    previous: previous.length ? { ...analyticsService.computeSummary(previous), sampleSize: previous.length } : null,
+    recent: {
+      ...analyticsService.computeSummary(recent),
+      sampleSize: recent.length,
+    },
+    previous: previous.length
+      ? {
+          ...analyticsService.computeSummary(previous),
+          sampleSize: previous.length,
+        }
+      : null,
     note:
       previous.length < n
         ? `Only ${previous.length} trade(s) exist before the most recent ${recent.length} — the "previous" comparison batch is smaller than requested.`
@@ -37,8 +47,12 @@ export async function buildContextBundle(filters = {}) {
     Strategy.find({ userId: filters.userId }).select('name').lean(),
     Playbook.find({ userId: filters.userId }).select('setupName').lean(),
   ]);
-  const strategyNameById = Object.fromEntries(strategies.map((s) => [String(s._id), s.name]));
-  const playbookNameById = Object.fromEntries(playbooks.map((p) => [String(p._id), p.setupName]));
+  const strategyNameById = Object.fromEntries(
+    strategies.map((s) => [String(s._id), s.name])
+  );
+  const playbookNameById = Object.fromEntries(
+    playbooks.map((p) => [String(p._id), p.setupName])
+  );
 
   const summary = analyticsService.computeSummary(trades);
   const equityCurve = analyticsService.buildEquityCurve(closed);
@@ -54,8 +68,12 @@ export async function buildContextBundle(filters = {}) {
       netPnL: t.netPnL,
       rMultiple: t.rMultiple,
       setup: t.setup,
-      strategy: t.strategy ? strategyNameById[String(t.strategy)] || null : null,
-      playbook: t.playbook ? playbookNameById[String(t.playbook)] || null : null,
+      strategy: t.strategy
+        ? strategyNameById[String(t.strategy)] || null
+        : null,
+      playbook: t.playbook
+        ? playbookNameById[String(t.playbook)] || null
+        : null,
       session: t.session,
       entryTime: t.entryTime,
       exitTime: t.exitTime,
@@ -71,7 +89,9 @@ export async function buildContextBundle(filters = {}) {
       'Every group below reports its own trade count. Treat any group with fewer than ~10 trades as too small to draw a confident conclusion from.',
     summary,
     bySymbol: analyticsService.buildBySymbol(closed),
-    byStrategy: analyticsService.buildByStrategy(closed).map((g) => ({ ...g, label: strategyNameById[g.key] || g.label })),
+    byStrategy: analyticsService
+      .buildByStrategy(closed)
+      .map((g) => ({ ...g, label: strategyNameById[g.key] || g.label })),
     bySetup: analyticsService.buildBySetup(closed),
     bySession: analyticsService.buildBySession(closed),
     byDirection: analyticsService.buildByDirection(closed),

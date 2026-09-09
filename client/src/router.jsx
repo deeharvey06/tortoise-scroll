@@ -13,15 +13,15 @@ import {
 const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/Auth/RegisterPage'));
 const ForgotPasswordPage = lazy(
-  () => import('./pages/Auth/ForgotPasswordPage'),
+  () => import('./pages/Auth/ForgotPasswordPage')
 );
 const ResetPasswordPage = lazy(() => import('./pages/Auth/ResetPasswordPage'));
 const AccessDeniedPage = lazy(() => import('./pages/Auth/AccessDeniedPage'));
 const SessionExpiredPage = lazy(
-  () => import('./pages/Auth/SessionExpiredPage'),
+  () => import('./pages/Auth/SessionExpiredPage')
 );
 const AccountSuspendedPage = lazy(
-  () => import('./pages/Auth/AccountSuspendedPage'),
+  () => import('./pages/Auth/AccountSuspendedPage')
 );
 const NetworkErrorPage = lazy(() => import('./pages/Auth/NetworkErrorPage'));
 
@@ -42,17 +42,17 @@ const ReportsPage = lazy(() => import('./pages/Reports/ReportsPage'));
 const AnalyticsPage = lazy(() => import('./pages/Analytics/AnalyticsPage'));
 const ReplayPage = lazy(() => import('./pages/Replay/ReplayPage'));
 const BacktestingPage = lazy(
-  () => import('./pages/Backtesting/BacktestingPage'),
+  () => import('./pages/Backtesting/BacktestingPage')
 );
 const AiPartnerPage = lazy(() => import('./pages/AiPartner/AiPartnerPage'));
 const RiskPage = lazy(() => import('./pages/Risk/RiskPage'));
 const ImportPage = lazy(() => import('./pages/Import/ImportPage'));
 const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage'));
 const AdministrationPage = lazy(
-  () => import('./pages/Administration/AdministrationPage'),
+  () => import('./pages/Administration/AdministrationPage')
 );
 const AccountSecurityPage = lazy(
-  () => import('./pages/Security/AccountSecurityPage'),
+  () => import('./pages/Security/AccountSecurityPage')
 );
 
 function PageFallback() {

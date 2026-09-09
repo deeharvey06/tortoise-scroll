@@ -26,7 +26,7 @@ const parse = (schema, body) => {
   if (!result.success)
     throw fail(
       400,
-      result.error.issues.map((issue) => issue.message).join(', '),
+      result.error.issues.map((issue) => issue.message).join(', ')
     );
   return result.data;
 };
@@ -88,7 +88,7 @@ export async function listUsers(req, res) {
 
 export async function getUser(req, res) {
   const user = await User.findOne(
-    visibleUserFilter(req, idFilter(req.params.id)),
+    visibleUserFilter(req, idFilter(req.params.id))
   ).lean();
   if (!user) throw fail(404, 'User not found');
   res.json({ user: adminUser(user) });
@@ -122,7 +122,7 @@ export async function changeUserRole(req, res) {
   const updated = await User.findOneAndUpdate(
     { _id: current._id, role: current.role },
     { $set: { role } },
-    { new: true, runValidators: true },
+    { new: true, runValidators: true }
   );
   if (!updated) throw fail(409, 'User changed concurrently; reload and retry');
   await recordChange(
@@ -130,7 +130,7 @@ export async function changeUserRole(req, res) {
     updated,
     'USER_ROLE_CHANGED',
     { role: current.role },
-    { role: updated.role },
+    { role: updated.role }
   );
   res.json({ user: adminUser(updated) });
 }
@@ -146,7 +146,7 @@ export async function changeUserStatus(req, res) {
   const updated = await User.findOneAndUpdate(
     { _id: current._id, role: { $ne: 'ROOT' }, status: current.status },
     { $set: { status }, $inc: { sessionVersion: 1 } },
-    { new: true, runValidators: true },
+    { new: true, runValidators: true }
   );
   if (!updated) throw fail(409, 'User changed concurrently; reload and retry');
   await recordChange(
@@ -154,7 +154,7 @@ export async function changeUserStatus(req, res) {
     updated,
     'USER_STATUS_CHANGED',
     { status: current.status },
-    { status: updated.status },
+    { status: updated.status }
   );
   if (status !== 'ACTIVE')
     await SessionRecord.deleteMany({ userId: updated._id });

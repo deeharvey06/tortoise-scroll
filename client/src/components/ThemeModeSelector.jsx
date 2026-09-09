@@ -31,18 +31,35 @@ export default function ThemeModeSelector() {
   return (
     <>
       <Tooltip title={OPTIONS[themeMode].label}>
-        <IconButton size="small" aria-label={`Theme: ${OPTIONS[themeMode].label}`} onClick={(event) => setAnchorEl(event.currentTarget)}>
+        <IconButton
+          size='small'
+          aria-label={`Theme: ${OPTIONS[themeMode].label}`}
+          onClick={(event) => setAnchorEl(event.currentTarget)}
+        >
           <ActiveIcon sx={{ fontSize: 19 }} />
         </IconButton>
       </Tooltip>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
         {THEME_MODES.map((mode) => {
           const Icon = OPTIONS[mode].icon;
           return (
-            <MenuItem key={mode} selected={mode === themeMode} onClick={() => chooseMode(mode)} sx={{ minWidth: 184 }}>
-              <ListItemIcon><Icon fontSize="small" /></ListItemIcon>
+            <MenuItem
+              key={mode}
+              selected={mode === themeMode}
+              onClick={() => chooseMode(mode)}
+              sx={{ minWidth: 184 }}
+            >
+              <ListItemIcon>
+                <Icon fontSize='small' />
+              </ListItemIcon>
               <ListItemText>{OPTIONS[mode].label}</ListItemText>
-              {mode === themeMode && <CheckIcon color="primary" sx={{ ml: 2, fontSize: 18 }} />}
+              {mode === themeMode && (
+                <CheckIcon color='primary' sx={{ ml: 2, fontSize: 18 }} />
+              )}
             </MenuItem>
           );
         })}

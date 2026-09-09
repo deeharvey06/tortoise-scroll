@@ -43,20 +43,22 @@ export const useUIStore = create((set) => ({
     }
     set({ sidebarCollapsed });
   },
-  toggleSidebar: () => set((state) => {
-    const sidebarCollapsed = !state.sidebarCollapsed;
-    try {
-      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(sidebarCollapsed));
-    } catch {
-      // The in-memory preference still works when storage is unavailable.
-    }
-    return { sidebarCollapsed };
-  }),
+  toggleSidebar: () =>
+    set((state) => {
+      const sidebarCollapsed = !state.sidebarCollapsed;
+      try {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(sidebarCollapsed));
+      } catch {
+        // The in-memory preference still works when storage is unavailable.
+      }
+      return { sidebarCollapsed };
+    }),
   mobileNavigationOpen: false,
   openMobileNavigation: () => set({ mobileNavigationOpen: true }),
   closeMobileNavigation: () => set({ mobileNavigationOpen: false }),
   snackbar: null, // { message, severity }
-  showSnackbar: (message, severity = 'info') => set({ snackbar: { message, severity } }),
+  showSnackbar: (message, severity = 'info') =>
+    set({ snackbar: { message, severity } }),
   clearSnackbar: () => set({ snackbar: null }),
 }));
 

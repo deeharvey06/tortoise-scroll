@@ -1,13 +1,32 @@
 import JournalEntry from '../models/JournalEntry.js';
-import { ownedFilter, ownedPayload, withoutOwnership } from '../utils/ownership.js';
+import {
+  ownedFilter,
+  ownedPayload,
+  withoutOwnership,
+} from '../utils/ownership.js';
 import Account from '../models/Account.js';
 import Trade from '../models/Trade.js';
 
 async function validateLinks(req, input) {
-  if (input.accountId && !(await Account.exists(ownedFilter(req, { _id: input.accountId })))) { resNotFound(); }
-  if (Array.isArray(input.relatedTrades) && await Trade.countDocuments(ownedFilter(req, { _id: { $in: input.relatedTrades } })) !== new Set(input.relatedTrades.map(String)).size) resNotFound();
+  if (
+    input.accountId &&
+    !(await Account.exists(ownedFilter(req, { _id: input.accountId })))
+  ) {
+    resNotFound();
+  }
+  if (
+    Array.isArray(input.relatedTrades) &&
+    (await Trade.countDocuments(
+      ownedFilter(req, { _id: { $in: input.relatedTrades } })
+    )) !== new Set(input.relatedTrades.map(String)).size
+  )
+    resNotFound();
 }
-function resNotFound() { const error = new Error('Related resource not found'); error.statusCode = 404; throw error; }
+function resNotFound() {
+  const error = new Error('Related resource not found');
+  error.statusCode = 404;
+  throw error;
+}
 
 export async function listEntries(req, res) {
   const { type, dateFrom, dateTo } = req.query;
@@ -23,7 +42,9 @@ export async function listEntries(req, res) {
 }
 
 export async function getEntry(req, res) {
-  const entry = await JournalEntry.findOne(ownedFilter(req, { _id: req.params.id })).lean();
+  const entry = await JournalEntry.findOne(
+    ownedFilter(req, { _id: req.params.id })
+  ).lean();
   if (!entry) {
     res.status(404);
     throw new Error('Journal entry not found');
@@ -39,7 +60,11 @@ export async function createEntry(req, res) {
 
 export async function updateEntry(req, res) {
   await validateLinks(req, req.body);
-  const entry = await JournalEntry.findOneAndUpdate(ownedFilter(req, { _id: req.params.id }), withoutOwnership(req.body), { new: true });
+  const entry = await JournalEntry.findOneAndUpdate(
+    ownedFilter(req, { _id: req.params.id }),
+    withoutOwnership(req.body),
+    { new: true }
+  );
   if (!entry) {
     res.status(404);
     throw new Error('Journal entry not found');
@@ -48,7 +73,9 @@ export async function updateEntry(req, res) {
 }
 
 export async function deleteEntry(req, res) {
-  const deleted = await JournalEntry.findOneAndDelete(ownedFilter(req, { _id: req.params.id }));
+  const deleted = await JournalEntry.findOneAndDelete(
+    ownedFilter(req, { _id: req.params.id })
+  );
   if (!deleted) {
     res.status(404);
     throw new Error('Journal entry not found');

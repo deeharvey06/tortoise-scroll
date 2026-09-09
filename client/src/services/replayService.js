@@ -1,7 +1,9 @@
 import api from './api';
 
 export async function fetchReplaySession(date, params = {}) {
-  const { data } = await api.get('/replay/session', { params: { ...params, date } });
+  const { data } = await api.get('/replay/session', {
+    params: { ...params, date },
+  });
   return data;
 }
 

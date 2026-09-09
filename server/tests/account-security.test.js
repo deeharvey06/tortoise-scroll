@@ -55,7 +55,7 @@ before(async () => {
   const { hashPassword } = await import('../src/auth/passwords.js');
 
   stub(User, 'exists', async ({ emailNormalized }) =>
-    users.has(emailNormalized),
+    users.has(emailNormalized)
   );
   stub(User, 'create', async (data) => {
     const user = {
@@ -72,7 +72,7 @@ before(async () => {
     return user;
   });
   stub(User, 'findById', (id) =>
-    query([...users.values()].find((user) => same(user._id, id)) || null),
+    query([...users.values()].find((user) => same(user._id, id)) || null)
   );
   stub(User, 'findOne', (filter) =>
     query(
@@ -81,14 +81,14 @@ before(async () => {
           (!filter.emailNormalized ||
             user.emailNormalized === filter.emailNormalized) &&
           (!filter._id || same(user._id, filter._id)) &&
-          (!filter.status || user.status === filter.status),
-      ) || null,
-    ),
+          (!filter.status || user.status === filter.status)
+      ) || null
+    )
   );
 
   stub(SessionRecord, 'findOneAndUpdate', async (filter, update) => {
     let record = [...sessions.values()].find(
-      (item) => item.sessionId === filter.sessionId,
+      (item) => item.sessionId === filter.sessionId
     );
     if (!record)
       record = {
@@ -106,17 +106,16 @@ before(async () => {
         (item) =>
           (!filter.userId || same(item.userId, filter.userId)) &&
           (!filter.expiresAt?.$gt || item.expiresAt > filter.expiresAt.$gt) &&
-          (!filter.sessionId?.$ne || item.sessionId !== filter.sessionId.$ne),
-      ),
-    ),
+          (!filter.sessionId?.$ne || item.sessionId !== filter.sessionId.$ne)
+      )
+    )
   );
   stub(SessionRecord, 'findOne', (filter) =>
     query(
       [...sessions.values()].find(
-        (item) =>
-          same(item._id, filter._id) && same(item.userId, filter.userId),
-      ) || null,
-    ),
+        (item) => same(item._id, filter._id) && same(item.userId, filter.userId)
+      ) || null
+    )
   );
   stub(SessionRecord, 'deleteOne', async (filter) => {
     const record = [...sessions.values()].find(
@@ -124,7 +123,7 @@ before(async () => {
         (filter.sessionId && item.sessionId === filter.sessionId) ||
         (filter._id &&
           same(item._id, filter._id) &&
-          same(item.userId, filter.userId)),
+          same(item.userId, filter.userId))
     );
     if (record) sessions.delete(record.sessionId);
     return { deletedCount: record ? 1 : 0 };
@@ -180,7 +179,7 @@ before(async () => {
       saveUninitialized: false,
       store: new session.MemoryStore(),
       cookie: { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 1000 },
-    }),
+    })
   );
   app.locals.sessionCookieName = 'tortoise.sid';
   app.locals.sessionCookieOptions = {
@@ -233,7 +232,7 @@ test('individual session revocation and logout-others invalidate server sessions
   assert.equal(
     (await first.delete(`/api/account-security/sessions/${secondRecord.id}`))
       .status,
-    204,
+    204
   );
   const statuses = [
     (await second.get('/api/auth/me')).status,
@@ -242,7 +241,7 @@ test('individual session revocation and logout-others invalidate server sessions
   assert.ok(statuses.includes(401));
   assert.ok(statuses.includes(200));
   const logoutOthers = await first.post(
-    '/api/account-security/sessions/logout-others',
+    '/api/account-security/sessions/logout-others'
   );
   assert.equal(logoutOthers.status, 200);
   assert.equal(logoutOthers.body.revoked, 1);
@@ -266,7 +265,7 @@ test('password change requires current password, rotates current session, and re
         newPassword: 'new-password-value-123',
       })
     ).status,
-    400,
+    400
   );
   const changed = await first.patch('/api/account-security/password').send({
     currentPassword: 'original-password-123',
@@ -283,7 +282,7 @@ test('password change requires current password, rotates current session, and re
         password: 'original-password-123',
       })
     ).status,
-    401,
+    401
   );
   assert.equal(
     (
@@ -292,7 +291,7 @@ test('password change requires current password, rotates current session, and re
         password: 'new-password-value-123',
       })
     ).status,
-    200,
+    200
   );
 });
 
@@ -315,11 +314,11 @@ test('password reset is non-enumerating, single-use, expiring, and revokes every
   assert.equal(
     resets.has(known.body.developmentResetToken),
     false,
-    'raw reset token must never be stored',
+    'raw reset token must never be stored'
   );
   assert.ok(
     [...resets.keys()].every((hash) => /^[a-f0-9]{64}$/.test(hash)),
-    'only SHA-256 token hashes are stored',
+    'only SHA-256 token hashes are stored'
   );
   const payload = {
     token: known.body.developmentResetToken,
@@ -327,11 +326,11 @@ test('password reset is non-enumerating, single-use, expiring, and revokes every
   };
   assert.equal(
     (await request(app).post('/api/auth/reset-password').send(payload)).status,
-    200,
+    200
   );
   assert.equal(
     (await request(app).post('/api/auth/reset-password').send(payload)).status,
-    400,
+    400
   );
   assert.equal((await first.get('/api/auth/me')).status, 401);
   assert.equal((await second.get('/api/auth/me')).status, 401);
@@ -339,7 +338,7 @@ test('password reset is non-enumerating, single-use, expiring, and revokes every
     .post('/api/auth/forgot-password')
     .send({ email: 'trader@example.test' });
   const activeToken = [...resets.values()].find(
-    (token) => token.usedAt == null,
+    (token) => token.usedAt == null
   );
   activeToken.expiresAt = new Date(0);
   assert.equal(
@@ -349,7 +348,7 @@ test('password reset is non-enumerating, single-use, expiring, and revokes every
         newPassword: 'another-password-123',
       })
     ).status,
-    400,
+    400
   );
   assert.ok(audits.some((event) => event.action === 'PASSWORD_RESET'));
 });

@@ -10,7 +10,11 @@ import {
 // Mounted at /api/trades/:id/screenshots
 const router = Router({ mergeParams: true });
 
-router.post('/', screenshotUpload.single('file'), asyncHandler(uploadScreenshot));
+router.post(
+  '/',
+  screenshotUpload.single('file'),
+  asyncHandler(uploadScreenshot)
+);
 router.put('/:screenshotId', asyncHandler(updateScreenshotCaption));
 router.delete('/:screenshotId', asyncHandler(deleteScreenshot));
 

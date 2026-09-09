@@ -18,7 +18,9 @@ function makeBar(i, close, { high, low } = {}) {
 test('long SMA crossover enters and exits on opposite crossover, computes correct P&L', () => {
   // Price ramps up (fast SMA crosses above slow), then ramps back down
   // (fast crosses below) — one full round-trip trade.
-  const closes = [10, 10, 10, 10, 11, 12, 13, 14, 15, 14, 13, 12, 11, 10, 10, 10];
+  const closes = [
+    10, 10, 10, 10, 11, 12, 13, 14, 15, 14, 13, 12, 11, 10, 10, 10,
+  ];
   const bars = closes.map((c, i) => makeBar(i, c));
 
   const result = runBacktest({
@@ -64,7 +66,10 @@ test('stop loss triggers via bar low, produces correct capped loss', () => {
   // Loss should be roughly bounded near 5% of entry * quantity, not a much
   // larger loss reflecting the close price after the gap.
   const approxMaxLoss = stopped.entryPrice * 0.05 * 10 * 1.5; // generous margin
-  assert.ok(Math.abs(stopped.netPnL) <= approxMaxLoss, `stop should cap the loss, got ${stopped.netPnL}`);
+  assert.ok(
+    Math.abs(stopped.netPnL) <= approxMaxLoss,
+    `stop should cap the loss, got ${stopped.netPnL}`
+  );
 });
 
 test('commission and slippage reduce net P&L relative to gross', () => {

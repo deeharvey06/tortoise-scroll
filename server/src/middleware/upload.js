@@ -17,7 +17,9 @@ export const csvUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const ok = file.mimetype === 'text/csv' || file.originalname.toLowerCase().endsWith('.csv');
+    const ok =
+      file.mimetype === 'text/csv' ||
+      file.originalname.toLowerCase().endsWith('.csv');
     cb(ok ? null : new Error('Only .csv files are accepted'), ok);
   },
 });

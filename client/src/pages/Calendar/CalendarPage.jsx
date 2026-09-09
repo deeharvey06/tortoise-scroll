@@ -70,7 +70,7 @@ export default function CalendarPage() {
       .catch(
         (err) =>
           !cancelled &&
-          setError(err.response?.data?.error?.message || err.message),
+          setError(err.response?.data?.error?.message || err.message)
       )
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -292,7 +292,7 @@ export default function CalendarPage() {
           {dayDialog
             ? format(
                 new Date(`${dayDialog.date}T00:00:00`),
-                'EEEE, MMMM d, yyyy',
+                'EEEE, MMMM d, yyyy'
               )
             : ''}
         </DialogTitle>

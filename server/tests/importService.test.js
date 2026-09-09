@@ -7,7 +7,7 @@ import {
 
 test('parseCsvBuffer preserves quoted commas, quotes, and multiline values', async () => {
   const csv = Buffer.from(
-    'Symbol,Notes\nAAPL,"Breakout, then \"hold\"\ninto close"\n',
+    'Symbol,Notes\nAAPL,"Breakout, then ""hold""\ninto close"\n'
   );
   const result = await parseCsvBuffer(csv);
 
@@ -30,7 +30,7 @@ test('previewImport returns all rows and the selected adapter mapping', async ()
 test('previewImport falls back to generic mapping for an unknown broker', async () => {
   const result = await previewImport(
     Buffer.from('Symbol\nAAPL\n'),
-    'unknown-broker',
+    'unknown-broker'
   );
 
   assert.deepEqual(result.suggestedMapping, {});

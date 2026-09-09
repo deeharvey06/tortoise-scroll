@@ -2,7 +2,7 @@ import SessionRecord from '../models/SessionRecord.js';
 
 const storeDestroy = (store, sessionId) =>
   new Promise((resolve, reject) =>
-    store.destroy(sessionId, (error) => (error ? reject(error) : resolve())),
+    store.destroy(sessionId, (error) => (error ? reject(error) : resolve()))
   );
 const metadata = (req) => ({
   ipAddress: String(req.ip || '').slice(0, 128),
@@ -12,7 +12,7 @@ const metadata = (req) => ({
 export async function registerSession(req, userId) {
   const now = new Date();
   const expiresAt = new Date(
-    Date.now() + (req.session?.cookie?.maxAge || 12 * 60 * 60 * 1000),
+    Date.now() + (req.session?.cookie?.maxAge || 12 * 60 * 60 * 1000)
   );
   await SessionRecord.findOneAndUpdate(
     { sessionId: req.sessionID },
@@ -20,7 +20,7 @@ export async function registerSession(req, userId) {
       $set: { userId, lastSeenAt: now, expiresAt, ...metadata(req) },
       $setOnInsert: { createdAt: now },
     },
-    { upsert: true, runValidators: true },
+    { upsert: true, runValidators: true }
   );
 }
 
@@ -57,7 +57,7 @@ export async function listSessions(userId, currentSessionId) {
 
 export async function revokeSessionByRecordId(req, userId, recordId) {
   const record = await SessionRecord.findOne({ _id: recordId, userId }).select(
-    '+sessionId',
+    '+sessionId'
   );
   if (!record) return false;
   if (record.sessionId === req.sessionID) {
@@ -73,7 +73,7 @@ export async function revokeSessionByRecordId(req, userId, recordId) {
 export async function revokeOtherSessions(
   req,
   userId,
-  currentSessionId = req.sessionID,
+  currentSessionId = req.sessionID
 ) {
   const records = await SessionRecord.find({
     userId,
@@ -82,7 +82,7 @@ export async function revokeOtherSessions(
     .select('+sessionId')
     .lean();
   await Promise.all(
-    records.map((record) => storeDestroy(req.sessionStore, record.sessionId)),
+    records.map((record) => storeDestroy(req.sessionStore, record.sessionId))
   );
   const result = await SessionRecord.deleteMany({
     userId,
@@ -96,7 +96,7 @@ export async function revokeAllSessions(req, userId) {
     .select('+sessionId')
     .lean();
   await Promise.all(
-    records.map((record) => storeDestroy(req.sessionStore, record.sessionId)),
+    records.map((record) => storeDestroy(req.sessionStore, record.sessionId))
   );
   await SessionRecord.deleteMany({ userId });
   return records.length;

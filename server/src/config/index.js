@@ -1,7 +1,7 @@
 const integer = (
   name,
   fallback,
-  { min = 1, max = Number.MAX_SAFE_INTEGER } = {},
+  { min = 1, max = Number.MAX_SAFE_INTEGER } = {}
 ) => {
   const value = Number(process.env[name] || fallback);
   if (!Number.isSafeInteger(value) || value < min || value > max)
@@ -14,7 +14,7 @@ export function getConfig() {
   const allowedOrigins = String(
     process.env.ALLOWED_ORIGINS ||
       process.env.CLIENT_ORIGIN ||
-      'http://localhost:5173',
+      'http://localhost:5173'
   )
     .split(',')
     .map((value) => value.trim())
@@ -72,11 +72,11 @@ export function getConfig() {
       /replace-with|change-me|example/i.test(sessionSecret)
     )
       throw new Error(
-        'SESSION_SECRET must be a non-placeholder value containing at least 32 characters',
+        'SESSION_SECRET must be a non-placeholder value containing at least 32 characters'
       );
     if (!allowedOrigins.length)
       throw new Error(
-        'ALLOWED_ORIGINS must contain at least one trusted frontend origin',
+        'ALLOWED_ORIGINS must contain at least one trusted frontend origin'
       );
     for (const origin of allowedOrigins) {
       let parsed;
@@ -84,7 +84,7 @@ export function getConfig() {
         parsed = new URL(origin);
       } catch {
         throw new Error(
-          `ALLOWED_ORIGINS contains an invalid origin: ${origin}`,
+          `ALLOWED_ORIGINS contains an invalid origin: ${origin}`
         );
       }
       if (
@@ -92,7 +92,7 @@ export function getConfig() {
         !['http:', 'https:'].includes(parsed.protocol)
       )
         throw new Error(
-          `ALLOWED_ORIGINS must contain exact HTTP(S) origins: ${origin}`,
+          `ALLOWED_ORIGINS must contain exact HTTP(S) origins: ${origin}`
         );
       if (nodeEnv === 'production' && parsed.protocol !== 'https:')
         throw new Error('Production ALLOWED_ORIGINS entries must use HTTPS');

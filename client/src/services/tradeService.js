@@ -60,12 +60,17 @@ export async function uploadScreenshot(tradeId, file, caption) {
 }
 
 export async function updateScreenshotCaption(tradeId, screenshotId, caption) {
-  const { data } = await api.put(`/trades/${tradeId}/screenshots/${screenshotId}`, { caption });
+  const { data } = await api.put(
+    `/trades/${tradeId}/screenshots/${screenshotId}`,
+    { caption }
+  );
   return data;
 }
 
 export async function deleteScreenshot(tradeId, screenshotId) {
-  const { data } = await api.delete(`/trades/${tradeId}/screenshots/${screenshotId}`);
+  const { data } = await api.delete(
+    `/trades/${tradeId}/screenshots/${screenshotId}`
+  );
   return data;
 }
 

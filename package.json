@@ -8,6 +8,8 @@
     "dev": "node node_modules/concurrently/dist/bin/concurrently.js -k -n SERVER,CLIENT -c green,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
+    "lint": "npm run lint --prefix server && npm run lint --prefix client",
+    "format": "npm run format --prefix server && npm run format --prefix client",
     "build:client": "npm run build --prefix client",
     "build:server:cluster": "npm run cluster --prefix server",
     "test:client": "npm test --prefix client",

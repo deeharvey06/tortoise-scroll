@@ -33,7 +33,7 @@ const renderPage = (mode = 'light') =>
   render(
     <ThemeProvider theme={createTortoiseTheme(mode)}>
       <AdministrationPage />
-    </ThemeProvider>,
+    </ThemeProvider>
   );
 
 describe('Phase 4 administration UI', () => {
@@ -59,9 +59,9 @@ describe('Phase 4 administration UI', () => {
       expect(screen.getByRole('button', { name: 'Suspend' })).toBeVisible();
       expect(screen.getByLabelText('Role for Regular User')).toBeVisible();
       expect(
-        screen.queryByLabelText('Role for Root User'),
+        screen.queryByLabelText('Role for Root User')
       ).not.toBeInTheDocument();
-    },
+    }
   );
 
   it.each(['light', 'dark'])(
@@ -78,13 +78,13 @@ describe('Phase 4 administration UI', () => {
       renderPage(mode);
       expect(await screen.findByText('Regular User')).toBeVisible();
       expect(
-        screen.queryByRole('tab', { name: 'Audit log' }),
+        screen.queryByRole('tab', { name: 'Audit log' })
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole('button', { name: 'Suspend' }),
+        screen.queryByRole('button', { name: 'Suspend' })
       ).not.toBeInTheDocument();
       await waitFor(() => expect(screen.getByText('Read only')).toBeVisible());
-    },
+    }
   );
 
   it('requires confirmation before ROOT suspends a user and refreshes the directory', async () => {
@@ -96,15 +96,15 @@ describe('Phase 4 administration UI', () => {
     renderPage();
     fireEvent.click(await screen.findByRole('button', { name: 'Suspend' }));
     expect(
-      screen.getByRole('dialog', { name: 'Suspend this user?' }),
+      screen.getByRole('dialog', { name: 'Suspend this user?' })
     ).toBeVisible();
     expect(adminApi.changeUserStatus).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Confirm change' }));
     await waitFor(() =>
       expect(adminApi.changeUserStatus).toHaveBeenCalledWith(
         'user',
-        'SUSPENDED',
-      ),
+        'SUSPENDED'
+      )
     );
     await waitFor(() => expect(adminApi.fetchUsers).toHaveBeenCalledTimes(2));
   });

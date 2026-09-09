@@ -36,13 +36,19 @@ export function deriveAggregatesFromExecutions(trade) {
   const closes = fills.filter((f) => f.side === closingSide);
 
   const weightedAvg = (fillsForSide) => {
-    const totalQty = fillsForSide.reduce((sum, f) => sum.plus(D(f.quantity)), D(0));
+    const totalQty = fillsForSide.reduce(
+      (sum, f) => sum.plus(D(f.quantity)),
+      D(0)
+    );
     if (totalQty.isZero()) return { price: null, qty: 0 };
     const weighted = fillsForSide.reduce(
       (sum, f) => sum.plus(D(f.price).times(D(f.quantity))),
       D(0)
     );
-    return { price: weighted.div(totalQty).toNumber(), qty: totalQty.toNumber() };
+    return {
+      price: weighted.div(totalQty).toNumber(),
+      qty: totalQty.toNumber(),
+    };
   };
 
   const entryAgg = weightedAvg(opens);
@@ -51,7 +57,9 @@ export function deriveAggregatesFromExecutions(trade) {
   const allFees = fills.reduce((sum, f) => sum.plus(D(f.fees)), D(0));
   const allComm = fills.reduce((sum, f) => sum.plus(D(f.commission)), D(0));
 
-  const times = fills.map((f) => new Date(f.time).getTime()).sort((a, b) => a - b);
+  const times = fills
+    .map((f) => new Date(f.time).getTime())
+    .sort((a, b) => a - b);
 
   return {
     quantity: entryAgg.qty || trade.quantity,
@@ -75,7 +83,10 @@ export function computeTradeFinancials(tradeInput) {
   const { direction } = tradeInput;
   const qty = D(agg.quantity);
   const entry = D(agg.entryPrice);
-  const exit = agg.exitPrice === null || agg.exitPrice === undefined ? null : D(agg.exitPrice);
+  const exit =
+    agg.exitPrice === null || agg.exitPrice === undefined
+      ? null
+      : D(agg.exitPrice);
 
   let grossPnL = null;
   let netPnL = null;
@@ -92,7 +103,10 @@ export function computeTradeFinancials(tradeInput) {
   if (agg.entryTime && agg.exitTime) {
     holdingTimeSeconds = Math.max(
       0,
-      Math.round((new Date(agg.exitTime).getTime() - new Date(agg.entryTime).getTime()) / 1000)
+      Math.round(
+        (new Date(agg.exitTime).getTime() - new Date(agg.entryTime).getTime()) /
+          1000
+      )
     );
   }
 
@@ -100,7 +114,12 @@ export function computeTradeFinancials(tradeInput) {
   // figure the user (or stop-loss distance) defines; we never invent one.
   let rMultiple = null;
   const riskAmount = tradeInput.riskAmount;
-  if (netPnL !== null && riskAmount !== null && riskAmount !== undefined && Number(riskAmount) > 0) {
+  if (
+    netPnL !== null &&
+    riskAmount !== null &&
+    riskAmount !== undefined &&
+    Number(riskAmount) > 0
+  ) {
     rMultiple = D(netPnL).div(D(riskAmount)).toDecimalPlaces(3).toNumber();
   } else if (
     netPnL !== null &&
@@ -111,7 +130,9 @@ export function computeTradeFinancials(tradeInput) {
     // Fall back to deriving risk from stop-loss distance × quantity if the
     // user set a stop but never entered a dollar risk figure directly.
     const stopDistance =
-      direction === 'long' ? entry.minus(D(tradeInput.stopLoss)) : D(tradeInput.stopLoss).minus(entry);
+      direction === 'long'
+        ? entry.minus(D(tradeInput.stopLoss))
+        : D(tradeInput.stopLoss).minus(entry);
     const derivedRisk = stopDistance.abs().times(qty);
     if (derivedRisk.gt(0)) {
       rMultiple = D(netPnL).div(derivedRisk).toDecimalPlaces(3).toNumber();

@@ -27,7 +27,9 @@ export async function getFilteredTrades(filters = {}) {
 }
 
 export function closedOnly(trades) {
-  return trades.filter((t) => t.netPnL !== null && t.netPnL !== undefined && t.exitTime);
+  return trades.filter(
+    (t) => t.netPnL !== null && t.netPnL !== undefined && t.exitTime
+  );
 }
 
 /**
@@ -45,22 +47,40 @@ export function computeSummary(trades) {
   const sumWins = wins.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0));
   const sumLosses = losses.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0)); // negative
 
-  const rValues = closed.filter((t) => t.rMultiple !== null && t.rMultiple !== undefined).map((t) => t.rMultiple);
+  const rValues = closed
+    .filter((t) => t.rMultiple !== null && t.rMultiple !== undefined)
+    .map((t) => t.rMultiple);
   const totalR = rValues.reduce((sum, r) => sum.plus(D(r)), D(0));
 
   const holdingTimes = closed
-    .filter((t) => t.holdingTimeSeconds !== null && t.holdingTimeSeconds !== undefined)
+    .filter(
+      (t) => t.holdingTimeSeconds !== null && t.holdingTimeSeconds !== undefined
+    )
     .map((t) => t.holdingTimeSeconds);
 
-  const winRate = closed.length > 0 ? D(wins.length).div(closed.length).times(100).toDecimalPlaces(2).toNumber() : null;
-  const lossRate = closed.length > 0 ? D(losses.length).div(closed.length).times(100).toDecimalPlaces(2).toNumber() : null;
+  const winRate =
+    closed.length > 0
+      ? D(wins.length)
+          .div(closed.length)
+          .times(100)
+          .toDecimalPlaces(2)
+          .toNumber()
+      : null;
+  const lossRate =
+    closed.length > 0
+      ? D(losses.length)
+          .div(closed.length)
+          .times(100)
+          .toDecimalPlaces(2)
+          .toNumber()
+      : null;
 
   const profitFactor =
     losses.length > 0 && !sumLosses.isZero()
       ? sumWins.div(sumLosses.abs()).toDecimalPlaces(2).toNumber()
       : wins.length > 0
-      ? null // undefined/infinite — no losing trades to divide by; report as null, not a fake number
-      : null;
+        ? null // undefined/infinite — no losing trades to divide by; report as null, not a fake number
+        : null;
 
   return {
     netPnL: closed.length ? netPnL.toDecimalPlaces(2).toNumber() : null,
@@ -68,19 +88,31 @@ export function computeSummary(trades) {
     winRate,
     lossRate,
     profitFactor,
-    avgWin: wins.length ? sumWins.div(wins.length).toDecimalPlaces(2).toNumber() : null,
-    avgLoss: losses.length ? sumLosses.div(losses.length).toDecimalPlaces(2).toNumber() : null,
-    expectancy: closed.length ? netPnL.div(closed.length).toDecimalPlaces(2).toNumber() : null,
-    avgR: rValues.length ? totalR.div(rValues.length).toDecimalPlaces(3).toNumber() : null,
+    avgWin: wins.length
+      ? sumWins.div(wins.length).toDecimalPlaces(2).toNumber()
+      : null,
+    avgLoss: losses.length
+      ? sumLosses.div(losses.length).toDecimalPlaces(2).toNumber()
+      : null,
+    expectancy: closed.length
+      ? netPnL.div(closed.length).toDecimalPlaces(2).toNumber()
+      : null,
+    avgR: rValues.length
+      ? totalR.div(rValues.length).toDecimalPlaces(3).toNumber()
+      : null,
     totalTrades: trades.length,
     closedTrades: closed.length,
     openTrades: trades.length - closed.length,
     winningTrades: wins.length,
     losingTrades: losses.length,
     largestWinner: wins.length ? Math.max(...wins.map((t) => t.netPnL)) : null,
-    largestLoser: losses.length ? Math.min(...losses.map((t) => t.netPnL)) : null,
+    largestLoser: losses.length
+      ? Math.min(...losses.map((t) => t.netPnL))
+      : null,
     avgHoldingTimeSeconds: holdingTimes.length
-      ? Math.round(holdingTimes.reduce((a, b) => a + b, 0) / holdingTimes.length)
+      ? Math.round(
+          holdingTimes.reduce((a, b) => a + b, 0) / holdingTimes.length
+        )
       : null,
     // maxDrawdown is attached by the caller once the equity curve is built,
     // since it's derived from the same closed-trade sequence.
@@ -89,11 +121,18 @@ export function computeSummary(trades) {
 
 /** Sorted cumulative net P&L over time, optionally offset by a starting balance. */
 export function buildEquityCurve(closedTrades, startingBalance = 0) {
-  const sorted = [...closedTrades].sort((a, b) => new Date(a.exitTime) - new Date(b.exitTime));
+  const sorted = [...closedTrades].sort(
+    (a, b) => new Date(a.exitTime) - new Date(b.exitTime)
+  );
   let running = D(startingBalance);
   return sorted.map((t) => {
     running = running.plus(D(t.netPnL));
-    return { date: t.exitTime, equity: running.toDecimalPlaces(2).toNumber(), tradeId: t._id, symbol: t.symbol };
+    return {
+      date: t.exitTime,
+      equity: running.toDecimalPlaces(2).toNumber(),
+      tradeId: t._id,
+      symbol: t.symbol,
+    };
   });
 }
 
@@ -103,7 +142,10 @@ export function buildDrawdownCurve(equityCurve) {
   let maxDrawdown = 0;
   const curve = equityCurve.map((point) => {
     peak = Math.max(peak, point.equity);
-    const drawdown = D(point.equity).minus(D(peak)).toDecimalPlaces(2).toNumber(); // <= 0
+    const drawdown = D(point.equity)
+      .minus(D(peak))
+      .toDecimalPlaces(2)
+      .toNumber(); // <= 0
     maxDrawdown = Math.min(maxDrawdown, drawdown);
     return { date: point.date, drawdown, equity: point.equity, peak };
   });
@@ -125,17 +167,34 @@ export function buildDailyStats(closedTrades) {
   }
   const days = [];
   for (const [date, dayTrades] of byDay.entries()) {
-    const netPnL = dayTrades.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0)).toDecimalPlaces(2).toNumber();
+    const netPnL = dayTrades
+      .reduce((sum, t) => sum.plus(D(t.netPnL)), D(0))
+      .toDecimalPlaces(2)
+      .toNumber();
     const wins = dayTrades.filter((t) => t.netPnL > 0).length;
-    const rVals = dayTrades.filter((t) => t.rMultiple !== null && t.rMultiple !== undefined).map((t) => t.rMultiple);
-    const avgR = rVals.length ? rVals.reduce((a, b) => a + b, 0) / rVals.length : null;
-    const best = dayTrades.reduce((a, b) => (b.netPnL > (a?.netPnL ?? -Infinity) ? b : a), null);
-    const worst = dayTrades.reduce((a, b) => (b.netPnL < (a?.netPnL ?? Infinity) ? b : a), null);
+    const rVals = dayTrades
+      .filter((t) => t.rMultiple !== null && t.rMultiple !== undefined)
+      .map((t) => t.rMultiple);
+    const avgR = rVals.length
+      ? rVals.reduce((a, b) => a + b, 0) / rVals.length
+      : null;
+    const best = dayTrades.reduce(
+      (a, b) => (b.netPnL > (a?.netPnL ?? -Infinity) ? b : a),
+      null
+    );
+    const worst = dayTrades.reduce(
+      (a, b) => (b.netPnL < (a?.netPnL ?? Infinity) ? b : a),
+      null
+    );
     days.push({
       date,
       netPnL,
       tradeCount: dayTrades.length,
-      winRate: D(wins).div(dayTrades.length).times(100).toDecimalPlaces(0).toNumber(),
+      winRate: D(wins)
+        .div(dayTrades.length)
+        .times(100)
+        .toDecimalPlaces(0)
+        .toNumber(),
       avgR,
       bestTrade: best ? { symbol: best.symbol, netPnL: best.netPnL } : null,
       worstTrade: worst ? { symbol: worst.symbol, netPnL: worst.netPnL } : null,
@@ -148,26 +207,49 @@ export function buildDailyStats(closedTrades) {
 function bucketize(values, edges) {
   const labels = [];
   for (let i = 0; i < edges.length - 1; i += 1) {
-    labels.push(`${edges[i] === -Infinity ? '<' : edges[i]}${i === 0 ? '' : ' to ' + edges[i + 1]}`);
+    labels.push(
+      `${edges[i] === -Infinity ? '<' : edges[i]}${i === 0 ? '' : ' to ' + edges[i + 1]}`
+    );
   }
-  const buckets = edges.slice(0, -1).map((lo, i) => ({ min: lo, max: edges[i + 1], count: 0 }));
+  const buckets = edges
+    .slice(0, -1)
+    .map((lo, i) => ({ min: lo, max: edges[i + 1], count: 0 }));
   for (const v of values) {
-    const b = buckets.find((bk) => v >= bk.min && v < bk.max) || buckets[buckets.length - 1];
+    const b =
+      buckets.find((bk) => v >= bk.min && v < bk.max) ||
+      buckets[buckets.length - 1];
     b.count += 1;
   }
   return buckets.map((b) => ({
-    label: b.min === -Infinity ? `< ${b.max}` : b.max === Infinity ? `≥ ${b.min}` : `${b.min} to ${b.max}`,
+    label:
+      b.min === -Infinity
+        ? `< ${b.max}`
+        : b.max === Infinity
+          ? `≥ ${b.min}`
+          : `${b.min} to ${b.max}`,
     count: b.count,
   }));
 }
 
 export function buildWinLossDistribution(closedTrades) {
   const values = closedTrades.map((t) => t.netPnL);
-  return bucketize(values, [-Infinity, -500, -200, -50, 0, 50, 200, 500, Infinity]);
+  return bucketize(values, [
+    -Infinity,
+    -500,
+    -200,
+    -50,
+    0,
+    50,
+    200,
+    500,
+    Infinity,
+  ]);
 }
 
 export function buildRMultipleDistribution(closedTrades) {
-  const values = closedTrades.filter((t) => t.rMultiple !== null && t.rMultiple !== undefined).map((t) => t.rMultiple);
+  const values = closedTrades
+    .filter((t) => t.rMultiple !== null && t.rMultiple !== undefined)
+    .map((t) => t.rMultiple);
   return bucketize(values, [-Infinity, -2, -1, 0, 1, 2, 3, Infinity]);
 }
 
@@ -187,26 +269,53 @@ export function groupTrades(closedTrades, keyFn, labelFn = (k) => k) {
   }
   const result = [];
   for (const [key, group] of groups.entries()) {
-    const netPnL = group.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0)).toDecimalPlaces(2).toNumber();
+    const netPnL = group
+      .reduce((sum, t) => sum.plus(D(t.netPnL)), D(0))
+      .toDecimalPlaces(2)
+      .toNumber();
     const wins = group.filter((t) => t.netPnL > 0);
     const losses = group.filter((t) => t.netPnL < 0);
     const sumWins = wins.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0));
     const sumLosses = losses.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0));
-    const rVals = group.filter((t) => t.rMultiple !== null && t.rMultiple !== undefined).map((t) => t.rMultiple);
+    const rVals = group
+      .filter((t) => t.rMultiple !== null && t.rMultiple !== undefined)
+      .map((t) => t.rMultiple);
     result.push({
       key,
       label: labelFn(key),
       count: group.length,
       netPnL,
-      winRate: group.length ? D(wins.length).div(group.length).times(100).toDecimalPlaces(0).toNumber() : null,
-      avgR: rVals.length ? D(rVals.reduce((a, b) => a + b, 0)).div(rVals.length).toDecimalPlaces(2).toNumber() : null,
-      profitFactor: losses.length && !sumLosses.isZero() ? sumWins.div(sumLosses.abs()).toDecimalPlaces(2).toNumber() : null,
+      winRate: group.length
+        ? D(wins.length)
+            .div(group.length)
+            .times(100)
+            .toDecimalPlaces(0)
+            .toNumber()
+        : null,
+      avgR: rVals.length
+        ? D(rVals.reduce((a, b) => a + b, 0))
+            .div(rVals.length)
+            .toDecimalPlaces(2)
+            .toNumber()
+        : null,
+      profitFactor:
+        losses.length && !sumLosses.isZero()
+          ? sumWins.div(sumLosses.abs()).toDecimalPlaces(2).toNumber()
+          : null,
     });
   }
   return result.sort((a, b) => b.netPnL - a.netPnL);
 }
 
-const DOW_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DOW_LABELS = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
 
 export function buildByDayOfWeek(closedTrades) {
   return groupTrades(
@@ -225,23 +334,43 @@ export function buildByHour(closedTrades) {
 }
 
 export function buildBySymbol(closedTrades) {
-  return groupTrades(closedTrades, (t) => t.symbol, (k) => k).slice(0, 25);
+  return groupTrades(
+    closedTrades,
+    (t) => t.symbol,
+    (k) => k
+  ).slice(0, 25);
 }
 
 export function buildByStrategy(closedTrades) {
-  return groupTrades(closedTrades, (t) => t.strategy, (k) => String(k));
+  return groupTrades(
+    closedTrades,
+    (t) => t.strategy,
+    (k) => String(k)
+  );
 }
 
 export function buildBySetup(closedTrades) {
-  return groupTrades(closedTrades, (t) => t.setup, (k) => k);
+  return groupTrades(
+    closedTrades,
+    (t) => t.setup,
+    (k) => k
+  );
 }
 
 export function buildBySession(closedTrades) {
-  return groupTrades(closedTrades, (t) => t.session, (k) => k);
+  return groupTrades(
+    closedTrades,
+    (t) => t.session,
+    (k) => k
+  );
 }
 
 export function buildByDirection(closedTrades) {
-  return groupTrades(closedTrades, (t) => t.direction, (k) => k);
+  return groupTrades(
+    closedTrades,
+    (t) => t.direction,
+    (k) => k
+  );
 }
 
 /**
@@ -279,14 +408,20 @@ export async function getCalendarMonth(filters, year, month) {
   // month is 1-indexed from the client for readability
   const from = new Date(Date.UTC(year, month - 1, 1));
   const to = new Date(Date.UTC(year, month, 0, 23, 59, 59));
-  const trades = await getFilteredTrades({ ...filters, dateFrom: from.toISOString(), dateTo: to.toISOString() });
+  const trades = await getFilteredTrades({
+    ...filters,
+    dateFrom: from.toISOString(),
+    dateTo: to.toISOString(),
+  });
   const closed = closedOnly(trades);
   return buildDailyStats(closed);
 }
 
 /** Longest and current consecutive-loss streaks, plus what happens after them (with sample sizes). */
 export function computeStreaks(closedTrades) {
-  const sorted = [...closedTrades].sort((a, b) => new Date(a.entryTime) - new Date(b.entryTime));
+  const sorted = [...closedTrades].sort(
+    (a, b) => new Date(a.entryTime) - new Date(b.entryTime)
+  );
 
   let longestLossStreak = 0;
   let currentStreak = 0;
@@ -298,7 +433,11 @@ export function computeStreaks(closedTrades) {
     const isWin = t.netPnL > 0;
     const isLoss = t.netPnL < 0;
 
-    if (consecutiveLosses >= 2 && t.rMultiple !== null && t.rMultiple !== undefined) {
+    if (
+      consecutiveLosses >= 2 &&
+      t.rMultiple !== null &&
+      t.rMultiple !== undefined
+    ) {
       afterTwoLosses.push(t.rMultiple);
     }
 
@@ -321,7 +460,10 @@ export function computeStreaks(closedTrades) {
     currentStreak,
     currentStreakType,
     avgRAfterTwoConsecutiveLosses: afterTwoLosses.length
-      ? D(afterTwoLosses.reduce((a, b) => a + b, 0)).div(afterTwoLosses.length).toDecimalPlaces(2).toNumber()
+      ? D(afterTwoLosses.reduce((a, b) => a + b, 0))
+          .div(afterTwoLosses.length)
+          .toDecimalPlaces(2)
+          .toNumber()
       : null,
     sampleSizeAfterTwoConsecutiveLosses: afterTwoLosses.length,
   };
@@ -338,7 +480,10 @@ export function computeTagBreakdown(closedTrades, field) {
   }
   const result = [];
   for (const [tag, group] of tagMap.entries()) {
-    const netPnL = group.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0)).toDecimalPlaces(2).toNumber();
+    const netPnL = group
+      .reduce((sum, t) => sum.plus(D(t.netPnL)), D(0))
+      .toDecimalPlaces(2)
+      .toNumber();
     result.push({
       tag,
       count: group.length,
@@ -351,19 +496,31 @@ export function computeTagBreakdown(closedTrades, field) {
 
 /** Trades that broke the user's own stated plan/rules — a straight count, no editorializing. */
 export function computeRuleViolations(closedTrades) {
-  const withPlanFlag = closedTrades.filter((t) => t.followedPlan !== null && t.followedPlan !== undefined);
+  const withPlanFlag = closedTrades.filter(
+    (t) => t.followedPlan !== null && t.followedPlan !== undefined
+  );
   const violations = withPlanFlag.filter((t) => t.followedPlan === false);
   return {
     tradesWithPlanFlagSet: withPlanFlag.length,
     violations: violations.length,
-    violationRate: withPlanFlag.length ? D(violations.length).div(withPlanFlag.length).times(100).toDecimalPlaces(0).toNumber() : null,
+    violationRate: withPlanFlag.length
+      ? D(violations.length)
+          .div(withPlanFlag.length)
+          .times(100)
+          .toDecimalPlaces(0)
+          .toNumber()
+      : null,
   };
 }
 
 /** Trades-per-day, useful for spotting overtrading days without asserting a threshold ourselves. */
 export function computeTradesPerDay(closedTrades) {
   const byDay = buildDailyStats(closedTrades);
-  return byDay.map((d) => ({ date: d.date, tradeCount: d.tradeCount, netPnL: d.netPnL }));
+  return byDay.map((d) => ({
+    date: d.date,
+    tradeCount: d.tradeCount,
+    netPnL: d.netPnL,
+  }));
 }
 
 export default {

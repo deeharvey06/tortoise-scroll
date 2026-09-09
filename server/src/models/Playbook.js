@@ -3,7 +3,10 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const imageSchema = new Schema(
-  { url: { type: String, required: true }, caption: { type: String, default: '' } },
+  {
+    url: { type: String, required: true },
+    caption: { type: String, default: '' },
+  },
   { _id: true }
 );
 
@@ -19,7 +22,12 @@ const CHECKLIST_DEFAULTS = [
 
 const playbookSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     setupName: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
     idealConditions: { type: String, default: '' },

@@ -30,11 +30,21 @@ function simpleMovingAverage(values, period) {
 }
 
 function crossesAbove(prevFast, prevSlow, fast, slow) {
-  return prevFast !== null && prevSlow !== null && prevFast <= prevSlow && fast > slow;
+  return (
+    prevFast !== null &&
+    prevSlow !== null &&
+    prevFast <= prevSlow &&
+    fast > slow
+  );
 }
 
 function crossesBelow(prevFast, prevSlow, fast, slow) {
-  return prevFast !== null && prevSlow !== null && prevFast >= prevSlow && fast < slow;
+  return (
+    prevFast !== null &&
+    prevSlow !== null &&
+    prevFast >= prevSlow &&
+    fast < slow
+  );
 }
 
 export function runBacktest({
@@ -51,7 +61,9 @@ export function runBacktest({
     throw new Error('runBacktest requires a non-empty bars array');
   }
   if (!entryRule || entryRule.type !== 'smaCrossover') {
-    throw new Error('Only entryRule.type === "smaCrossover" is supported in this phase');
+    throw new Error(
+      'Only entryRule.type === "smaCrossover" is supported in this phase'
+    );
   }
 
   const closes = bars.map((b) => b.close);
@@ -73,10 +85,18 @@ export function runBacktest({
       const entered =
         direction === 'long'
           ? crossesAbove(fastSMA[i - 1], slowSMA[i - 1], fastSMA[i], slowSMA[i])
-          : crossesBelow(fastSMA[i - 1], slowSMA[i - 1], fastSMA[i], slowSMA[i]);
+          : crossesBelow(
+              fastSMA[i - 1],
+              slowSMA[i - 1],
+              fastSMA[i],
+              slowSMA[i]
+            );
 
       if (entered) {
-        const fillPrice = direction === 'long' ? D(bar.open).plus(slip) : D(bar.open).minus(slip);
+        const fillPrice =
+          direction === 'long'
+            ? D(bar.open).plus(slip)
+            : D(bar.open).minus(slip);
         const stop =
           stopLossPct !== null
             ? direction === 'long'
@@ -89,7 +109,13 @@ export function runBacktest({
               ? fillPrice.times(D(1).plus(D(takeProfitPct).div(100)))
               : fillPrice.times(D(1).minus(D(takeProfitPct).div(100)))
             : null;
-        position = { entryIndex: i, entryTime: bar.time, entryPrice: fillPrice, stop, target };
+        position = {
+          entryIndex: i,
+          entryTime: bar.time,
+          entryPrice: fillPrice,
+          stop,
+          target,
+        };
       }
     } else {
       let exitPrice = null;
@@ -99,14 +125,20 @@ export function runBacktest({
       // data, not fabricated; this is standard backtest bar-resolution.
       if (position.stop !== null) {
         const stopNum = position.stop.toNumber();
-        if ((direction === 'long' && bar.low <= stopNum) || (direction === 'short' && bar.high >= stopNum)) {
+        if (
+          (direction === 'long' && bar.low <= stopNum) ||
+          (direction === 'short' && bar.high >= stopNum)
+        ) {
           exitPrice = position.stop;
           exitReason = 'stop';
         }
       }
       if (exitPrice === null && position.target !== null) {
         const targetNum = position.target.toNumber();
-        if ((direction === 'long' && bar.high >= targetNum) || (direction === 'short' && bar.low <= targetNum)) {
+        if (
+          (direction === 'long' && bar.high >= targetNum) ||
+          (direction === 'short' && bar.low <= targetNum)
+        ) {
           exitPrice = position.target;
           exitReason = 'target';
         }
@@ -114,20 +146,42 @@ export function runBacktest({
       if (exitPrice === null) {
         const oppositeCross =
           direction === 'long'
-            ? crossesBelow(fastSMA[i - 1], slowSMA[i - 1], fastSMA[i], slowSMA[i])
-            : crossesAbove(fastSMA[i - 1], slowSMA[i - 1], fastSMA[i], slowSMA[i]);
+            ? crossesBelow(
+                fastSMA[i - 1],
+                slowSMA[i - 1],
+                fastSMA[i],
+                slowSMA[i]
+              )
+            : crossesAbove(
+                fastSMA[i - 1],
+                slowSMA[i - 1],
+                fastSMA[i],
+                slowSMA[i]
+              );
         if (oppositeCross) {
-          exitPrice = direction === 'long' ? D(bar.open).minus(slip) : D(bar.open).plus(slip);
+          exitPrice =
+            direction === 'long'
+              ? D(bar.open).minus(slip)
+              : D(bar.open).plus(slip);
           exitReason = 'signal';
         }
       }
 
       if (exitPrice !== null) {
-        const diff = direction === 'long' ? exitPrice.minus(position.entryPrice) : position.entryPrice.minus(exitPrice);
+        const diff =
+          direction === 'long'
+            ? exitPrice.minus(position.entryPrice)
+            : position.entryPrice.minus(exitPrice);
         const grossPnL = diff.times(posSize);
         const netPnL = grossPnL.minus(D(commission).times(2)); // entry + exit commission
-        const riskPerUnit = position.stop !== null ? position.entryPrice.minus(position.stop).abs() : null;
-        const rMultiple = riskPerUnit && riskPerUnit.gt(0) ? netPnL.div(riskPerUnit.times(posSize)) : null;
+        const riskPerUnit =
+          position.stop !== null
+            ? position.entryPrice.minus(position.stop).abs()
+            : null;
+        const rMultiple =
+          riskPerUnit && riskPerUnit.gt(0)
+            ? netPnL.div(riskPerUnit.times(posSize))
+            : null;
 
         trades.push({
           entryTime: position.entryTime,
@@ -143,7 +197,10 @@ export function runBacktest({
         });
 
         equity = equity.plus(netPnL);
-        equityCurve.push({ time: bar.time, equity: equity.toDecimalPlaces(2).toNumber() });
+        equityCurve.push({
+          time: bar.time,
+          equity: equity.toDecimalPlaces(2).toNumber(),
+        });
         position = null;
       }
     }
@@ -169,7 +226,9 @@ function summarize(trades) {
   const netPnL = trades.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0));
   const sumWins = wins.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0));
   const sumLosses = losses.reduce((sum, t) => sum.plus(D(t.netPnL)), D(0));
-  const rVals = trades.filter((t) => t.rMultiple !== null).map((t) => t.rMultiple);
+  const rVals = trades
+    .filter((t) => t.rMultiple !== null)
+    .map((t) => t.rMultiple);
 
   let peak = 0;
   let running = 0;
@@ -183,10 +242,22 @@ function summarize(trades) {
   return {
     totalTrades: trades.length,
     netPnL: netPnL.toDecimalPlaces(2).toNumber(),
-    winRate: D(wins.length).div(trades.length).times(100).toDecimalPlaces(1).toNumber(),
-    profitFactor: losses.length && !sumLosses.isZero() ? sumWins.div(sumLosses.abs()).toDecimalPlaces(2).toNumber() : null,
+    winRate: D(wins.length)
+      .div(trades.length)
+      .times(100)
+      .toDecimalPlaces(1)
+      .toNumber(),
+    profitFactor:
+      losses.length && !sumLosses.isZero()
+        ? sumWins.div(sumLosses.abs()).toDecimalPlaces(2).toNumber()
+        : null,
     expectancy: netPnL.div(trades.length).toDecimalPlaces(2).toNumber(),
-    avgR: rVals.length ? D(rVals.reduce((a, b) => a + b, 0)).div(rVals.length).toDecimalPlaces(2).toNumber() : null,
+    avgR: rVals.length
+      ? D(rVals.reduce((a, b) => a + b, 0))
+          .div(rVals.length)
+          .toDecimalPlaces(2)
+          .toNumber()
+      : null,
     maxDrawdown: Math.round(maxDrawdown * 100) / 100,
   };
 }

@@ -17,7 +17,12 @@ const messageSchema = new Schema(
 
 const aiConversationSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     title: { type: String, default: 'New conversation' },
     messages: { type: [messageSchema], default: [] },
   },

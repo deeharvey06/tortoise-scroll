@@ -72,7 +72,7 @@ export async function runAutoTagger(tradeIds, userId) {
 
     if (tagsToAdd.size > 0) {
       const newTags = Array.from(
-        new Set([...(trade.tags || []), ...tagsToAdd]),
+        new Set([...(trade.tags || []), ...tagsToAdd])
       );
       await tradeService.updateTrade(tradeId, { tags: newTags }, userId);
       applied.push({

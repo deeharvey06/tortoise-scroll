@@ -40,7 +40,9 @@ export async function uploadPlaybookImage(id, file, caption) {
 }
 
 export async function updatePlaybookImageCaption(id, imageId, caption) {
-  const { data } = await api.put(`/playbooks/${id}/images/${imageId}`, { caption });
+  const { data } = await api.put(`/playbooks/${id}/images/${imageId}`, {
+    caption,
+  });
   return data;
 }
 

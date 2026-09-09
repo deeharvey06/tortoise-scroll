@@ -8,5 +8,19 @@ export default function AccessDeniedPage() {
     const { user, setAuthenticatedUser } = useAuthStore.getState();
     if (user) setAuthenticatedUser(user);
   };
-  return <AuthLayout title='Access denied' subtitle='Your account does not have permission to open this area.'><Button component={RouterLink} to='/' onClick={restoreAuthenticatedState} variant='contained'>Return to dashboard</Button></AuthLayout>;
+  return (
+    <AuthLayout
+      title='Access denied'
+      subtitle='Your account does not have permission to open this area.'
+    >
+      <Button
+        component={RouterLink}
+        to='/'
+        onClick={restoreAuthenticatedState}
+        variant='contained'
+      >
+        Return to dashboard
+      </Button>
+    </AuthLayout>
+  );
 }

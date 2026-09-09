@@ -11,7 +11,10 @@ test('system prompt embeds the safety rules verbatim', () => {
 });
 
 test('system prompt embeds the exact context bundle as JSON, not a paraphrase', () => {
-  const bundle = { summary: { netPnL: 273.45, closedTrades: 12 }, bySetup: [{ label: 'Breakout', count: 5 }] };
+  const bundle = {
+    summary: { netPnL: 273.45, closedTrades: 12 },
+    bySetup: [{ label: 'Breakout', count: 5 }],
+  };
   const prompt = buildSystemPrompt(bundle, []);
   assert.match(prompt, /"netPnL": 273\.45/);
   assert.match(prompt, /"closedTrades": 12/);

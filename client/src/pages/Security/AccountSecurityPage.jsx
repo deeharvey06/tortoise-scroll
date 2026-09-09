@@ -31,7 +31,7 @@ const formatDate = (value) =>
 export default function AccountSecurityPage() {
   const user = useAuthStore((state) => state.user);
   const setAuthenticatedUser = useAuthStore(
-    (state) => state.setAuthenticatedUser,
+    (state) => state.setAuthenticatedUser
   );
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,12 +70,12 @@ export default function AccountSecurityPage() {
     try {
       const data = await securityApi.changePassword(
         form.currentPassword,
-        form.newPassword,
+        form.newPassword
       );
       setAuthenticatedUser(data.user);
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setSuccess(
-        `Password changed. ${data.otherSessionsRevoked} other session(s) signed out.`,
+        `Password changed. ${data.otherSessionsRevoked} other session(s) signed out.`
       );
       await loadSessions();
     } catch (err) {

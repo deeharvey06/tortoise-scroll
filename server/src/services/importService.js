@@ -6,7 +6,13 @@ import { getAdapter } from '../utils/csvAdapters.js';
 import { computeRowHash } from '../utils/hash.js';
 import { createTrade } from './tradeService.js';
 
-const REQUIRED_TARGET_FIELDS = ['symbol', 'direction', 'quantity', 'entryPrice', 'entryTime'];
+const REQUIRED_TARGET_FIELDS = [
+  'symbol',
+  'direction',
+  'quantity',
+  'entryPrice',
+  'entryTime',
+];
 
 export function parseCsvBuffer(buffer) {
   return new Promise((resolve, reject) => {
@@ -80,7 +86,8 @@ function buildRowPayload(row, mapping, adapter, accountId) {
   const notes = readMapped(row, mapping, 'notes') || '';
 
   if (!symbol) errors.push('Missing symbol');
-  if (!direction) errors.push(`Unrecognized or missing direction ("${rawDirection ?? ''}")`);
+  if (!direction)
+    errors.push(`Unrecognized or missing direction ("${rawDirection ?? ''}")`);
   if (quantity === undefined) errors.push('Missing or invalid quantity');
   if (entryPrice === undefined) errors.push('Missing or invalid entry price');
   if (!entryTime) errors.push('Missing or unparseable entry time');
@@ -112,7 +119,14 @@ function buildRowPayload(row, mapping, adapter, accountId) {
  * broker exports) and returns a saved ImportJob with a per-row outcome —
  * imported / duplicate / error — so nothing is ever silently dropped.
  */
-export async function commitImport({ accountId, broker, mapping, buffer, originalFilename, userId }) {
+export async function commitImport({
+  accountId,
+  broker,
+  mapping,
+  buffer,
+  originalFilename,
+  userId,
+}) {
   const adapter = getAdapter(broker);
   const effectiveMapping = { ...adapter.defaultMapping, ...mapping };
 
@@ -133,7 +147,12 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
     const rowNumber = i + 2; // account for header row, 1-indexed data rows
     const row = rows[i];
 
-    const { payload, errors } = buildRowPayload(row, effectiveMapping, adapter, accountId);
+    const { payload, errors } = buildRowPayload(
+      row,
+      effectiveMapping,
+      adapter,
+      accountId
+    );
 
     if (errors.length > 0) {
       errorCount += 1;
@@ -141,7 +160,11 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
       continue;
     }
 
-    const existing = await Trade.findOne({ userId, accountId, sourceRowHash: payload.sourceRowHash }).lean();
+    const existing = await Trade.findOne({
+      userId,
+      accountId,
+      sourceRowHash: payload.sourceRowHash,
+    }).lean();
     if (existing) {
       duplicates += 1;
       jobRows.push({
@@ -156,7 +179,12 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
     try {
       const trade = await createTrade(payload, userId);
       imported += 1;
-      jobRows.push({ rowNumber, outcome: 'imported', message: 'Imported', tradeId: trade._id });
+      jobRows.push({
+        rowNumber,
+        outcome: 'imported',
+        message: 'Imported',
+        tradeId: trade._id,
+      });
     } catch (err) {
       errorCount += 1;
       jobRows.push({ rowNumber, outcome: 'error', message: err.message });
@@ -170,13 +198,25 @@ export async function commitImport({ accountId, broker, mapping, buffer, origina
     originalFilename,
     status: 'completed',
     mapping: effectiveMapping,
-    summary: { totalRows: rows.length, imported, duplicates, errors: errorCount },
+    summary: {
+      totalRows: rows.length,
+      imported,
+      duplicates,
+      errors: errorCount,
+    },
     rows: jobRows,
   });
 
   // Tag every imported trade with its import batch for provenance/audit
   await Trade.updateMany(
-    { userId, _id: { $in: jobRows.filter((r) => r.tradeId && r.outcome === 'imported').map((r) => r.tradeId) } },
+    {
+      userId,
+      _id: {
+        $in: jobRows
+          .filter((r) => r.tradeId && r.outcome === 'imported')
+          .map((r) => r.tradeId),
+      },
+    },
     { $set: { importBatchId: job._id } }
   );
 

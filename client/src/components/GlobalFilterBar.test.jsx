@@ -48,14 +48,14 @@ describe('GlobalFilterBar', () => {
       expect(useFilterStore.getState().accountId).toBe('account-1');
     });
     expect(
-      screen.getByText('Primary account', { selector: '.MuiChip-label' }),
+      screen.getByText('Primary account', { selector: '.MuiChip-label' })
     ).toBeVisible();
 
     await act(async () => {
       fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
     });
     await waitFor(() =>
-      expect(accountSelect).toHaveAttribute('aria-expanded', 'false'),
+      expect(accountSelect).toHaveAttribute('aria-expanded', 'false')
     );
   });
 });

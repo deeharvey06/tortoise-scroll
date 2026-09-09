@@ -36,7 +36,15 @@ const TARGET_FIELDS = [
   { key: 'notes', label: 'Notes', required: false },
 ];
 
-const STAGES = ['Upload', 'Detect', 'Map', 'Validate', 'Review', 'Import', 'Results'];
+const STAGES = [
+  'Upload',
+  'Detect',
+  'Map',
+  'Validate',
+  'Review',
+  'Import',
+  'Results',
+];
 
 export default function ImportPage() {
   const [activeStep, setActiveStep] = useState(0);
@@ -57,14 +65,31 @@ export default function ImportPage() {
 
   const [loading, setLoading] = useState(false);
   const [job, setJob] = useState(null);
-  const visualStage = activeStep === 0 ? (loading ? 1 : 0) : activeStep === 1 ? 2 : activeStep === 2 ? (loading ? 5 : 4) : 6;
+  const visualStage =
+    activeStep === 0
+      ? loading
+        ? 1
+        : 0
+      : activeStep === 1
+        ? 2
+        : activeStep === 2
+          ? loading
+            ? 5
+            : 4
+          : 6;
   const failedRows = job?.rows?.filter((row) => row.outcome === 'error') || [];
   const hasErrorField = failedRows.some((row) => row.field !== undefined);
   const hasErrorValue = failedRows.some((row) => row.value !== undefined);
 
   useEffect(() => {
-    importApi.fetchAdapters().then(setAdapters).catch((e) => setError(e.message));
-    tradeApi.fetchAccounts().then(setAccounts).catch((e) => setError(e.message));
+    importApi
+      .fetchAdapters()
+      .then(setAdapters)
+      .catch((e) => setError(e.message));
+    tradeApi
+      .fetchAccounts()
+      .then(setAccounts)
+      .catch((e) => setError(e.message));
   }, []);
 
   const handleFileSelect = (f) => {
@@ -104,11 +129,15 @@ export default function ImportPage() {
     }
   }, [file, broker]);
 
-  const missingRequired = TARGET_FIELDS.filter((f) => f.required && !mapping[f.key]);
+  const missingRequired = TARGET_FIELDS.filter(
+    (f) => f.required && !mapping[f.key]
+  );
 
   const goToPreviewStep = () => {
     if (missingRequired.length > 0) {
-      setError(`Map all required fields first: ${missingRequired.map((f) => f.label).join(', ')}`);
+      setError(
+        `Map all required fields first: ${missingRequired.map((f) => f.label).join(', ')}`
+      );
       return;
     }
     setError(null);
@@ -123,7 +152,12 @@ export default function ImportPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await importApi.commitCsv({ file, accountId, broker, mapping });
+      const result = await importApi.commitCsv({
+        file,
+        accountId,
+        broker,
+        mapping,
+      });
       setJob(result);
       setActiveStep(3);
     } catch (err) {
@@ -145,34 +179,52 @@ export default function ImportPage() {
 
   return (
     <Box sx={{ maxWidth: 1120 }}>
-      <PageHeader eyebrow="System" title="Import trades" description="Bring broker CSV exports into your permanent trading record through a controlled, reviewable workflow." />
+      <PageHeader
+        eyebrow='System'
+        title='Import trades'
+        description='Bring broker CSV exports into your permanent trading record through a controlled, reviewable workflow.'
+      />
 
-      <Box sx={{ overflowX: 'auto', mb: 6, pb: 1 }} aria-label="Import progress">
-      <Stepper activeStep={visualStage} alternativeLabel sx={{ minWidth: 680, '& .MuiStepLabel-label': { typography: 'caption' } }}>
-        {STAGES.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+      <Box
+        sx={{ overflowX: 'auto', mb: 6, pb: 1 }}
+        aria-label='Import progress'
+      >
+        <Stepper
+          activeStep={visualStage}
+          alternativeLabel
+          sx={{
+            minWidth: 680,
+            '& .MuiStepLabel-label': { typography: 'caption' },
+          }}
+        >
+          {STAGES.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
       </Box>
 
       {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+        <Alert severity='error' onClose={() => setError(null)} sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
       {activeStep === 0 && (
         <Panel>
-          <SectionHeader eyebrow="Upload" title="Choose source file" description="Select the broker format, then provide its CSV export. The source file is not modified." />
+          <SectionHeader
+            eyebrow='Upload'
+            title='Choose source file'
+            description='Select the broker format, then provide its CSV export. The source file is not modified.'
+          />
           <TextField
             select
-            label="Broker format"
+            label='Broker format'
             value={broker}
             onChange={(e) => setBroker(e.target.value)}
             fullWidth
-            size="small"
+            size='small'
             sx={{ mb: 3, maxWidth: 320 }}
           >
             {adapters.map((a) => (
@@ -198,28 +250,34 @@ export default function ImportPage() {
               backgroundColor: dragOver ? 'action.hover' : 'transparent',
             }}
           >
-            <UploadFileIcon sx={{ fontSize: 36, color: 'text.secondary', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            <UploadFileIcon
+              sx={{ fontSize: 36, color: 'text.secondary', mb: 1 }}
+            />
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
               Drag and drop a CSV export here, or
             </Typography>
-            <Button variant="outlined" component="label" size="small">
+            <Button variant='outlined' component='label' size='small'>
               Choose file
               <input
-                type="file"
-                accept=".csv,text/csv"
+                type='file'
+                accept='.csv,text/csv'
                 hidden
                 onChange={(e) => handleFileSelect(e.target.files?.[0])}
               />
             </Button>
             {file && (
-              <Typography variant="body2" sx={{ mt: 2 }}>
+              <Typography variant='body2' sx={{ mt: 2 }}>
                 Selected: <strong>{file.name}</strong>
               </Typography>
             )}
           </Box>
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant="contained" onClick={runPreview} disabled={!file || loading}>
+            <Button
+              variant='contained'
+              onClick={runPreview}
+              disabled={!file || loading}
+            >
               {loading ? <CircularProgress size={18} /> : 'Preview'}
             </Button>
           </Box>
@@ -228,12 +286,17 @@ export default function ImportPage() {
 
       {activeStep === 1 && (
         <Panel>
-          <SectionHeader eyebrow="Detect · Map" title="Confirm column mapping" description="Review the detected headers before any rows are imported." />
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {totalRows} rows detected. Map each field to a column from your file. Fields marked * are required —
-            rows that fail to resolve them will be reported as errors, never silently skipped.
+          <SectionHeader
+            eyebrow='Detect · Map'
+            title='Confirm column mapping'
+            description='Review the detected headers before any rows are imported.'
+          />
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+            {totalRows} rows detected. Map each field to a column from your
+            file. Fields marked * are required — rows that fail to resolve them
+            will be reported as errors, never silently skipped.
           </Typography>
-          <Table size="small">
+          <Table size='small'>
             <TableHead>
               <TableRow>
                 <TableCell>Trade field</TableCell>
@@ -250,12 +313,17 @@ export default function ImportPage() {
                   <TableCell>
                     <TextField
                       select
-                      size="small"
+                      size='small'
                       fullWidth
                       value={mapping[f.key] || ''}
-                      onChange={(e) => setMapping((m) => ({ ...m, [f.key]: e.target.value || undefined }))}
+                      onChange={(e) =>
+                        setMapping((m) => ({
+                          ...m,
+                          [f.key]: e.target.value || undefined,
+                        }))
+                      }
                     >
-                      <MenuItem value="">— not mapped —</MenuItem>
+                      <MenuItem value=''>— not mapped —</MenuItem>
                       {headers.map((h) => (
                         <MenuItem key={h} value={h}>
                           {h}
@@ -270,7 +338,7 @@ export default function ImportPage() {
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
             <Button onClick={() => setActiveStep(0)}>Back</Button>
-            <Button variant="contained" onClick={goToPreviewStep}>
+            <Button variant='contained' onClick={goToPreviewStep}>
               Continue
             </Button>
           </Box>
@@ -279,14 +347,18 @@ export default function ImportPage() {
 
       {activeStep === 2 && (
         <Panel>
-          <SectionHeader eyebrow="Validate · Review" title="Review interpreted trades" description="Choose the destination account and verify how the mapped values will be interpreted." />
+          <SectionHeader
+            eyebrow='Validate · Review'
+            title='Review interpreted trades'
+            description='Choose the destination account and verify how the mapped values will be interpreted.'
+          />
           <TextField
             select
-            label="Import into account"
+            label='Import into account'
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             fullWidth
-            size="small"
+            size='small'
             required
             sx={{ mb: 3, maxWidth: 320 }}
           >
@@ -297,11 +369,12 @@ export default function ImportPage() {
             ))}
           </TextField>
 
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            First {previewRows.length} of {totalRows} rows, as they'll be interpreted with your mapping:
+          <Typography variant='body2' sx={{ mb: 1 }}>
+            First {previewRows.length} of {totalRows} rows, as they'll be
+            interpreted with your mapping:
           </Typography>
           <TableContainer sx={{ maxHeight: 320 }}>
-            <Table size="small" stickyHeader>
+            <Table size='small' stickyHeader>
               <TableHead>
                 <TableRow>
                   {TARGET_FIELDS.filter((f) => mapping[f.key]).map((f) => (
@@ -323,8 +396,16 @@ export default function ImportPage() {
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
             <Button onClick={() => setActiveStep(1)}>Back</Button>
-            <Button variant="contained" onClick={runCommit} disabled={loading || !accountId}>
-              {loading ? <CircularProgress size={18} /> : `Import ${totalRows} rows`}
+            <Button
+              variant='contained'
+              onClick={runCommit}
+              disabled={loading || !accountId}
+            >
+              {loading ? (
+                <CircularProgress size={18} />
+              ) : (
+                `Import ${totalRows} rows`
+              )}
             </Button>
           </Box>
         </Panel>
@@ -332,20 +413,33 @@ export default function ImportPage() {
 
       {activeStep === 3 && job && (
         <Panel>
-          <SectionHeader eyebrow="Results" title="Import completed" description="Every submitted row is accounted for below." />
+          <SectionHeader
+            eyebrow='Results'
+            title='Import completed'
+            description='Every submitted row is accounted for below.'
+          />
           <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <StatusBadge label={`${job.summary.imported} imported`} tone="positive" />
-            <StatusBadge label={`${job.summary.duplicates} duplicates skipped`} tone="warning" />
-            <StatusBadge label={`${job.summary.errors} errors`} tone={job.summary.errors > 0 ? 'negative' : 'neutral'} />
+            <StatusBadge
+              label={`${job.summary.imported} imported`}
+              tone='positive'
+            />
+            <StatusBadge
+              label={`${job.summary.duplicates} duplicates skipped`}
+              tone='warning'
+            />
+            <StatusBadge
+              label={`${job.summary.errors} errors`}
+              tone={job.summary.errors > 0 ? 'negative' : 'neutral'}
+            />
           </Box>
 
           {job.summary.errors > 0 && (
             <>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Typography variant='subtitle2' sx={{ mb: 1 }}>
                 Rows that failed — nothing was silently discarded
               </Typography>
               <TableContainer sx={{ maxHeight: 300, mb: 2 }}>
-                <Table size="small" stickyHeader>
+                <Table size='small' stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell>Row</TableCell>
@@ -356,20 +450,26 @@ export default function ImportPage() {
                   </TableHead>
                   <TableBody>
                     {failedRows.map((r) => (
-                        <TableRow key={r.rowNumber}>
-                          <TableCell>{r.rowNumber}</TableCell>
-                          {hasErrorField && <TableCell>{r.field ?? '—'}</TableCell>}
-                          {hasErrorValue && <TableCell className="financial-number">{r.value ?? '—'}</TableCell>}
-                          <TableCell>{r.message}</TableCell>
-                        </TableRow>
-                      ))}
+                      <TableRow key={r.rowNumber}>
+                        <TableCell>{r.rowNumber}</TableCell>
+                        {hasErrorField && (
+                          <TableCell>{r.field ?? '—'}</TableCell>
+                        )}
+                        {hasErrorValue && (
+                          <TableCell className='financial-number'>
+                            {r.value ?? '—'}
+                          </TableCell>
+                        )}
+                        <TableCell>{r.message}</TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>
             </>
           )}
 
-          <Button variant="contained" onClick={startOver}>
+          <Button variant='contained' onClick={startOver}>
             Import another file
           </Button>
         </Panel>

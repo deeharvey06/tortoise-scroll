@@ -28,7 +28,12 @@ export function isConfigured() {
  * @throws if no provider is configured — callers must handle this and tell
  * the user clearly, never substitute synthetic data.
  */
-export async function fetchCandles({ symbol, timeframe, from, to }) {
+export async function fetchCandles({
+  symbol,
+  timeframe: _timeframe,
+  from: _from,
+  to: _to,
+}) {
   if (!isConfigured()) {
     const err = new Error(
       `No market data provider is configured (MARKET_DATA_PROVIDER=none). Historical price bars for ${symbol} are unavailable. ` +
@@ -39,7 +44,9 @@ export async function fetchCandles({ symbol, timeframe, from, to }) {
   }
   // Real providers get implemented here, switched on PROVIDER. None exist
   // yet — isConfigured() guards against ever reaching this line today.
-  throw new Error(`Market data provider "${PROVIDER}" has no implementation yet.`);
+  throw new Error(
+    `Market data provider "${PROVIDER}" has no implementation yet.`
+  );
 }
 
 export default { getProviderName, isConfigured, fetchCandles };

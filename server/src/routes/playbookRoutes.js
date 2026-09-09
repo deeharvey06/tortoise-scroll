@@ -21,7 +21,11 @@ router.get('/:id', asyncHandler(getPlaybook));
 router.put('/:id', asyncHandler(updatePlaybook));
 router.delete('/:id', asyncHandler(deletePlaybook));
 router.get('/:id/performance', asyncHandler(getPlaybookPerformance));
-router.post('/:id/images', mediaUpload.single('file'), asyncHandler(images.upload));
+router.post(
+  '/:id/images',
+  mediaUpload.single('file'),
+  asyncHandler(images.upload)
+);
 router.put('/:id/images/:imageId', asyncHandler(images.updateCaption));
 router.delete('/:id/images/:imageId', asyncHandler(images.remove));
 

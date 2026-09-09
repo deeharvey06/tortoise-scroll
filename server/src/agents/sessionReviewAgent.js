@@ -35,20 +35,46 @@ export async function computeSessionReview(date, filters = {}) {
   const summary = analyticsService.computeSummary(trades);
   const mistakes = analyticsService.computeTagBreakdown(closed, 'mistake');
   const violations = analyticsService.computeRuleViolations(closed);
-  const best = closed.reduce((a, b) => (b.netPnL > (a?.netPnL ?? -Infinity) ? b : a), null);
-  const worst = closed.reduce((a, b) => (b.netPnL < (a?.netPnL ?? Infinity) ? b : a), null);
-  const biggestMistake = mistakes.length ? mistakes.sort((a, b) => b.count - a.count)[0] : null;
+  const best = closed.reduce(
+    (a, b) => (b.netPnL > (a?.netPnL ?? -Infinity) ? b : a),
+    null
+  );
+  const worst = closed.reduce(
+    (a, b) => (b.netPnL < (a?.netPnL ?? Infinity) ? b : a),
+    null
+  );
+  const biggestMistake = mistakes.length
+    ? mistakes.sort((a, b) => b.count - a.count)[0]
+    : null;
 
   const wentWell = [];
   const wentWrong = [];
 
-  if (summary.netPnL > 0) wentWell.push(`Net P&L was positive: $${summary.netPnL.toFixed(2)} across ${closed.length} trade(s).`);
-  if (summary.winRate !== null && summary.winRate >= 60) wentWell.push(`Win rate was ${summary.winRate}% over ${closed.length} trade(s).`);
-  if (violations.violations === 0 && violations.tradesWithPlanFlagSet > 0) wentWell.push(`You followed your plan on all ${violations.tradesWithPlanFlagSet} trade(s) where you tracked it.`);
+  if (summary.netPnL > 0)
+    wentWell.push(
+      `Net P&L was positive: $${summary.netPnL.toFixed(2)} across ${closed.length} trade(s).`
+    );
+  if (summary.winRate !== null && summary.winRate >= 60)
+    wentWell.push(
+      `Win rate was ${summary.winRate}% over ${closed.length} trade(s).`
+    );
+  if (violations.violations === 0 && violations.tradesWithPlanFlagSet > 0)
+    wentWell.push(
+      `You followed your plan on all ${violations.tradesWithPlanFlagSet} trade(s) where you tracked it.`
+    );
 
-  if (summary.netPnL < 0) wentWrong.push(`Net P&L was negative: -$${Math.abs(summary.netPnL).toFixed(2)} across ${closed.length} trade(s).`);
-  if (violations.violations > 0) wentWrong.push(`You marked ${violations.violations} of ${violations.tradesWithPlanFlagSet} trade(s) as not following your plan.`);
-  if (biggestMistake) wentWrong.push(`"${biggestMistake.tag}" was tagged on ${biggestMistake.count} trade(s) today, averaging $${biggestMistake.avgPnL.toFixed(2)} per trade.`);
+  if (summary.netPnL < 0)
+    wentWrong.push(
+      `Net P&L was negative: -$${Math.abs(summary.netPnL).toFixed(2)} across ${closed.length} trade(s).`
+    );
+  if (violations.violations > 0)
+    wentWrong.push(
+      `You marked ${violations.violations} of ${violations.tradesWithPlanFlagSet} trade(s) as not following your plan.`
+    );
+  if (biggestMistake)
+    wentWrong.push(
+      `"${biggestMistake.tag}" was tagged on ${biggestMistake.count} trade(s) today, averaging $${biggestMistake.avgPnL.toFixed(2)} per trade.`
+    );
 
   const overtradingThreshold = 5; // simple, stated default — not user-hidden
   const overtrading =
@@ -61,14 +87,16 @@ export async function computeSessionReview(date, filters = {}) {
     ...wentWrong,
     overtrading,
     best ? `Best trade: ${best.symbol} at $${best.netPnL.toFixed(2)}.` : null,
-    worst ? `Worst trade: ${worst.symbol} at $${worst.netPnL.toFixed(2)}.` : null,
+    worst
+      ? `Worst trade: ${worst.symbol} at $${worst.netPnL.toFixed(2)}.`
+      : null,
   ].filter(Boolean);
 
   const tomorrowsFocus = biggestMistake
     ? `Consider a specific plan for avoiding "${biggestMistake.tag}" tomorrow — it showed up ${biggestMistake.count} time(s) today.`
     : summary.netPnL < 0
-    ? 'Review today\'s losing trades for a common thread before the next session.'
-    : 'No specific red flag stood out today — keep doing what worked.';
+      ? "Review today's losing trades for a common thread before the next session."
+      : 'No specific red flag stood out today — keep doing what worked.';
 
   return {
     date,
@@ -87,7 +115,10 @@ export async function computeSessionReview(date, filters = {}) {
 
 export async function generateSessionReview(date, filters = {}) {
   const review = await computeSessionReview(date, filters);
-  const narrative = await narrate(review.findings, { title: 'Session Review', userId: filters.userId });
+  const narrative = await narrate(review.findings, {
+    title: 'Session Review',
+    userId: filters.userId,
+  });
   return { ...review, narrative };
 }
 

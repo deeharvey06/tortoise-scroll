@@ -33,13 +33,39 @@ const screenshotSchema = new Schema(
 const tradeSchema = new Schema(
   {
     // Identity / linkage
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    accountId: { type: Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
-    strategy: { type: Schema.Types.ObjectId, ref: 'Strategy', default: null, index: true },
-    playbook: { type: Schema.Types.ObjectId, ref: 'Playbook', default: null, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    accountId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Account',
+      required: true,
+      index: true,
+    },
+    strategy: {
+      type: Schema.Types.ObjectId,
+      ref: 'Strategy',
+      default: null,
+      index: true,
+    },
+    playbook: {
+      type: Schema.Types.ObjectId,
+      ref: 'Playbook',
+      default: null,
+      index: true,
+    },
 
     // Instrument
-    symbol: { type: String, required: true, uppercase: true, trim: true, index: true },
+    symbol: {
+      type: String,
+      required: true,
+      uppercase: true,
+      trim: true,
+      index: true,
+    },
     assetType: {
       type: String,
       enum: ['equity', 'option', 'future', 'forex', 'crypto', 'other'],
@@ -48,7 +74,12 @@ const tradeSchema = new Schema(
     market: { type: String, default: '' },
 
     // Direction / size
-    direction: { type: String, enum: ['long', 'short'], required: true, index: true },
+    direction: {
+      type: String,
+      enum: ['long', 'short'],
+      required: true,
+      index: true,
+    },
     quantity: { type: Number, required: true }, // net/aggregate size, derived if fills exist
 
     // Price / time — aggregate values. When `executions` is populated these
@@ -81,7 +112,14 @@ const tradeSchema = new Schema(
     setup: { type: String, default: '', index: true },
     session: {
       type: String,
-      enum: ['pre-market', 'open', 'mid-day', 'power-hour', 'after-hours', 'unspecified'],
+      enum: [
+        'pre-market',
+        'open',
+        'mid-day',
+        'power-hour',
+        'after-hours',
+        'unspecified',
+      ],
       default: 'unspecified',
     },
     timeframe: { type: String, default: '' },
@@ -105,7 +143,11 @@ const tradeSchema = new Schema(
     chartImage: { type: String, default: '' },
 
     // Import provenance — never silently overwritten on re-import
-    importBatchId: { type: Schema.Types.ObjectId, ref: 'ImportJob', default: null },
+    importBatchId: {
+      type: Schema.Types.ObjectId,
+      ref: 'ImportJob',
+      default: null,
+    },
     sourceRowHash: { type: String, default: null, index: true }, // for duplicate detection
     isDemoData: { type: Boolean, default: false },
   },

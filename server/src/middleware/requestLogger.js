@@ -5,7 +5,7 @@ export function requestLogger(req, res, next) {
   const start = Date.now();
   req.requestId = String(req.get('x-request-id') || crypto.randomUUID()).slice(
     0,
-    128,
+    128
   );
   res.setHeader('X-Request-Id', req.requestId);
 
@@ -18,7 +18,7 @@ export function requestLogger(req, res, next) {
         durationMs: Date.now() - start,
         requestId: req.requestId,
       },
-      'request completed',
+      'request completed'
     );
   });
 

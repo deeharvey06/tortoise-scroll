@@ -22,7 +22,7 @@ async function start() {
   } catch (err) {
     console.error('[startup] Failed to connect to MongoDB:', err.message);
     console.error(
-      '[startup] Is MongoDB running? Try: mongod --dbpath <your-db-path>',
+      '[startup] Is MongoDB running? Try: mongod --dbpath <your-db-path>'
     );
     process.exit(1);
   }
@@ -32,7 +32,7 @@ async function start() {
   } catch (err) {
     console.error(
       '[startup] Failed to provision the ROOT account:',
-      err.message,
+      err.message
     );
     process.exit(1);
   }
@@ -40,7 +40,7 @@ async function start() {
   const app = createApp();
   app.listen(config.port, () => {
     console.log(
-      `[server] Trading journal API listening on http://localhost:${config.port}`,
+      `[server] Trading journal API listening on http://localhost:${config.port}`
     );
   });
 }

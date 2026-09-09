@@ -32,7 +32,8 @@ export const BROKER_ADAPTERS = {
       exitTime: 'Exit time',
       commission: 'Commission',
     },
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['long'], short: ['short'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, { long: ['long'], short: ['short'] }),
   },
 
   tradestation: {
@@ -48,7 +49,11 @@ export const BROKER_ADAPTERS = {
       commission: 'Commission',
       fees: 'Fees',
     },
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['buy', 'long'], short: ['sell', 'short', 'sell short'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, {
+        long: ['buy', 'long'],
+        short: ['sell', 'short', 'sell short'],
+      }),
   },
 
   thinkorswim: {
@@ -66,7 +71,8 @@ export const BROKER_ADAPTERS = {
     // rather than closed round-trips; full fill-pairing support lands with
     // the multi-fill import path in a later pass. For now the generic
     // mapping step lets a user reshape an already-paired export.
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['bot', 'buy'], short: ['sld', 'sell'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, { long: ['bot', 'buy'], short: ['sld', 'sell'] }),
   },
 
   interactive_brokers: {
@@ -79,12 +85,15 @@ export const BROKER_ADAPTERS = {
       entryTime: 'Date/Time',
       commission: 'Comm/Fee',
     },
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['buy', 'bot'], short: ['sell', 'sld'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, { long: ['buy', 'bot'], short: ['sell', 'sld'] }),
   },
 };
 
 function normalizeDirection(raw, overrides) {
-  const v = String(raw || '').trim().toLowerCase();
+  const v = String(raw || '')
+    .trim()
+    .toLowerCase();
   const longWords = overrides?.long || ['long', 'buy', 'bot', 'b'];
   const shortWords = overrides?.short || ['short', 'sell', 'sld', 'ss', 's'];
   if (longWords.includes(v)) return 'long';
@@ -97,7 +106,10 @@ export function getAdapter(brokerKey) {
 }
 
 export function listAdapters() {
-  return Object.entries(BROKER_ADAPTERS).map(([key, a]) => ({ key, label: a.label }));
+  return Object.entries(BROKER_ADAPTERS).map(([key, a]) => ({
+    key,
+    label: a.label,
+  }));
 }
 
 export default { BROKER_ADAPTERS, getAdapter, listAdapters };

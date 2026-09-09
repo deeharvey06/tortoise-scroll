@@ -16,22 +16,42 @@ export async function getAppSettings(req, res) {
       defaultStrategyId: null,
       tradingHoursStart: '09:30',
       tradingHoursEnd: '16:00',
-    },
+    }
   );
 }
 
 export async function saveAppSettings(req, res) {
   // Validate request body before persistence
   const validated = appSettingsSchema.parse(req.body);
-  if (validated.defaultAccountId && !(await Account.exists(ownedFilter(req, { _id: validated.defaultAccountId })))) { res.status(404); throw new Error('Default account not found'); }
-  if (validated.defaultStrategyId && !(await Strategy.exists(ownedFilter(req, { _id: validated.defaultStrategyId })))) { res.status(404); throw new Error('Default strategy not found'); }
+  if (
+    validated.defaultAccountId &&
+    !(await Account.exists(
+      ownedFilter(req, { _id: validated.defaultAccountId })
+    ))
+  ) {
+    res.status(404);
+    throw new Error('Default account not found');
+  }
+  if (
+    validated.defaultStrategyId &&
+    !(await Strategy.exists(
+      ownedFilter(req, { _id: validated.defaultStrategyId })
+    ))
+  ) {
+    res.status(404);
+    throw new Error('Default strategy not found');
+  }
 
   const existing = await AppSettings.findOne(ownedFilter(req));
   const settings = existing
-    ? await AppSettings.findOneAndUpdate(ownedFilter(req, { _id: existing._id }), validated, {
-        new: true,
-        runValidators: true,
-      })
+    ? await AppSettings.findOneAndUpdate(
+        ownedFilter(req, { _id: existing._id }),
+        validated,
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
     : await AppSettings.create({ ...validated, userId: req.user.id });
   res.json(settings);
 }

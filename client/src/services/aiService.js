@@ -16,7 +16,11 @@ export async function saveAISettings(payload) {
 }
 
 export async function sendChatMessage({ conversationId, message, filters }) {
-  const { data } = await api.post('/ai/chat', { conversationId, message, filters });
+  const { data } = await api.post('/ai/chat', {
+    conversationId,
+    message,
+    filters,
+  });
   return data;
 }
 

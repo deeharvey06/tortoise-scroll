@@ -39,7 +39,7 @@ const renderAt = (node, { path = '/', mode = 'light' } = {}) =>
   render(
     <ThemeProvider theme={createTortoiseTheme(mode)}>
       <MemoryRouter initialEntries={[path]}>{node}</MemoryRouter>
-    </ThemeProvider>,
+    </ThemeProvider>
   );
 
 describe('Phase 2 authentication UI', () => {
@@ -53,7 +53,7 @@ describe('Phase 2 authentication UI', () => {
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
     expect(screen.getByLabelText(/^Email/)).toBeVisible();
     expect(
-      screen.getByRole('link', { name: 'Forgot password?' }),
+      screen.getByRole('link', { name: 'Forgot password?' })
     ).toBeVisible();
   });
 
@@ -63,9 +63,9 @@ describe('Phase 2 authentication UI', () => {
       renderAt(<RegisterPage />, { path: '/register', mode });
       expect(screen.getByLabelText(/^Display name/)).toBeVisible();
       expect(
-        screen.queryByLabelText(/role|admin|root|status/i),
+        screen.queryByLabelText(/role|admin|root|status/i)
       ).not.toBeInTheDocument();
-    },
+    }
   );
 
   it('validates registration fields and password confirmation', () => {
@@ -105,7 +105,7 @@ describe('Phase 2 authentication UI', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'already exists',
+      'already exists'
     );
   });
 
@@ -122,7 +122,7 @@ describe('Phase 2 authentication UI', () => {
           }
         />
       </Routes>,
-      { path: '/private' },
+      { path: '/private' }
     );
     expect(screen.getByText('Sign in destination')).toBeVisible();
   });
@@ -137,10 +137,10 @@ describe('Phase 2 authentication UI', () => {
       renderAt(
         <ProtectedRoute>
           <div>Private content</div>
-        </ProtectedRoute>,
+        </ProtectedRoute>
       );
       expect(screen.getByText('Private content')).toBeVisible();
-    },
+    }
   );
 
   it.each([
@@ -162,7 +162,7 @@ describe('Phase 2 authentication UI', () => {
           }
         />
       </Routes>,
-      { path },
+      { path }
     );
     expect(screen.getByText('Denied')).toBeVisible();
   });
@@ -176,7 +176,7 @@ describe('Phase 2 authentication UI', () => {
     renderAt(
       <Gate>
         <div>Allowed</div>
-      </Gate>,
+      </Gate>
     );
     expect(screen.getByText('Allowed')).toBeVisible();
   });
@@ -202,10 +202,10 @@ describe('Phase 2 authentication UI', () => {
           />
           <Route path={destination} element={<div>{label}</div>} />
         </Routes>,
-        { path: '/private' },
+        { path: '/private' }
       );
       expect(screen.getByText(label)).toBeVisible();
-    },
+    }
   );
 
   it('shows current user data and signs out from the account menu', async () => {
@@ -222,34 +222,34 @@ describe('Phase 2 authentication UI', () => {
   it('renders access, session, suspended, and loading states', () => {
     const { rerender } = renderAt(<AccessDeniedPage />);
     expect(
-      screen.getByRole('heading', { name: 'Access denied' }),
+      screen.getByRole('heading', { name: 'Access denied' })
     ).toBeVisible();
     rerender(
       <ThemeProvider theme={createTortoiseTheme('light')}>
         <MemoryRouter>
           <SessionExpiredPage />
         </MemoryRouter>
-      </ThemeProvider>,
+      </ThemeProvider>
     );
     expect(
-      screen.getByRole('heading', { name: 'Session expired' }),
+      screen.getByRole('heading', { name: 'Session expired' })
     ).toBeVisible();
     rerender(
       <ThemeProvider theme={createTortoiseTheme('light')}>
         <MemoryRouter>
           <AccountSuspendedPage />
         </MemoryRouter>
-      </ThemeProvider>,
+      </ThemeProvider>
     );
     expect(
-      screen.getByRole('heading', { name: 'Account unavailable' }),
+      screen.getByRole('heading', { name: 'Account unavailable' })
     ).toBeVisible();
     rerender(
       <ThemeProvider theme={createTortoiseTheme('light')}>
         <MemoryRouter>
           <AuthLoadingState />
         </MemoryRouter>
-      </ThemeProvider>,
+      </ThemeProvider>
     );
     expect(screen.getByRole('status')).toBeVisible();
   });

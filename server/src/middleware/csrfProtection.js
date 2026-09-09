@@ -24,7 +24,7 @@ export function csrfProtection({ allowedOrigins, enforce = true }) {
           method: req.method,
           url: req.originalUrl,
         },
-        'request origin rejected',
+        'request origin rejected'
       );
       return next(securityError(403, 'Request origin is not allowed'));
     }
@@ -36,7 +36,7 @@ export function csrfProtection({ allowedOrigins, enforce = true }) {
           method: req.method,
           url: req.originalUrl,
         },
-        'CSRF marker missing',
+        'CSRF marker missing'
       );
       return next(securityError(403, 'CSRF protection header is required'));
     }

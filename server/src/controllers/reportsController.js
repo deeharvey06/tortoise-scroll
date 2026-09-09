@@ -1,8 +1,29 @@
 import * as analyticsService from '../services/analyticsService.js';
 
 function extractFilters(req) {
-  const { accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo } = req.query;
-  return { userId: req.user.id, accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo };
+  const {
+    accountId,
+    symbol,
+    strategy,
+    setup,
+    direction,
+    session,
+    tags,
+    dateFrom,
+    dateTo,
+  } = req.query;
+  return {
+    userId: req.user.id,
+    accountId,
+    symbol,
+    strategy,
+    setup,
+    direction,
+    session,
+    tags,
+    dateFrom,
+    dateTo,
+  };
 }
 
 /**
@@ -25,21 +46,29 @@ export async function getReport(req, res) {
     res.json({
       summary,
       winLossDistribution: analyticsService.buildWinLossDistribution(closed),
-      rMultipleDistribution: analyticsService.buildRMultipleDistribution(closed),
+      rMultipleDistribution:
+        analyticsService.buildRMultipleDistribution(closed),
     });
     return;
   }
 
   if (category === 'execution') {
     const holdingTimes = closed
-      .filter((t) => t.holdingTimeSeconds !== null && t.holdingTimeSeconds !== undefined)
+      .filter(
+        (t) =>
+          t.holdingTimeSeconds !== null && t.holdingTimeSeconds !== undefined
+      )
       .map((t) => t.holdingTimeSeconds);
     res.json({
       sampleSize: closed.length,
       byHour: analyticsService.buildByHour(closed),
       holdingTimeStats: {
         count: holdingTimes.length,
-        avgSeconds: holdingTimes.length ? Math.round(holdingTimes.reduce((a, b) => a + b, 0) / holdingTimes.length) : null,
+        avgSeconds: holdingTimes.length
+          ? Math.round(
+              holdingTimes.reduce((a, b) => a + b, 0) / holdingTimes.length
+            )
+          : null,
         minSeconds: holdingTimes.length ? Math.min(...holdingTimes) : null,
         maxSeconds: holdingTimes.length ? Math.max(...holdingTimes) : null,
       },
@@ -80,7 +109,9 @@ export async function getReport(req, res) {
   }
 
   res.status(404);
-  throw new Error(`Unknown report category "${category}". Expected performance, execution, behavior, or market.`);
+  throw new Error(
+    `Unknown report category "${category}". Expected performance, execution, behavior, or market.`
+  );
 }
 
 export default { getReport };

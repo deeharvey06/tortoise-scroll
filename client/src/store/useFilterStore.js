@@ -1,5 +1,18 @@
 import { create } from 'zustand';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subDays } from 'date-fns';
+import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  startOfQuarter,
+  endOfQuarter,
+  startOfYear,
+  endOfYear,
+  subDays,
+} from 'date-fns';
 
 export const DATE_PRESETS = [
   'today',
@@ -55,7 +68,8 @@ export const useFilterStore = create((set) => ({
   tags: [],
 
   setDatePreset: (datePreset) => set({ datePreset }),
-  setCustomRange: (customFrom, customTo) => set({ customFrom, customTo, datePreset: 'custom' }),
+  setCustomRange: (customFrom, customTo) =>
+    set({ customFrom, customTo, datePreset: 'custom' }),
   setAccountId: (accountId) => set({ accountId }),
   setSymbol: (symbol) => set({ symbol }),
   setStrategy: (strategy) => set({ strategy }),
@@ -81,7 +95,11 @@ export const useFilterStore = create((set) => ({
 /** Converts current filter store state into the query params the API expects. */
 export function useFilterParams() {
   const state = useFilterStore();
-  const { dateFrom, dateTo } = resolveDateRange(state.datePreset, state.customFrom, state.customTo);
+  const { dateFrom, dateTo } = resolveDateRange(
+    state.datePreset,
+    state.customFrom,
+    state.customTo
+  );
   const params = {};
   if (state.accountId) params.accountId = state.accountId;
   if (state.symbol) params.symbol = state.symbol;

@@ -38,7 +38,7 @@ export async function deleteTradesByIds(ids, userId) {
 export async function addTagsToTrades(ids, userId, tagsToAdd) {
   return Trade.updateMany(
     { _id: { $in: ids }, userId },
-    { $addToSet: { tags: { $each: tagsToAdd } } },
+    { $addToSet: { tags: { $each: tagsToAdd } } }
   );
 }
 

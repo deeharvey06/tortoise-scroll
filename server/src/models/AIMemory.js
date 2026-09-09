@@ -11,14 +11,23 @@ const { Schema } = mongoose;
  */
 const aiMemorySchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     content: { type: String, required: true, trim: true },
     category: {
       type: String,
       enum: ['rule', 'goal', 'preference', 'mistake_pattern', 'other'],
       default: 'other',
     },
-    sourceConversationId: { type: Schema.Types.ObjectId, ref: 'AIConversation', default: null },
+    sourceConversationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'AIConversation',
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -1,5 +1,8 @@
 import RiskSettings from '../models/RiskSettings.js';
-import { resolveSettings, computeRiskDashboard } from '../services/riskDashboardService.js';
+import {
+  resolveSettings,
+  computeRiskDashboard,
+} from '../services/riskDashboardService.js';
 import Account from '../models/Account.js';
 
 export async function getSettings(req, res) {
@@ -20,15 +23,25 @@ export async function getSettings(req, res) {
 
 export async function upsertSettings(req, res) {
   const { accountId } = req.body;
-  if (accountId && !(await Account.exists({ _id: accountId, userId: req.user.id }))) { res.status(404); throw new Error('Account not found'); }
+  if (
+    accountId &&
+    !(await Account.exists({ _id: accountId, userId: req.user.id }))
+  ) {
+    res.status(404);
+    throw new Error('Account not found');
+  }
   const filter = { userId: req.user.id, accountId: accountId || null };
   const { userId: _ignored, ...safe } = req.body;
-  const settings = await RiskSettings.findOneAndUpdate(filter, { ...safe, userId: req.user.id }, {
-    new: true,
-    upsert: true,
-    runValidators: true,
-    setDefaultsOnInsert: true,
-  });
+  const settings = await RiskSettings.findOneAndUpdate(
+    filter,
+    { ...safe, userId: req.user.id },
+    {
+      new: true,
+      upsert: true,
+      runValidators: true,
+      setDefaultsOnInsert: true,
+    }
+  );
   res.json(settings);
 }
 

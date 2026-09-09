@@ -46,10 +46,15 @@ export async function deleteScreenshot(req, res) {
   if (shot) {
     // uploads root is served at /uploads, so strip that prefix to get the
     // on-disk path; failing to find the file is not fatal to the DB update.
-    const filePath = path.join(uploadsRootPath, shot.url.replace(/^\/uploads\//, ''));
+    const filePath = path.join(
+      uploadsRootPath,
+      shot.url.replace(/^\/uploads\//, '')
+    );
     fs.unlink(filePath, () => {});
   }
-  trade.screenshots = trade.screenshots.filter((s) => String(s._id) !== req.params.screenshotId);
+  trade.screenshots = trade.screenshots.filter(
+    (s) => String(s._id) !== req.params.screenshotId
+  );
   await trade.save();
   res.json(trade.toObject());
 }

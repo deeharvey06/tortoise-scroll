@@ -43,7 +43,7 @@ import Playbook from './models/Playbook.js';
 jobQueue.register('import-trades', jobHandlers.handleTradeImport);
 jobQueue.register(
   'performance-analysis',
-  jobHandlers.handlePerformanceAnalysis,
+  jobHandlers.handlePerformanceAnalysis
 );
 jobQueue.register('risk-assessment', jobHandlers.handleRiskAssessment);
 jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
@@ -73,7 +73,7 @@ export function createApp(options = {}) {
     helmet({
       crossOriginResourcePolicy: { policy: 'same-origin' },
       referrerPolicy: { policy: 'no-referrer' },
-    }),
+    })
   );
 
   app.use(
@@ -86,7 +86,7 @@ export function createApp(options = {}) {
             statusCode: 403,
             publicMessage: 'Request origin is not allowed',
             isOperational: true,
-          }),
+          })
         );
       },
       credentials: true,
@@ -99,7 +99,7 @@ export function createApp(options = {}) {
         'Retry-After',
       ],
       maxAge: 600,
-    }),
+    })
   );
 
   app.use(
@@ -107,7 +107,7 @@ export function createApp(options = {}) {
     csrfProtection({
       allowedOrigins: config.allowedOrigins,
       enforce: options.enforceCsrf ?? config.csrfProtectionEnabled,
-    }),
+    })
   );
 
   app.use(
@@ -126,7 +126,7 @@ export function createApp(options = {}) {
           touchAfter: 300,
         }),
       cookie: sessionCookieOptions,
-    }),
+    })
   );
 
   app.locals.sessionCookieName = sessionCookieName;
@@ -146,8 +146,8 @@ export function createApp(options = {}) {
             statusCode: 429,
             publicMessage: 'Too many authentication attempts. Try again later.',
             isOperational: true,
-          },
-        ),
+          }
+        )
       ),
   });
 
@@ -165,8 +165,8 @@ export function createApp(options = {}) {
             statusCode: 429,
             publicMessage: 'Too many password reset attempts. Try again later.',
             isOperational: true,
-          },
-        ),
+          }
+        )
       ),
   });
 
@@ -181,7 +181,7 @@ export function createApp(options = {}) {
     app.use(['/api/auth/login', '/api/auth/register'], loginLimiter);
     app.use(
       ['/api/auth/forgot-password', '/api/auth/reset-password'],
-      resetLimiter,
+      resetLimiter
     );
     app.use(apiLimiter);
   }
@@ -192,7 +192,7 @@ export function createApp(options = {}) {
       extended: false,
       limit: '100kb',
       parameterLimit: 100,
-    }),
+    })
   );
 
   app.use('/api', inputSafety);
@@ -252,7 +252,7 @@ export function createApp(options = {}) {
       } catch (error) {
         return next(error);
       }
-    },
+    }
   );
 
   app.use('/uploads/media/:filename', requireAuth, async (req, res, next) => {

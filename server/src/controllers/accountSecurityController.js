@@ -26,13 +26,13 @@ const parse = (schema, body) => {
   if (!result.success)
     throw fail(
       400,
-      result.error.issues.map((issue) => issue.message).join(', '),
+      result.error.issues.map((issue) => issue.message).join(', ')
     );
   return result.data;
 };
 const regenerate = (req) =>
   new Promise((resolve, reject) =>
-    req.session.regenerate((error) => (error ? reject(error) : resolve())),
+    req.session.regenerate((error) => (error ? reject(error) : resolve()))
   );
 const tokenHash = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
@@ -74,7 +74,7 @@ export async function revokeSession(req, res) {
     req.user.id,
     'SESSION_REVOKED',
     {},
-    { sessionRecordId: req.params.id },
+    { sessionRecordId: req.params.id }
   );
   res.status(204).end();
 }
@@ -93,10 +93,10 @@ export async function logoutOtherSessions(req, res) {
 export async function changePassword(req, res) {
   const { currentPassword, newPassword } = parse(
     changePasswordSchema,
-    req.body,
+    req.body
   );
   const user = await User.findById(req.user.id).select(
-    '+passwordHash +sessionVersion',
+    '+passwordHash +sessionVersion'
   );
   if (!user || !(await verifyPassword(user.passwordHash, currentPassword)))
     throw fail(400, 'Current password is incorrect');
@@ -121,7 +121,7 @@ export async function changePassword(req, res) {
     user._id,
     'PASSWORD_CHANGED',
     {},
-    { otherSessionsRevoked: revoked },
+    { otherSessionsRevoked: revoked }
   );
   res.json({ user: toSafeUser(user), otherSessionsRevoked: revoked });
 }
@@ -161,7 +161,7 @@ export async function resetPassword(req, res) {
       expiresAt: { $gt: new Date() },
     },
     { $set: { usedAt: new Date() } },
-    { new: true },
+    { new: true }
   );
   if (!reset) throw fail(400, 'Reset link is invalid or has expired');
   const user = await User.findOne({
@@ -178,7 +178,7 @@ export async function resetPassword(req, res) {
   const revoked = await revokeAllSessions(req, user._id);
   if (req.session?.userId) {
     await new Promise((resolve, reject) =>
-      req.session.destroy((error) => (error ? reject(error) : resolve())),
+      req.session.destroy((error) => (error ? reject(error) : resolve()))
     );
   }
   await audit(
@@ -186,7 +186,7 @@ export async function resetPassword(req, res) {
     user._id,
     'PASSWORD_RESET',
     {},
-    { sessionsRevoked: revoked },
+    { sessionsRevoked: revoked }
   );
   res.json({ message: 'Password reset. Sign in with your new password.' });
 }

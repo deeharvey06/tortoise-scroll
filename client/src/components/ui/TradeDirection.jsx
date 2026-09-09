@@ -10,7 +10,7 @@ export default function TradeDirection({ direction, size = 'small', sx }) {
       icon={isLong ? <NorthEastIcon /> : <SouthEastIcon />}
       label={isLong ? 'Long' : 'Short'}
       color={isLong ? 'success' : 'error'}
-      variant="outlined"
+      variant='outlined'
       sx={{ textTransform: 'capitalize', ...sx }}
     />
   );

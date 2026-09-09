@@ -1,32 +1,45 @@
-import { defineConfig } from "eslint/config";
-// import js from "eslint/configs/js";
-import globals from "globals";
+import js from '@eslint/js';
+import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 
-export default defineConfig([
-  // 1. Apply global ignores first
+export default [
   {
-    ignores: ["dist/", "build/", "node_modules/"],
+    ignores: ['dist/**', 'build/**', 'coverage/**', 'node_modules/**'],
   },
-
-  // 2. Base configuration for JavaScript files
+  js.configs.recommended,
   {
-    files: ["**/*.js"],
+    files: ['src/**/*.{js,jsx}'],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: {
-        ...globals.browser,
-        ...globals.node,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
       },
+      globals: globals.browser,
     },
     plugins: {
-      js,
+      'react-hooks': reactHooks,
     },
-    // Apply recommended rules
     rules: {
-      // ...js.configs.recommended.rules,
-      "no-unused-vars": "warn",
-      "prefer-const": "error",
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
     },
   },
-]);
+  {
+    files: ['*.config.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: globals.node,
+    },
+  },
+  prettier,
+];

@@ -35,7 +35,7 @@ const auditLogSchema = new mongoose.Schema(
     ipAddress: { type: String, default: '' },
     userAgent: { type: String, default: '' },
   },
-  { timestamps: { createdAt: true, updatedAt: false } },
+  { timestamps: { createdAt: true, updatedAt: false } }
 );
 
 auditLogSchema.index({ createdAt: -1 });

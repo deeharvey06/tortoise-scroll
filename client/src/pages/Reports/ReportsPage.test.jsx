@@ -74,7 +74,7 @@ describe('ReportsPage', () => {
     render(<ReportsPage />);
 
     await waitFor(() =>
-      expect(screen.getByText('Reports')).toBeInTheDocument(),
+      expect(screen.getByText('Reports')).toBeInTheDocument()
     );
 
     expect(await screen.findByText('Net P&L')).toBeInTheDocument();

@@ -14,26 +14,26 @@ export async function provisionRootUser() {
   if (user) {
     if (user.role !== 'ROOT')
       throw new Error(
-        'ROOT_USER_EMAIL belongs to a non-ROOT account; refusing promotion',
+        'ROOT_USER_EMAIL belongs to a non-ROOT account; refusing promotion'
       );
     if (user.status !== 'ACTIVE')
       throw new Error('Configured ROOT account must be ACTIVE');
     if (process.env.ROOT_USER_INITIAL_PASSWORD)
       console.warn(
-        '[startup] ROOT_USER_INITIAL_PASSWORD is still configured; remove it after initial provisioning',
+        '[startup] ROOT_USER_INITIAL_PASSWORD is still configured; remove it after initial provisioning'
       );
     return user;
   }
   const bootstrapPassword = process.env.ROOT_USER_INITIAL_PASSWORD;
   if (!bootstrapPassword) {
     console.warn(
-      '[startup] ROOT user does not exist; set ROOT_USER_INITIAL_PASSWORD once to provision it',
+      '[startup] ROOT user does not exist; set ROOT_USER_INITIAL_PASSWORD once to provision it'
     );
     return null;
   }
   if (bootstrapPassword.length < 12)
     throw new Error(
-      'ROOT_USER_INITIAL_PASSWORD must be at least 12 characters',
+      'ROOT_USER_INITIAL_PASSWORD must be at least 12 characters'
     );
   user = await User.create({
     email: emailNormalized,

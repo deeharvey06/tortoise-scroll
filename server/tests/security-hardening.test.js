@@ -37,7 +37,7 @@ test('credentialed CORS allows only the exact configured origin', async () => {
   assert.equal(allowed.status, 200);
   assert.equal(
     allowed.headers['access-control-allow-origin'],
-    'https://journal.example.test',
+    'https://journal.example.test'
   );
   assert.equal(allowed.headers['access-control-allow-credentials'], 'true');
   assert.equal(
@@ -46,7 +46,7 @@ test('credentialed CORS allows only the exact configured origin', async () => {
         .get('/api/health')
         .set('Origin', 'https://evil.example')
     ).status,
-    403,
+    403
   );
 });
 
@@ -55,7 +55,7 @@ test('CSRF defense rejects unsafe requests without the marker or from an untrust
   assert.equal(missing.status, 403);
   assert.equal(
     missing.body.error.message,
-    'CSRF protection header is required',
+    'CSRF protection header is required'
   );
   const untrusted = await request(app)
     .post('/api/auth/register')
@@ -125,7 +125,7 @@ test('production sessions use a secure host-only cookie policy', () => {
       sameSite: app.locals.sessionCookieOptions.sameSite,
       path: app.locals.sessionCookieOptions.path,
     },
-    { httpOnly: true, secure: true, sameSite: 'lax', path: '/' },
+    { httpOnly: true, secure: true, sameSite: 'lax', path: '/' }
   );
   assert.equal(app.locals.sessionCookieOptions.domain, undefined);
 });
@@ -165,7 +165,7 @@ test('production error responses hide internal exception details and include a r
   const { errorHandler } = await import('../src/middleware/errorHandler.js');
   const isolated = express();
   isolated.get('/explode', (_req, _res, next) =>
-    next(new Error('database-password-should-not-leak')),
+    next(new Error('database-password-should-not-leak'))
   );
   isolated.use(errorHandler);
   const response = await request(isolated).get('/explode');
@@ -173,7 +173,7 @@ test('production error responses hide internal exception details and include a r
   assert.equal(response.body.error.message, 'Internal server error');
   assert.equal(
     JSON.stringify(response.body).includes('database-password'),
-    false,
+    false
   );
   assert.equal(response.body.error.stack, undefined);
 });

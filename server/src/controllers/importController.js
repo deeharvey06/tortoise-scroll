@@ -33,7 +33,7 @@ export async function postCommit(req, res) {
   if (req.body && typeof req.body.mapping === 'string') {
     try {
       parsedMapping = JSON.parse(req.body.mapping);
-    } catch (error) {
+    } catch (_error) {
       res.status(400);
       throw new Error('Invalid CSV mapping payload');
     }
@@ -55,7 +55,10 @@ export async function postCommit(req, res) {
   if (validated.mapping) {
     mapping = validated.mapping;
   }
-  if (!(await Account.exists(ownedFilter(req, { _id: validated.accountId })))) { res.status(404); throw new Error('Account not found'); }
+  if (!(await Account.exists(ownedFilter(req, { _id: validated.accountId })))) {
+    res.status(404);
+    throw new Error('Account not found');
+  }
 
   const job = await commitImport({
     accountId: validated.accountId,
@@ -70,7 +73,9 @@ export async function postCommit(req, res) {
 }
 
 export async function getImportJob(req, res) {
-  const job = await ImportJob.findOne(ownedFilter(req, { _id: req.params.id })).lean();
+  const job = await ImportJob.findOne(
+    ownedFilter(req, { _id: req.params.id })
+  ).lean();
   if (!job) {
     res.status(404);
     throw new Error('Import job not found');
@@ -79,7 +84,10 @@ export async function getImportJob(req, res) {
 }
 
 export async function listImportJobs(req, res) {
-  const jobs = await ImportJob.find(ownedFilter(req)).sort({ createdAt: -1 }).limit(50).lean();
+  const jobs = await ImportJob.find(ownedFilter(req))
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .lean();
   res.json(jobs);
 }
 

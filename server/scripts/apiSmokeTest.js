@@ -83,7 +83,7 @@ async function main() {
     });
     assert(
       status === 201,
-      `expected 201, got ${status}: ${JSON.stringify(body)}`,
+      `expected 201, got ${status}: ${JSON.stringify(body)}`
     );
     assert(body?._id, 'expected created account to have an _id');
     created.accountId = body._id;
@@ -107,18 +107,18 @@ async function main() {
       });
       assert(
         status === 201,
-        `expected 201, got ${status}: ${JSON.stringify(body)}`,
+        `expected 201, got ${status}: ${JSON.stringify(body)}`
       );
       assert(
         body?.netPnL === 100,
-        `expected netPnL 100 (deterministic calc), got ${body?.netPnL}`,
+        `expected netPnL 100 (deterministic calc), got ${body?.netPnL}`
       );
       assert(
         body?.rMultiple === 1,
-        `expected rMultiple 1, got ${body?.rMultiple}`,
+        `expected rMultiple 1, got ${body?.rMultiple}`
       );
       created.tradeId = body._id;
-    },
+    }
   );
 
   await check(
@@ -130,24 +130,24 @@ async function main() {
       });
       assert(
         status === 400,
-        `expected validation failure 400, got ${status}: ${JSON.stringify(body)}`,
+        `expected validation failure 400, got ${status}: ${JSON.stringify(body)}`
       );
       assert(
         body?.error?.message,
-        'expected a useful validation error message',
+        'expected a useful validation error message'
       );
-    },
+    }
   );
 
   await check('GET /trades lists the created trade', async () => {
     const { status, body } = await req(
       'GET',
-      `/trades?accountId=${created.accountId}`,
+      `/trades?accountId=${created.accountId}`
     );
     assert(status === 200, `expected 200, got ${status}`);
     assert(
       body?.items?.some((t) => t._id === created.tradeId),
-      'created trade not found in list',
+      'created trade not found in list'
     );
   });
 
@@ -156,21 +156,21 @@ async function main() {
     async () => {
       const { status, body } = await req(
         'GET',
-        `/analytics/dashboard?accountId=${created.accountId}`,
+        `/analytics/dashboard?accountId=${created.accountId}`
       );
       assert(status === 200, `expected 200, got ${status}`);
       assert(
         body?.summary?.netPnL === 100,
-        `expected dashboard netPnL 100, got ${body?.summary?.netPnL}`,
+        `expected dashboard netPnL 100, got ${body?.summary?.netPnL}`
       );
       assert(Array.isArray(body?.equityCurve), 'expected equityCurve array');
-    },
+    }
   );
 
   await check('GET /analytics/calendar returns the trading day', async () => {
     const { status, body } = await req(
       'GET',
-      `/analytics/calendar?year=2026&month=1&accountId=${created.accountId}`,
+      `/analytics/calendar?year=2026&month=1&accountId=${created.accountId}`
     );
     assert(status === 200, `expected 200, got ${status}`);
     const day = body?.days?.find((d) => d.date === '2026-01-01');
@@ -201,27 +201,27 @@ async function main() {
     assert(status === 200, `expected 200, got ${status}`);
     assert(
       body?.strategy === created.strategyId,
-      'strategy assignment did not persist',
+      'strategy assignment did not persist'
     );
     assert(
       body?.playbook === created.playbookId,
-      'playbook assignment did not persist',
+      'playbook assignment did not persist'
     );
   });
 
   await check('GET /trades filters by playbook', async () => {
     const { status, body } = await req(
       'GET',
-      `/trades?playbook=${created.playbookId}`,
+      `/trades?playbook=${created.playbookId}`
     );
     assert(status === 200, `expected 200, got ${status}`);
     assert(
       body?.pagination?.total === 1,
-      `expected one playbook trade, got ${body?.pagination?.total}`,
+      `expected one playbook trade, got ${body?.pagination?.total}`
     );
     assert(
       body.items[0]?._id === created.tradeId,
-      'playbook filter returned the wrong trade',
+      'playbook filter returned the wrong trade'
     );
   });
 
@@ -233,13 +233,13 @@ async function main() {
       });
       assert(
         status === 400,
-        `expected 400, got ${status}: ${JSON.stringify(body)}`,
+        `expected 400, got ${status}: ${JSON.stringify(body)}`
       );
       assert(
         body?.error?.message?.includes('explicit confirmation'),
-        'expected confirmation error',
+        'expected confirmation error'
       );
-    },
+    }
   );
 
   await check(
@@ -247,14 +247,14 @@ async function main() {
     async () => {
       const { status, body } = await req(
         'GET',
-        `/strategies/${created.strategyId}/performance`,
+        `/strategies/${created.strategyId}/performance`
       );
       assert(status === 200, `expected 200, got ${status}`);
       assert(
         body?.totalTrades === 1,
-        `expected 1 trade rolled up, got ${body?.totalTrades}`,
+        `expected 1 trade rolled up, got ${body?.totalTrades}`
       );
-    },
+    }
   );
 
   await check('PUT /risk/settings saves and GET reflects it', async () => {
@@ -265,12 +265,12 @@ async function main() {
     assert(putRes.status === 200, `expected 200, got ${putRes.status}`);
     const getRes = await req(
       'GET',
-      `/risk/dashboard?accountId=${created.accountId}`,
+      `/risk/dashboard?accountId=${created.accountId}`
     );
     assert(getRes.status === 200, `expected 200, got ${getRes.status}`);
     assert(
       getRes.body?.settings?.maxDailyLoss === 500,
-      'risk setting did not persist',
+      'risk setting did not persist'
     );
   });
 
@@ -279,11 +279,11 @@ async function main() {
     assert(status === 200, `expected 200, got ${status}`);
     assert(
       Array.isArray(body?.data?.trades),
-      'expected data.trades array in export',
+      'expected data.trades array in export'
     );
     assert(
       body.data.trades.some((t) => t._id === created.tradeId),
-      'created trade missing from export',
+      'created trade missing from export'
     );
   });
 
@@ -295,7 +295,7 @@ async function main() {
     async () => {
       const { status } = await req('DELETE', `/accounts/${created.accountId}`);
       assert(status === 409, `expected 409, got ${status}`);
-    },
+    }
   );
 
   await check('DELETE /trades/:id removes the trade', async () => {
@@ -309,11 +309,11 @@ async function main() {
     async () => {
       const { status } = await req(
         'DELETE',
-        `/strategies/${created.strategyId}`,
+        `/strategies/${created.strategyId}`
       );
       assert(status === 204, `expected 204, got ${status}`);
       created.strategyId = null;
-    },
+    }
   );
 
   await check(
@@ -321,11 +321,11 @@ async function main() {
     async () => {
       const { status } = await req(
         'DELETE',
-        `/playbooks/${created.playbookId}`,
+        `/playbooks/${created.playbookId}`
       );
       assert(status === 204, `expected 204, got ${status}`);
       created.playbookId = null;
-    },
+    }
   );
 
   await check('DELETE /accounts/:id now succeeds', async () => {

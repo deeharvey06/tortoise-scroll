@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import asyncHandler from '../middleware/asyncHandler.js';
-import { getAppSettings, saveAppSettings } from '../controllers/appSettingsController.js';
+import {
+  getAppSettings,
+  saveAppSettings,
+} from '../controllers/appSettingsController.js';
 
 const router = Router();
 

@@ -41,35 +41,84 @@ function pickWeighted(winProbability) {
 }
 
 const SYMBOLS = [
-  { symbol: 'AAPL', base: 190 }, { symbol: 'MSFT', base: 420 }, { symbol: 'TSLA', base: 250 },
-  { symbol: 'NVDA', base: 130 }, { symbol: 'AMZN', base: 185 }, { symbol: 'GOOGL', base: 175 },
-  { symbol: 'META', base: 500 }, { symbol: 'AMD', base: 165 }, { symbol: 'SPY', base: 560 },
-  { symbol: 'QQQ', base: 480 }, { symbol: 'NFLX', base: 680 }, { symbol: 'JPM', base: 210 },
-  { symbol: 'BA', base: 180 }, { symbol: 'DIS', base: 100 }, { symbol: 'COIN', base: 220 },
+  { symbol: 'AAPL', base: 190 },
+  { symbol: 'MSFT', base: 420 },
+  { symbol: 'TSLA', base: 250 },
+  { symbol: 'NVDA', base: 130 },
+  { symbol: 'AMZN', base: 185 },
+  { symbol: 'GOOGL', base: 175 },
+  { symbol: 'META', base: 500 },
+  { symbol: 'AMD', base: 165 },
+  { symbol: 'SPY', base: 560 },
+  { symbol: 'QQQ', base: 480 },
+  { symbol: 'NFLX', base: 680 },
+  { symbol: 'JPM', base: 210 },
+  { symbol: 'BA', base: 180 },
+  { symbol: 'DIS', base: 100 },
+  { symbol: 'COIN', base: 220 },
 ];
 
 const SETUPS = [
-  'Breakout', 'Reversal', 'Trend Continuation', 'Pullback', 'Trading Range', 'Gap Fill', 'VWAP Bounce',
-  'Bull Flag', 'Bear Flag', 'Double Top', 'Double Bottom', 'Range Break', 'News Spike', 'EOD Fade',
-  'Opening Drive', 'Mean Reversion', 'Momentum Continuation', 'Failed Breakout', 'Support Bounce',
+  'Breakout',
+  'Reversal',
+  'Trend Continuation',
+  'Pullback',
+  'Trading Range',
+  'Gap Fill',
+  'VWAP Bounce',
+  'Bull Flag',
+  'Bear Flag',
+  'Double Top',
+  'Double Bottom',
+  'Range Break',
+  'News Spike',
+  'EOD Fade',
+  'Opening Drive',
+  'Mean Reversion',
+  'Momentum Continuation',
+  'Failed Breakout',
+  'Support Bounce',
   'Resistance Reject',
 ];
 
 const SESSIONS = ['pre-market', 'open', 'mid-day', 'power-hour', 'after-hours'];
 
-const MISTAKE_OPTIONS = ['Early Entry', 'Late Entry', 'Overtrading', 'FOMO', 'Oversized', 'Poor Exit', 'Failed Follow-through'];
-const EMOTION_OPTIONS = ['Calm', 'Confident', 'Fear', 'Frustrated', 'Revenge', 'FOMO'];
+const MISTAKE_OPTIONS = [
+  'Early Entry',
+  'Late Entry',
+  'Overtrading',
+  'FOMO',
+  'Oversized',
+  'Poor Exit',
+  'Failed Follow-through',
+];
+const EMOTION_OPTIONS = [
+  'Calm',
+  'Confident',
+  'Fear',
+  'Frustrated',
+  'Revenge',
+  'FOMO',
+];
 
 const STRATEGY_DEFS = [
   { name: '[DEMO] ORB Breakout', timeframe: '5m', market: 'Equities' },
   { name: '[DEMO] VWAP Reversion', timeframe: '1m', market: 'Equities' },
   { name: '[DEMO] Gap and Go', timeframe: '1m', market: 'Equities' },
-  { name: '[DEMO] Bull Flag Continuation', timeframe: '5m', market: 'Equities' },
+  {
+    name: '[DEMO] Bull Flag Continuation',
+    timeframe: '5m',
+    market: 'Equities',
+  },
   { name: '[DEMO] EOD Fade', timeframe: '15m', market: 'Equities' },
   { name: '[DEMO] News Momentum', timeframe: '1m', market: 'Equities' },
   { name: '[DEMO] Range Scalp', timeframe: '1m', market: 'Equities' },
   { name: '[DEMO] Trend Pullback', timeframe: '1h', market: 'Equities' },
-  { name: '[DEMO] Double Bottom Reversal', timeframe: '5m', market: 'Equities' },
+  {
+    name: '[DEMO] Double Bottom Reversal',
+    timeframe: '5m',
+    market: 'Equities',
+  },
   { name: '[DEMO] Power Hour Momentum', timeframe: '5m', market: 'Equities' },
 ];
 
@@ -93,13 +142,20 @@ function buildRandomTrade({ accountId, strategyIds }) {
   const entryPrice = Number((base * rand(0.97, 1.03)).toFixed(2));
   const isWin = pickWeighted(0.52); // slightly-better-than-coinflip demo trader
   const movePct = isWin ? rand(0.003, 0.025) : -rand(0.002, 0.02);
-  const exitPrice = Number((entryPrice * (1 + (direction === 'long' ? movePct : -movePct))).toFixed(2));
+  const exitPrice = Number(
+    (entryPrice * (1 + (direction === 'long' ? movePct : -movePct))).toFixed(2)
+  );
 
   const stopDistancePct = rand(0.005, 0.015);
   const stopLoss = Number(
-    (direction === 'long' ? entryPrice * (1 - stopDistancePct) : entryPrice * (1 + stopDistancePct)).toFixed(2)
+    (direction === 'long'
+      ? entryPrice * (1 - stopDistancePct)
+      : entryPrice * (1 + stopDistancePct)
+    ).toFixed(2)
   );
-  const riskAmount = Number((Math.abs(entryPrice - stopLoss) * quantity).toFixed(2));
+  const riskAmount = Number(
+    (Math.abs(entryPrice - stopLoss) * quantity).toFixed(2)
+  );
 
   const fees = Number(rand(0, 1).toFixed(2));
   const commission = Number(rand(0, 4).toFixed(2));
@@ -107,7 +163,10 @@ function buildRandomTrade({ accountId, strategyIds }) {
   const setup = pick(SETUPS);
   const session = pick(SESSIONS);
   const followedPlan = Math.random() < 0.8;
-  const mistakes = !followedPlan || Math.random() < 0.15 ? pickSome(MISTAKE_OPTIONS, 1, 2) : [];
+  const mistakes =
+    !followedPlan || Math.random() < 0.15
+      ? pickSome(MISTAKE_OPTIONS, 1, 2)
+      : [];
   const emotions = Math.random() < 0.4 ? pickSome(EMOTION_OPTIONS, 1, 1) : [];
 
   const computed = computeTradeFinancials({
@@ -143,18 +202,31 @@ function buildRandomTrade({ accountId, strategyIds }) {
   };
 }
 
-const JOURNAL_TYPES = ['pre-market', 'daily', 'post-market', 'weekly', 'monthly', 'freeform'];
+const JOURNAL_TYPES = [
+  'pre-market',
+  'daily',
+  'post-market',
+  'weekly',
+  'monthly',
+  'freeform',
+];
 
 function buildJournalEntry() {
   const type = pick(JOURNAL_TYPES);
   const date = randomDateWithinLastNDays(180);
   const contentByType = {
-    'pre-market': 'Market:\nMixed futures.\n\nBias:\nCautiously bullish.\n\nRisk Limit:\n$300\n\nMaximum Trades:\n5',
-    daily: 'Traded 3 setups today, mixed results. Stayed disciplined on sizing.',
-    'post-market': 'What went well?\nFollowed my plan on 2 of 3 trades.\n\nWhat went poorly?\nChased one entry late.\n\nWhat will I change tomorrow?\nWait for confirmation candle.',
-    weekly: 'Weekly review: net positive week, biggest edge was morning breakouts.',
-    monthly: 'Monthly review: consistency improving, need to cut down on afternoon overtrading.',
-    freeform: 'Note to self: revisit position sizing rules for high-volatility names.',
+    'pre-market':
+      'Market:\nMixed futures.\n\nBias:\nCautiously bullish.\n\nRisk Limit:\n$300\n\nMaximum Trades:\n5',
+    daily:
+      'Traded 3 setups today, mixed results. Stayed disciplined on sizing.',
+    'post-market':
+      'What went well?\nFollowed my plan on 2 of 3 trades.\n\nWhat went poorly?\nChased one entry late.\n\nWhat will I change tomorrow?\nWait for confirmation candle.',
+    weekly:
+      'Weekly review: net positive week, biggest edge was morning breakouts.',
+    monthly:
+      'Monthly review: consistency improving, need to cut down on afternoon overtrading.',
+    freeform:
+      'Note to self: revisit position sizing rules for high-volatility names.',
   };
   return {
     type,
@@ -167,11 +239,20 @@ function buildJournalEntry() {
 async function seed() {
   console.log('[seed] Connecting to MongoDB...');
   await connectDB();
-  const root = await User.findOne({ role: 'ROOT', emailNormalized: normalizeEmail(process.env.ROOT_USER_EMAIL), status: 'ACTIVE' });
-  if (!root) throw new Error('Configured active ROOT account is required before seeding');
+  const root = await User.findOne({
+    role: 'ROOT',
+    emailNormalized: normalizeEmail(process.env.ROOT_USER_EMAIL),
+    status: 'ACTIVE',
+  });
+  if (!root)
+    throw new Error(
+      'Configured active ROOT account is required before seeding'
+    );
   const userId = root._id;
 
-  console.log('[seed] Clearing previously seeded [DEMO] data (real data is untouched)...');
+  console.log(
+    '[seed] Clearing previously seeded [DEMO] data (real data is untouched)...'
+  );
   await Trade.deleteMany({ userId, isDemoData: true });
   await Account.deleteMany({ userId, name: /^\[DEMO\]/ });
   await Strategy.deleteMany({ userId, name: /^\[DEMO\]/ });
@@ -180,9 +261,27 @@ async function seed() {
 
   console.log('[seed] Creating 3 demo accounts...');
   const accounts = await Account.insertMany([
-    { userId, name: '[DEMO] Main Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 25000 },
-    { userId, name: '[DEMO] Swing Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 50000 },
-    { userId, name: '[DEMO] Small Account', broker: 'Demo Broker', currency: 'USD', startingBalance: 5000 },
+    {
+      userId,
+      name: '[DEMO] Main Account',
+      broker: 'Demo Broker',
+      currency: 'USD',
+      startingBalance: 25000,
+    },
+    {
+      userId,
+      name: '[DEMO] Swing Account',
+      broker: 'Demo Broker',
+      currency: 'USD',
+      startingBalance: 50000,
+    },
+    {
+      userId,
+      name: '[DEMO] Small Account',
+      broker: 'Demo Broker',
+      currency: 'USD',
+      startingBalance: 5000,
+    },
   ]);
 
   console.log('[seed] Creating 10 demo strategies...');
@@ -201,32 +300,58 @@ async function seed() {
 
   console.log('[seed] Creating 30 demo tags...');
   const demoTagNames = [
-    ...SETUPS.slice(0, 10).map((s) => ({ userId, name: `[DEMO] ${s}`, category: 'Setup' })),
-    ...MISTAKE_OPTIONS.map((m) => ({ userId, name: `[DEMO] ${m}`, category: 'Mistake' })),
-    ...EMOTION_OPTIONS.map((e) => ({ userId, name: `[DEMO] ${e}`, category: 'Emotion' })),
-    ...Array.from({ length: 30 - 10 - MISTAKE_OPTIONS.length - EMOTION_OPTIONS.length }, (_, i) => ({
-      name: `[DEMO] Custom Tag ${i + 1}`,
-      userId, category: 'Custom',
+    ...SETUPS.slice(0, 10).map((s) => ({
+      userId,
+      name: `[DEMO] ${s}`,
+      category: 'Setup',
     })),
+    ...MISTAKE_OPTIONS.map((m) => ({
+      userId,
+      name: `[DEMO] ${m}`,
+      category: 'Mistake',
+    })),
+    ...EMOTION_OPTIONS.map((e) => ({
+      userId,
+      name: `[DEMO] ${e}`,
+      category: 'Emotion',
+    })),
+    ...Array.from(
+      { length: 30 - 10 - MISTAKE_OPTIONS.length - EMOTION_OPTIONS.length },
+      (_, i) => ({
+        name: `[DEMO] Custom Tag ${i + 1}`,
+        userId,
+        category: 'Custom',
+      })
+    ),
   ];
   await Tag.insertMany(demoTagNames);
 
-  console.log(`[seed] Generating ${TRADE_COUNT} demo trades (this reuses the real calculationsService, so all P&L/R figures are computed exactly as they would be for a real trade)...`);
+  console.log(
+    `[seed] Generating ${TRADE_COUNT} demo trades (this reuses the real calculationsService, so all P&L/R figures are computed exactly as they would be for a real trade)...`
+  );
   const accountIds = accounts.map((a) => a._id);
   const strategyIds = strategies.map((s) => s._id);
   const tradeDocs = [];
   for (let i = 0; i < TRADE_COUNT; i += 1) {
-    tradeDocs.push({ ...buildRandomTrade({ accountId: pick(accountIds), strategyIds }), userId });
+    tradeDocs.push({
+      ...buildRandomTrade({ accountId: pick(accountIds), strategyIds }),
+      userId,
+    });
   }
   // insertMany in batches to avoid one giant payload
   const BATCH_SIZE = 200;
   for (let i = 0; i < tradeDocs.length; i += BATCH_SIZE) {
     await Trade.insertMany(tradeDocs.slice(i, i + BATCH_SIZE));
-    console.log(`[seed]   ...${Math.min(i + BATCH_SIZE, tradeDocs.length)} / ${tradeDocs.length}`);
+    console.log(
+      `[seed]   ...${Math.min(i + BATCH_SIZE, tradeDocs.length)} / ${tradeDocs.length}`
+    );
   }
 
   console.log('[seed] Creating 60 demo journal entries...');
-  const journalDocs = Array.from({ length: 60 }, () => ({ ...buildJournalEntry(), userId }));
+  const journalDocs = Array.from({ length: 60 }, () => ({
+    ...buildJournalEntry(),
+    userId,
+  }));
   await JournalEntry.insertMany(journalDocs);
 
   console.log('\n[seed] Done. Summary:');

@@ -2,7 +2,12 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import SearchIcon from '@mui/icons-material/SearchOutlined';
 
-export default function SearchField({ label = 'Search', placeholder = 'Search', inputRef, ...props }) {
+export default function SearchField({
+  label = 'Search',
+  placeholder = 'Search',
+  inputRef,
+  ...props
+}) {
   return (
     <TextField
       {...props}
@@ -11,7 +16,11 @@ export default function SearchField({ label = 'Search', placeholder = 'Search', 
       label={label}
       placeholder={placeholder}
       InputProps={{
-        startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18 }} /></InputAdornment>,
+        startAdornment: (
+          <InputAdornment position='start'>
+            <SearchIcon sx={{ fontSize: 18 }} />
+          </InputAdornment>
+        ),
         ...props.InputProps,
       }}
     />
