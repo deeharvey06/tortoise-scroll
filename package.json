@@ -9,6 +9,7 @@
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
+    "build:server:cluster": "npm run cluster --prefix server",
     "test:client": "npm test --prefix client",
     "test:server": "npm test --prefix server",
     "smoke": "npm run smoke --prefix server",
