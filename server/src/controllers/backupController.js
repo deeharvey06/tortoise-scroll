@@ -11,6 +11,7 @@ import AIMemory from '../models/AIMemory.js';
 import AIConversation from '../models/AIConversation.js';
 import AISettings from '../models/AISettings.js';
 import ImportJob from '../models/ImportJob.js';
+import BrokerExecution from '../models/BrokerExecution.js';
 import AppSettings from '../models/AppSettings.js';
 
 const BACKUP_VERSION = 1;
@@ -27,6 +28,7 @@ const COLLECTIONS_IN_ORDER = [
   ['riskSettings', RiskSettings],
   ['trades', Trade],
   ['importJobs', ImportJob],
+  ['brokerExecutions', BrokerExecution],
   ['journalEntries', JournalEntry],
   ['backtestConfigs', BacktestConfig],
   ['aiConversations', AIConversation],
@@ -37,12 +39,12 @@ const COLLECTIONS_IN_ORDER = [
 export function validateBackupRequest(backup) {
   if (!backup || !backup.data || typeof backup.data !== 'object') {
     throw new Error(
-      'Invalid backup file: expected a { version, data } object as exported by this app.',
+      'Invalid backup file: expected a { version, data } object as exported by this app.'
     );
   }
   if (!backup.confirm) {
     throw new Error(
-      'Restore requires explicit confirmation (confirm: true) since it replaces existing data.',
+      'Restore requires explicit confirmation (confirm: true) since it replaces existing data.'
     );
   }
 }
@@ -54,7 +56,9 @@ async function allowedIds(backup, key, Model, userId) {
     return new Set(backup.data[key].map((doc) => id(doc._id)).filter(Boolean));
   }
   return new Set(
-    (await Model.find({ userId }).select('_id').lean()).map((doc) => id(doc._id)),
+    (await Model.find({ userId }).select('_id').lean()).map((doc) =>
+      id(doc._id)
+    )
   );
 }
 
@@ -71,41 +75,169 @@ export async function validateBackupRelationships(backup, userId) {
     playbooks: await allowedIds(backup, 'playbooks', Playbook, userId),
     trades: await allowedIds(backup, 'trades', Trade, userId),
     importJobs: await allowedIds(backup, 'importJobs', ImportJob, userId),
-    aiConversations: await allowedIds(backup, 'aiConversations', AIConversation, userId),
+    brokerExecutions: await allowedIds(
+      backup,
+      'brokerExecutions',
+      BrokerExecution,
+      userId
+    ),
+    aiConversations: await allowedIds(
+      backup,
+      'aiConversations',
+      AIConversation,
+      userId
+    ),
   };
-  const requireAllowed = (collection, documentId, field, value, target, optional = false) => {
+  const requireAllowed = (
+    collection,
+    documentId,
+    field,
+    value,
+    target,
+    optional = false
+  ) => {
     if (value == null && optional) return;
     if (!allowed[target].has(id(value))) {
-      throw new Error(`Invalid backup relationship: ${collection}.${id(documentId) || '<new>'}.${field}`);
+      throw new Error(
+        `Invalid backup relationship: ${collection}.${id(documentId) || '<new>'}.${field}`
+      );
     }
   };
 
   for (const trade of backup.data.trades || []) {
-    requireAllowed('trades', trade._id, 'accountId', trade.accountId, 'accounts');
-    requireAllowed('trades', trade._id, 'strategy', trade.strategy, 'strategies', true);
-    requireAllowed('trades', trade._id, 'playbook', trade.playbook, 'playbooks', true);
-    requireAllowed('trades', trade._id, 'importBatchId', trade.importBatchId, 'importJobs', true);
+    requireAllowed(
+      'trades',
+      trade._id,
+      'accountId',
+      trade.accountId,
+      'accounts'
+    );
+    requireAllowed(
+      'trades',
+      trade._id,
+      'strategy',
+      trade.strategy,
+      'strategies',
+      true
+    );
+    requireAllowed(
+      'trades',
+      trade._id,
+      'playbook',
+      trade.playbook,
+      'playbooks',
+      true
+    );
+    requireAllowed(
+      'trades',
+      trade._id,
+      'importBatchId',
+      trade.importBatchId,
+      'importJobs',
+      true
+    );
   }
+
+  for (const execution of backup.data.brokerExecutions || []) {
+    requireAllowed(
+      'brokerExecutions',
+      execution._id,
+      'accountId',
+      execution.accountId,
+      'accounts'
+    );
+    requireAllowed(
+      'brokerExecutions',
+      execution._id,
+      'importJobId',
+      execution.importJobId,
+      'importJobs',
+      true
+    );
+    requireAllowed(
+      'brokerExecutions',
+      execution._id,
+      'tradeId',
+      execution.tradeId,
+      'trades',
+      true
+    );
+  }
+
   for (const entry of backup.data.journalEntries || []) {
-    requireAllowed('journalEntries', entry._id, 'accountId', entry.accountId, 'accounts', true);
+    requireAllowed(
+      'journalEntries',
+      entry._id,
+      'accountId',
+      entry.accountId,
+      'accounts',
+      true
+    );
     for (const tradeId of entry.relatedTrades || []) {
-      requireAllowed('journalEntries', entry._id, 'relatedTrades', tradeId, 'trades');
+      requireAllowed(
+        'journalEntries',
+        entry._id,
+        'relatedTrades',
+        tradeId,
+        'trades'
+      );
     }
   }
   for (const settings of backup.data.riskSettings || []) {
-    requireAllowed('riskSettings', settings._id, 'accountId', settings.accountId, 'accounts', true);
+    requireAllowed(
+      'riskSettings',
+      settings._id,
+      'accountId',
+      settings.accountId,
+      'accounts',
+      true
+    );
   }
   for (const settings of backup.data.appSettings || []) {
-    requireAllowed('appSettings', settings._id, 'defaultAccountId', settings.defaultAccountId, 'accounts', true);
-    requireAllowed('appSettings', settings._id, 'defaultStrategyId', settings.defaultStrategyId, 'strategies', true);
+    requireAllowed(
+      'appSettings',
+      settings._id,
+      'defaultAccountId',
+      settings.defaultAccountId,
+      'accounts',
+      true
+    );
+    requireAllowed(
+      'appSettings',
+      settings._id,
+      'defaultStrategyId',
+      settings.defaultStrategyId,
+      'strategies',
+      true
+    );
   }
   for (const memory of backup.data.aiMemories || []) {
-    requireAllowed('aiMemories', memory._id, 'sourceConversationId', memory.sourceConversationId, 'aiConversations', true);
+    requireAllowed(
+      'aiMemories',
+      memory._id,
+      'sourceConversationId',
+      memory.sourceConversationId,
+      'aiConversations',
+      true
+    );
   }
   for (const job of backup.data.importJobs || []) {
-    requireAllowed('importJobs', job._id, 'accountId', job.accountId, 'accounts');
+    requireAllowed(
+      'importJobs',
+      job._id,
+      'accountId',
+      job.accountId,
+      'accounts'
+    );
     for (const row of job.rows || []) {
-      requireAllowed('importJobs', job._id, 'rows.tradeId', row.tradeId, 'trades', true);
+      requireAllowed(
+        'importJobs',
+        job._id,
+        'rows.tradeId',
+        row.tradeId,
+        'trades',
+        true
+      );
     }
   }
 }
@@ -133,7 +265,7 @@ export async function exportAll(req, res) {
 
   res.setHeader(
     'Content-Disposition',
-    `attachment; filename="trading-journal-backup-${Date.now()}.json"`,
+    `attachment; filename="trading-journal-backup-${Date.now()}.json"`
   );
   res.json(payload);
 }
@@ -156,7 +288,13 @@ export async function importAll(req, res) {
     try {
       await Model.deleteMany({ userId: req.user.id });
       if (docs.length > 0) {
-        await Model.insertMany(docs.map(({ userId: _ignored, ...doc }) => ({ ...doc, userId: req.user.id })), { ordered: false });
+        await Model.insertMany(
+          docs.map(({ userId: _ignored, ...doc }) => ({
+            ...doc,
+            userId: req.user.id,
+          })),
+          { ordered: false }
+        );
       }
       report.push({ collection: key, restored: docs.length, error: null });
     } catch (err) {
@@ -171,7 +309,11 @@ export async function importAll(req, res) {
     try {
       const { _id, ...rest } = backup.data.aiSettings;
       await AISettings.deleteMany({ userId: req.user.id });
-      await AISettings.create({ ...rest, userId: req.user.id, openaiApiKey: '' });
+      await AISettings.create({
+        ...rest,
+        userId: req.user.id,
+        openaiApiKey: '',
+      });
       report.push({ collection: 'aiSettings', restored: 1, error: null });
     } catch (err) {
       report.push({

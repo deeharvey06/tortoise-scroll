@@ -40,7 +40,9 @@ export async function uploadStrategyImage(id, file, caption) {
 }
 
 export async function updateStrategyImageCaption(id, imageId, caption) {
-  const { data } = await api.put(`/strategies/${id}/images/${imageId}`, { caption });
+  const { data } = await api.put(`/strategies/${id}/images/${imageId}`, {
+    caption,
+  });
   return data;
 }
 

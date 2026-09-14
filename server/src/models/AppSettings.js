@@ -10,13 +10,27 @@ const { Schema } = mongoose;
  */
 const appSettingsSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      unique: true,
+      index: true,
+    },
     timezone: { type: String, default: 'UTC' },
     currency: { type: String, default: 'USD' },
-    defaultAccountId: { type: Schema.Types.ObjectId, ref: 'Account', default: null },
+    defaultAccountId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Account',
+      default: null,
+    },
     defaultRiskAmount: { type: Number, default: null },
     defaultRMultipleTarget: { type: Number, default: null },
-    defaultStrategyId: { type: Schema.Types.ObjectId, ref: 'Strategy', default: null },
+    defaultStrategyId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Strategy',
+      default: null,
+    },
     tradingHoursStart: { type: String, default: '09:30' },
     tradingHoursEnd: { type: String, default: '16:00' },
   },

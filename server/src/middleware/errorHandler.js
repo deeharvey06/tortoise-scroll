@@ -9,8 +9,7 @@ export function notFound(req, res, next) {
   next(new Error(`Not found: ${req.originalUrl}`));
 }
 
-export function errorHandler(err, req, res, next) {
-  // eslint-disable-line no-unused-vars
+export function errorHandler(err, req, res, _next) {
   const isClientInputError =
     err.name === 'ValidationError' || err.name === 'CastError';
   const statusCode =
@@ -24,7 +23,7 @@ export function errorHandler(err, req, res, next) {
   const requestId = req.requestId || crypto.randomUUID();
   console.error(
     `[error] ${requestId} ${req.method} ${req.originalUrl} ->`,
-    err.message,
+    err.message
   );
   if (process.env.NODE_ENV !== 'production') {
     console.error(err.stack);

@@ -10,7 +10,10 @@ import { uploadsRootPath } from '../middleware/upload.js';
  */
 export function createImageHandlers(Model) {
   async function upload(req, res) {
-    const doc = await Model.findOne({ _id: req.params.id, userId: req.user.id });
+    const doc = await Model.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
     if (!doc) {
       res.status(404);
       throw new Error('Not found');
@@ -26,7 +29,10 @@ export function createImageHandlers(Model) {
   }
 
   async function updateCaption(req, res) {
-    const doc = await Model.findOne({ _id: req.params.id, userId: req.user.id });
+    const doc = await Model.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
     if (!doc) {
       res.status(404);
       throw new Error('Not found');
@@ -42,17 +48,25 @@ export function createImageHandlers(Model) {
   }
 
   async function remove(req, res) {
-    const doc = await Model.findOne({ _id: req.params.id, userId: req.user.id });
+    const doc = await Model.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
     if (!doc) {
       res.status(404);
       throw new Error('Not found');
     }
     const shot = doc.screenshots.id(req.params.imageId);
     if (shot) {
-      const filePath = path.join(uploadsRootPath, shot.url.replace(/^\/uploads\//, ''));
+      const filePath = path.join(
+        uploadsRootPath,
+        shot.url.replace(/^\/uploads\//, '')
+      );
       fs.unlink(filePath, () => {});
     }
-    doc.screenshots = doc.screenshots.filter((s) => String(s._id) !== req.params.imageId);
+    doc.screenshots = doc.screenshots.filter(
+      (s) => String(s._id) !== req.params.imageId
+    );
     await doc.save();
     res.json(doc.toObject());
   }

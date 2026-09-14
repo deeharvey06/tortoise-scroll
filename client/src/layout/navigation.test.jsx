@@ -12,7 +12,7 @@ describe('application navigation', () => {
       'System',
     ]);
     expect(
-      NAVIGATION_GROUPS.flatMap((group) => group.items.map((item) => item.to)),
+      NAVIGATION_GROUPS.flatMap((group) => group.items.map((item) => item.to))
     ).toEqual([
       '/',
       '/trades',

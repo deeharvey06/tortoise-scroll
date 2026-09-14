@@ -48,7 +48,7 @@ before(async () => {
   User.findById = (id) =>
     query(
       [...users.values()].find((user) => String(user._id) === String(id)) ||
-        null,
+        null
     );
   User.countDocuments = async () => users.size;
   passwordApi = await import('../src/auth/passwords.js');
@@ -74,7 +74,7 @@ test('Argon2id hashes and verifies passwords', async () => {
   assert.equal(await passwordApi.verifyPassword(hash, valid.password), true);
   assert.equal(
     await passwordApi.verifyPassword(hash, 'incorrect-password'),
-    false,
+    false
   );
 });
 
@@ -93,14 +93,14 @@ test('User schema restricts roles, protects credential fields, and permits only 
     assert.equal(
       User.schema.path(field).options.select,
       false,
-      `${field} must not be selected by default`,
+      `${field} must not be selected by default`
     );
   }
   const rootIndex = User.schema
     .indexes()
     .find(
       ([fields, options]) =>
-        fields.role === 1 && options.partialFilterExpression?.role === 'ROOT',
+        fields.role === 1 && options.partialFilterExpression?.role === 'ROOT'
     );
   assert.ok(rootIndex);
   assert.equal(rootIndex[1].unique, true);
@@ -124,7 +124,7 @@ test('registration creates only a safe USER and rejects duplicates', async () =>
   assert.equal(stored.emailNormalized, 'trader@example.com');
   assert.equal(
     (await request(app).post('/api/auth/register').send(valid)).status,
-    409,
+    409
   );
 });
 
@@ -147,7 +147,7 @@ test('registration rejects weak passwords and unknown fields', async () => {
         .post('/api/auth/register')
         .send({ ...valid, password: 'too-short' })
     ).status,
-    400,
+    400
   );
   assert.equal(
     (
@@ -155,7 +155,7 @@ test('registration rejects weak passwords and unknown fields', async () => {
         .post('/api/auth/register')
         .send({ ...valid, unexpected: true })
     ).status,
-    400,
+    400
   );
   assert.equal(users.size, 0);
 });
@@ -226,7 +226,7 @@ test('repeated invalid passwords temporarily lock the account and a later succes
         .post('/api/auth/login')
         .send({ email: valid.email, password: valid.password })
     ).status,
-    401,
+    401
   );
   stored.lockedUntil = new Date(Date.now() - 1);
   const success = await request(app)
@@ -252,7 +252,7 @@ test('suspended and disabled accounts cannot create sessions', async () => {
   }
   assert.equal(
     audits.filter((event) => event.action === 'LOGIN_FAILED').length,
-    2,
+    2
   );
 });
 
@@ -267,7 +267,7 @@ test('direct USER session cannot access administration APIs', async () => {
   assert.equal(
     (await agent.patch(`/api/admin/users/${id}/role`).send({ role: 'ADMIN' }))
       .status,
-    403,
+    403
   );
 });
 

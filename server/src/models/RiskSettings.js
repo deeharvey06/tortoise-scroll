@@ -9,7 +9,12 @@ const { Schema } = mongoose;
  */
 const riskSettingsSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     accountId: { type: Schema.Types.ObjectId, ref: 'Account', default: null },
     maxDailyLoss: { type: Number, default: null },
     maxWeeklyLoss: { type: Number, default: null },

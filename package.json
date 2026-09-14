@@ -4,20 +4,31 @@
   "version": "0.1.0",
   "description": "Local-first personal trading journal (TradeZella-style) with AI trading partner",
   "scripts": {
-    "install:all": "npm install --prefix server && npm install --prefix client",
+    "install:all": "npm ci --prefix server && npm ci --include=optional --prefix client && npm ci --prefix e2e",
     "dev": "node node_modules/concurrently/dist/bin/concurrently.js -k -n SERVER,CLIENT -c green,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
+    "lint": "npm run lint --prefix server && npm run lint --prefix client",
+    "format": "npm run format --prefix server && npm run format --prefix client",
     "build:client": "npm run build --prefix client",
     "build:server:cluster": "npm run cluster --prefix server",
     "test:client": "npm test --prefix client",
     "test:server": "npm test --prefix server",
     "smoke": "npm run smoke --prefix server",
-    "e2e:install": "npm install --prefix e2e && npm run install-browsers --prefix e2e",
+    "e2e:install": "npm ci --prefix e2e && npm run install-browsers --prefix e2e",
     "e2e": "cd e2e && npm test",
-    "e2e:headed": "cd e2e && npm run test:headed"
+    "e2e:headed": "cd e2e && npm run test:headed",
+    "test": "npm run test:server && npm run test:client",
+    "test:coverage": "npm run test:coverage --prefix server",
+    "ci:verify": "npm run lint && npm run test:server && npm run test:client && npm run build:client",
+    "audit:deps": "npm audit --workspaces=false && npm audit --prefix server && npm audit --prefix client && npm audit --prefix e2e"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
-  }
+  },
+  "engines": {
+    "node": ">=20 <23",
+    "npm": ">=10"
+  },
+  "packageManager": "npm@10"
 }

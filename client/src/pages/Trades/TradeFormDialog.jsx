@@ -16,7 +16,14 @@ import * as strategyApi from '../../services/strategyService';
 import * as playbookApi from '../../services/playbookService';
 
 const ASSET_TYPES = ['equity', 'option', 'future', 'forex', 'crypto', 'other'];
-const SESSIONS = ['pre-market', 'open', 'mid-day', 'power-hour', 'after-hours', 'unspecified'];
+const SESSIONS = [
+  'pre-market',
+  'open',
+  'mid-day',
+  'power-hour',
+  'after-hours',
+  'unspecified',
+];
 
 function toLocalInputValue(isoString) {
   if (!isoString) return '';
@@ -50,15 +57,29 @@ const emptyDefaults = {
   followedPlan: null,
 };
 
-export default function TradeFormDialog({ open, onClose, onSubmit, accounts, initialTrade }) {
-  const { control, handleSubmit, reset } = useForm({ defaultValues: emptyDefaults });
+export default function TradeFormDialog({
+  open,
+  onClose,
+  onSubmit,
+  accounts,
+  initialTrade,
+}) {
+  const { control, handleSubmit, reset } = useForm({
+    defaultValues: emptyDefaults,
+  });
   const [strategies, setStrategies] = useState([]);
   const [playbooks, setPlaybooks] = useState([]);
 
   useEffect(() => {
     if (!open) return;
-    strategyApi.fetchStrategies().then(setStrategies).catch(() => {});
-    playbookApi.fetchPlaybooks().then(setPlaybooks).catch(() => {});
+    strategyApi
+      .fetchStrategies()
+      .then(setStrategies)
+      .catch(() => {});
+    playbookApi
+      .fetchPlaybooks()
+      .then(setPlaybooks)
+      .catch(() => {});
   }, [open]);
 
   useEffect(() => {
@@ -100,8 +121,12 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
       quantity: Number(values.quantity),
       entryPrice: Number(values.entryPrice),
       exitPrice: values.exitPrice === '' ? null : Number(values.exitPrice),
-      entryTime: values.entryTime ? new Date(values.entryTime).toISOString() : null,
-      exitTime: values.exitTime ? new Date(values.exitTime).toISOString() : null,
+      entryTime: values.entryTime
+        ? new Date(values.entryTime).toISOString()
+        : null,
+      exitTime: values.exitTime
+        ? new Date(values.exitTime).toISOString()
+        : null,
       stopLoss: values.stopLoss === '' ? null : Number(values.stopLoss),
       riskAmount: values.riskAmount === '' ? null : Number(values.riskAmount),
       fees: Number(values.fees || 0),
@@ -121,18 +146,25 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
       <DialogTitle>{initialTrade ? 'Edit trade' : 'New trade'}</DialogTitle>
       <form onSubmit={handleSubmit(submit)}>
         <DialogContent dividers>
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <Controller
-                name="accountId"
+                name='accountId'
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <TextField {...field} select label="Account" fullWidth required size="small">
+                  <TextField
+                    {...field}
+                    select
+                    label='Account'
+                    fullWidth
+                    required
+                    size='small'
+                  >
                     {(accounts || []).map((a) => (
                       <MenuItem key={a._id} value={a._id}>
                         {a.name}
@@ -144,21 +176,34 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
             </Grid>
             <Grid item xs={6}>
               <Controller
-                name="symbol"
+                name='symbol'
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <TextField {...field} label="Symbol" fullWidth required size="small" placeholder="AAPL" />
+                  <TextField
+                    {...field}
+                    label='Symbol'
+                    fullWidth
+                    required
+                    size='small'
+                    placeholder='AAPL'
+                  />
                 )}
               />
             </Grid>
 
             <Grid item xs={4}>
               <Controller
-                name="assetType"
+                name='assetType'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} select label="Asset type" fullWidth size="small">
+                  <TextField
+                    {...field}
+                    select
+                    label='Asset type'
+                    fullWidth
+                    size='small'
+                  >
                     {ASSET_TYPES.map((t) => (
                       <MenuItem key={t} value={t}>
                         {t}
@@ -170,57 +215,35 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
             </Grid>
             <Grid item xs={4}>
               <Controller
-                name="direction"
+                name='direction'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} select label="Direction" fullWidth size="small">
-                    <MenuItem value="long">Long</MenuItem>
-                    <MenuItem value="short">Short</MenuItem>
+                  <TextField
+                    {...field}
+                    select
+                    label='Direction'
+                    fullWidth
+                    size='small'
+                  >
+                    <MenuItem value='long'>Long</MenuItem>
+                    <MenuItem value='short'>Short</MenuItem>
                   </TextField>
                 )}
               />
             </Grid>
             <Grid item xs={4}>
               <Controller
-                name="quantity"
-                control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <TextField {...field} type="number" label="Quantity" fullWidth required size="small" />
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-              <Controller
-                name="entryPrice"
+                name='quantity'
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    type="number"
-                    label="Entry price"
+                    type='number'
+                    label='Quantity'
                     fullWidth
                     required
-                    size="small"
-                    inputProps={{ step: 'any' }}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <Controller
-                name="exitPrice"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    type="number"
-                    label="Exit price (blank if open)"
-                    fullWidth
-                    size="small"
-                    inputProps={{ step: 'any' }}
+                    size='small'
                   />
                 )}
               />
@@ -228,17 +251,52 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
 
             <Grid item xs={6}>
               <Controller
-                name="entryTime"
+                name='entryPrice'
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    type="datetime-local"
-                    label="Entry time"
+                    type='number'
+                    label='Entry price'
                     fullWidth
                     required
-                    size="small"
+                    size='small'
+                    inputProps={{ step: 'any' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <Controller
+                name='exitPrice'
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    type='number'
+                    label='Exit price (blank if open)'
+                    fullWidth
+                    size='small'
+                    inputProps={{ step: 'any' }}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={6}>
+              <Controller
+                name='entryTime'
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    type='datetime-local'
+                    label='Entry time'
+                    fullWidth
+                    required
+                    size='small'
                     InputLabelProps={{ shrink: true }}
                   />
                 )}
@@ -246,15 +304,15 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
             </Grid>
             <Grid item xs={6}>
               <Controller
-                name="exitTime"
+                name='exitTime'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    type="datetime-local"
-                    label="Exit time"
+                    type='datetime-local'
+                    label='Exit time'
                     fullWidth
-                    size="small"
+                    size='small'
                     InputLabelProps={{ shrink: true }}
                   />
                 )}
@@ -263,25 +321,15 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
 
             <Grid item xs={4}>
               <Controller
-                name="stopLoss"
-                control={control}
-                render={({ field }) => (
-                  <TextField {...field} type="number" label="Stop loss" fullWidth size="small" inputProps={{ step: 'any' }} />
-                )}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <Controller
-                name="riskAmount"
+                name='stopLoss'
                 control={control}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    type="number"
-                    label="Risk amount ($)"
+                    type='number'
+                    label='Stop loss'
                     fullWidth
-                    size="small"
-                    helperText="Used for R multiple; falls back to stop-loss distance"
+                    size='small'
                     inputProps={{ step: 'any' }}
                   />
                 )}
@@ -289,10 +337,33 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
             </Grid>
             <Grid item xs={4}>
               <Controller
-                name="session"
+                name='riskAmount'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} select label="Session" fullWidth size="small">
+                  <TextField
+                    {...field}
+                    type='number'
+                    label='Risk amount ($)'
+                    fullWidth
+                    size='small'
+                    helperText='Used for R multiple; falls back to stop-loss distance'
+                    inputProps={{ step: 'any' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <Controller
+                name='session'
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    label='Session'
+                    fullWidth
+                    size='small'
+                  >
                     {SESSIONS.map((s) => (
                       <MenuItem key={s} value={s}>
                         {s}
@@ -305,37 +376,65 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
 
             <Grid item xs={4}>
               <Controller
-                name="fees"
+                name='fees'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} type="number" label="Fees" fullWidth size="small" inputProps={{ step: 'any' }} />
+                  <TextField
+                    {...field}
+                    type='number'
+                    label='Fees'
+                    fullWidth
+                    size='small'
+                    inputProps={{ step: 'any' }}
+                  />
                 )}
               />
             </Grid>
             <Grid item xs={4}>
               <Controller
-                name="commission"
+                name='commission'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} type="number" label="Commission" fullWidth size="small" inputProps={{ step: 'any' }} />
+                  <TextField
+                    {...field}
+                    type='number'
+                    label='Commission'
+                    fullWidth
+                    size='small'
+                    inputProps={{ step: 'any' }}
+                  />
                 )}
               />
             </Grid>
             <Grid item xs={4}>
               <Controller
-                name="setup"
+                name='setup'
                 control={control}
-                render={({ field }) => <TextField {...field} label="Setup" fullWidth size="small" placeholder="Breakout" />}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label='Setup'
+                    fullWidth
+                    size='small'
+                    placeholder='Breakout'
+                  />
+                )}
               />
             </Grid>
 
             <Grid item xs={6}>
               <Controller
-                name="strategy"
+                name='strategy'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} select label="Strategy (optional)" fullWidth size="small">
-                    <MenuItem value="">— none —</MenuItem>
+                  <TextField
+                    {...field}
+                    select
+                    label='Strategy (optional)'
+                    fullWidth
+                    size='small'
+                  >
+                    <MenuItem value=''>— none —</MenuItem>
                     {strategies.map((s) => (
                       <MenuItem key={s._id} value={s._id}>
                         {s.name}
@@ -347,11 +446,17 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
             </Grid>
             <Grid item xs={6}>
               <Controller
-                name="playbook"
+                name='playbook'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} select label="Playbook (optional)" fullWidth size="small">
-                    <MenuItem value="">— none —</MenuItem>
+                  <TextField
+                    {...field}
+                    select
+                    label='Playbook (optional)'
+                    fullWidth
+                    size='small'
+                  >
+                    <MenuItem value=''>— none —</MenuItem>
                     {playbooks.map((p) => (
                       <MenuItem key={p._id} value={p._id}>
                         {p.setupName}
@@ -364,36 +469,56 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
 
             <Grid item xs={12}>
               <Controller
-                name="tagsInput"
+                name='tagsInput'
                 control={control}
                 render={({ field }) => (
-                  <TextField {...field} label="Tags (comma separated)" fullWidth size="small" placeholder="momentum, gap-up" />
+                  <TextField
+                    {...field}
+                    label='Tags (comma separated)'
+                    fullWidth
+                    size='small'
+                    placeholder='momentum, gap-up'
+                  />
                 )}
               />
             </Grid>
 
             <Grid item xs={12}>
               <Controller
-                name="notes"
+                name='notes'
                 control={control}
-                render={({ field }) => <TextField {...field} label="Notes" fullWidth multiline minRows={3} size="small" />}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label='Notes'
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size='small'
+                  />
+                )}
               />
             </Grid>
 
             <Grid item xs={12}>
               <Divider sx={{ my: 1 }} />
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant='caption' color='text.secondary'>
                 Discretionary journaling
               </Typography>
             </Grid>
             <Grid item xs={12}>
               <Controller
-                name="followedPlan"
+                name='followedPlan'
                 control={control}
                 render={({ field }) => (
                   <FormControlLabel
-                    control={<Checkbox checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />}
-                    label="Followed my trading plan"
+                    control={
+                      <Checkbox
+                        checked={!!field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                    }
+                    label='Followed my trading plan'
                   />
                 )}
               />
@@ -402,7 +527,7 @@ export default function TradeFormDialog({ open, onClose, onSubmit, accounts, ini
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained">
+          <Button type='submit' variant='contained'>
             {initialTrade ? 'Save changes' : 'Create trade'}
           </Button>
         </DialogActions>

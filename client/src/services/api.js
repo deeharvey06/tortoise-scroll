@@ -20,7 +20,7 @@ api.interceptors.response.use(
     const isAuthEntryRequest = /\/auth\/(login|register|me)$/.test(path);
     if (!isAuthEntryRequest && error?.response?.status === 401)
       window.dispatchEvent(
-        new CustomEvent('tortoise:auth', { detail: 'SESSION_EXPIRED' }),
+        new CustomEvent('tortoise:auth', { detail: 'SESSION_EXPIRED' })
       );
     if (!isAuthEntryRequest && error?.response?.status === 403) {
       const message = String(error.response?.data?.error?.message || '');
@@ -29,11 +29,11 @@ api.interceptors.response.use(
           detail: /not active/i.test(message)
             ? 'ACCOUNT_SUSPENDED'
             : 'FORBIDDEN',
-        }),
+        })
       );
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export async function checkHealth() {

@@ -34,4 +34,12 @@ export async function runConfig(id) {
   return data;
 }
 
-export default { fetchBacktestStatus, fetchConfigs, fetchConfig, createConfig, updateConfig, deleteConfig, runConfig };
+export default {
+  fetchBacktestStatus,
+  fetchConfigs,
+  fetchConfig,
+  createConfig,
+  updateConfig,
+  deleteConfig,
+  runConfig,
+};

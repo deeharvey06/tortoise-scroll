@@ -65,7 +65,7 @@ Settings page.
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20.x LTS (supported range: `>=20 <23`)
 - MongoDB running locally (Community Edition). Install via Homebrew on macOS:
 
   ```bash
@@ -81,14 +81,31 @@ Settings page.
 ```bash
 # from the project root
 cp server/.env.example server/.env
+npm ci
 npm run install:all
 ```
 
-`install:all` runs `npm install` in both `server/` and `client/`.
+`install:all` uses the committed lockfiles and runs `npm ci` for `server/`, `client/`, and `e2e/`. Do not copy or ship `node_modules` between machines/platforms.
 The first `npm run dev` generates a unique local `SESSION_SECRET` if the copied
 value is blank, too short, or still a placeholder. It preserves every other
 setting in `server/.env` and never prints the secret. Production still requires
 an explicitly configured secret and fails closed when it is unsafe.
+
+
+## Reproducible quality baseline
+
+Phase 1 stabilization added a locked-install/CI baseline. See [`STABILIZATION.md`](./STABILIZATION.md) for the full workflow.
+
+```bash
+npm run lint
+npm run test:server
+npm run test:coverage
+npm run test:client
+npm run build:client
+npm run e2e
+```
+
+CI runs the same gates against isolated test databases. Tortoise AI is not part of this stabilization phase.
 
 ## Run (both client and server together)
 

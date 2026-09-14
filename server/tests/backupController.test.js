@@ -6,14 +6,14 @@ test('validateBackupRequest rejects missing or malformed backup data', () => {
   assert.throws(() => validateBackupRequest(null), /Invalid backup file/);
   assert.throws(
     () => validateBackupRequest({ data: [] }),
-    /Restore requires explicit confirmation/,
+    /Restore requires explicit confirmation/
   );
 });
 
 test('validateBackupRequest requires explicit confirmation', () => {
   assert.throws(
     () => validateBackupRequest({ data: {}, confirm: false }),
-    /Restore requires explicit confirmation/,
+    /Restore requires explicit confirmation/
   );
   assert.doesNotThrow(() => validateBackupRequest({ data: {}, confirm: true }));
 });

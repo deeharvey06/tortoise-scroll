@@ -162,3 +162,37 @@ test('entry-only executions remain open and retain entry-side costs', () => {
   assert.equal(result.commission, 2);
   assert.equal(result.netPnL, null);
 });
+
+test('futures multiplier is applied deterministically to P&L and stop-derived risk', () => {
+  const result = computeTradeFinancials({
+    direction: 'long',
+    quantity: 2,
+    entryPrice: 6000,
+    exitPrice: 6002,
+    entryTime: '2026-09-01T14:30:00Z',
+    exitTime: '2026-09-01T14:35:00Z',
+    multiplier: 50,
+    stopLoss: 5999,
+    fees: 0,
+    commission: 0,
+  });
+  assert.equal(result.grossPnL, 200);
+  assert.equal(result.netPnL, 200);
+  assert.equal(result.rMultiple, 2); // risk = 1 point * 2 * $50 = $100
+});
+
+test('option multiplier is applied to execution-derived P&L', () => {
+  const result = computeTradeFinancials({
+    direction: 'long',
+    quantity: 1,
+    entryPrice: 2,
+    exitPrice: 3,
+    entryTime: '2026-09-01T14:30:00Z',
+    exitTime: '2026-09-01T14:35:00Z',
+    multiplier: 100,
+    fees: 0,
+    commission: 1,
+  });
+  assert.equal(result.grossPnL, 100);
+  assert.equal(result.netPnL, 99);
+});

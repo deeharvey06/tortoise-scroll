@@ -21,7 +21,7 @@ test('refuses to promote a pre-registered matching USER account', async () => {
 
   await assert.rejects(
     () => provisionRootUser(),
-    /belongs to a non-ROOT account; refusing promotion/,
+    /belongs to a non-ROOT account; refusing promotion/
   );
   assert.equal(user.role, 'USER');
 });
@@ -33,7 +33,7 @@ test('refuses to reactivate an inactive matching ROOT account', async () => {
 
   await assert.rejects(
     () => provisionRootUser(),
-    /Configured ROOT account must be ACTIVE/,
+    /Configured ROOT account must be ACTIVE/
   );
   assert.equal(root.status, 'SUSPENDED');
 });

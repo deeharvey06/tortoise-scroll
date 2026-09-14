@@ -6,7 +6,14 @@ import { createHash } from 'crypto';
  * run produced it, so re-importing the same file (or an overlapping date
  * range from the same broker) doesn't create duplicate trades.
  */
-export function computeRowHash({ accountId, symbol, direction, quantity, entryPrice, entryTime }) {
+export function computeRowHash({
+  accountId,
+  symbol,
+  direction,
+  quantity,
+  entryPrice,
+  entryTime,
+}) {
   const key = [
     String(accountId),
     String(symbol || '').toUpperCase(),

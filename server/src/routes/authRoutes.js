@@ -23,7 +23,7 @@ function parse(schema, body, res) {
   if (!parsed.success) {
     res.status(400);
     throw new Error(
-      parsed.error.issues.map((issue) => issue.message).join(', '),
+      parsed.error.issues.map((issue) => issue.message).join(', ')
     );
   }
   return parsed.data;
@@ -31,7 +31,7 @@ function parse(schema, body, res) {
 
 function regenerateSession(req) {
   return new Promise((resolve, reject) =>
-    req.session.regenerate((error) => (error ? reject(error) : resolve())),
+    req.session.regenerate((error) => (error ? reject(error) : resolve()))
   );
 }
 
@@ -52,7 +52,7 @@ router.post(
     const { email, password, displayName } = parse(
       registerSchema,
       req.body,
-      res,
+      res
     );
     const emailNormalized = normalizeEmail(email);
     if (emailNormalized === normalizeEmail(process.env.ROOT_USER_EMAIL)) {
@@ -71,7 +71,7 @@ router.post(
       role: 'USER',
     });
     res.status(201).json({ user: toSafeUser(user) });
-  }),
+  })
 );
 
 router.post(
@@ -81,15 +81,15 @@ router.post(
     const user = await User.findOne({
       emailNormalized: normalizeEmail(email),
     }).select(
-      '+passwordHash +sessionVersion +failedLoginAttempts +lockedUntil',
+      '+passwordHash +sessionVersion +failedLoginAttempts +lockedUntil'
     );
     const config = getConfig();
     const isLocked = Boolean(
-      user?.lockedUntil && user.lockedUntil > new Date(),
+      user?.lockedUntil && user.lockedUntil > new Date()
     );
     const passwordIsValid = await verifyPassword(
       user?.passwordHash || DUMMY_PASSWORD_HASH,
-      password,
+      password
     );
     if (!user || !passwordIsValid || isLocked) {
       if (user) {
@@ -104,14 +104,14 @@ router.post(
             req,
             user,
             lockedNow ? 'ACCOUNT_LOCKED' : 'LOGIN_FAILED',
-            lockedNow ? 'FAILURE_LIMIT_REACHED' : 'INVALID_CREDENTIALS',
+            lockedNow ? 'FAILURE_LIMIT_REACHED' : 'INVALID_CREDENTIALS'
           );
         } else {
           await loginAudit(
             req,
             user,
             'LOGIN_FAILED',
-            'ACCOUNT_TEMPORARILY_LOCKED',
+            'ACCOUNT_TEMPORARILY_LOCKED'
           );
         }
       }
@@ -133,7 +133,7 @@ router.post(
     await user.save();
     await loginAudit(req, user, 'LOGIN_SUCCEEDED', 'PASSWORD_AUTHENTICATION');
     res.json({ user: toSafeUser(user) });
-  }),
+  })
 );
 
 router.post(
@@ -144,11 +144,11 @@ router.post(
       req.app.locals.sessionCookieOptions;
     res.clearCookie(req.app.locals.sessionCookieName, clearOptions);
     res.status(204).end();
-  }),
+  })
 );
 
 router.get('/me', requireAuthentication, (req, res) =>
-  res.json({ user: req.user }),
+  res.json({ user: req.user })
 );
 router.post('/forgot-password', asyncHandler(forgotPassword));
 router.post('/reset-password', asyncHandler(resetPassword));

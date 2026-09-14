@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import asyncHandler from '../middleware/asyncHandler.js';
-import { listTags, createTag, deleteTag } from '../controllers/tagController.js';
+import {
+  listTags,
+  createTag,
+  deleteTag,
+} from '../controllers/tagController.js';
 
 const router = Router();
 

@@ -45,31 +45,18 @@ export function buildTradeQuery({
   if (search) {
     const re = new RegExp(
       search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-      'i',
+      'i'
     );
     query.$or = [{ symbol: re }, { notes: re }, { setup: re }, { tags: re }];
   }
   return query;
 }
 
-export async function listTrades(userId, {
-  page = 1,
-  limit = 50,
-  accountId,
-  symbol,
-  strategy,
-  playbook,
-  setup,
-  direction,
-  session,
-  tags,
-  dateFrom,
-  dateTo,
-  search,
-  sortBy = 'entryTime',
-  sortDir = 'desc',
-} = {}) {
-  const query = { userId, ...buildTradeQuery({
+export async function listTrades(
+  userId,
+  {
+    page = 1,
+    limit = 50,
     accountId,
     symbol,
     strategy,
@@ -81,7 +68,26 @@ export async function listTrades(userId, {
     dateFrom,
     dateTo,
     search,
-  }) };
+    sortBy = 'entryTime',
+    sortDir = 'desc',
+  } = {}
+) {
+  const query = {
+    userId,
+    ...buildTradeQuery({
+      accountId,
+      symbol,
+      strategy,
+      playbook,
+      setup,
+      direction,
+      session,
+      tags,
+      dateFrom,
+      dateTo,
+      search,
+    }),
+  };
 
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
   const limitNum = Math.min(500, Math.max(1, parseInt(limit, 10) || 50));
@@ -109,8 +115,13 @@ export async function getTradeById(id, userId) {
 }
 
 async function assertOwnedRelationships(userId, input) {
-  const checks = [[Account, input.accountId, 'Account'], [Strategy, input.strategy, 'Strategy'], [Playbook, input.playbook, 'Playbook']];
-  for (const [Model, id, label] of checks) await requireOwnedReference(Model, id, userId, label);
+  const checks = [
+    [Account, input.accountId, 'Account'],
+    [Strategy, input.strategy, 'Strategy'],
+    [Playbook, input.playbook, 'Playbook'],
+  ];
+  for (const [Model, id, label] of checks)
+    await requireOwnedReference(Model, id, userId, label);
 }
 
 export async function createTrade(input, userId) {

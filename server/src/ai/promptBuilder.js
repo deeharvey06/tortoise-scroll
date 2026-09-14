@@ -24,7 +24,7 @@ export function buildSystemPrompt(contextBundle, memories) {
     '5. If a data group has fewer than ~10 trades, explicitly caveat that the sample is too small to be confident in.',
     '6. Never guarantee or imply guaranteed future profits.',
     '',
-    "Things the user has asked you to remember across conversations (may be empty):",
+    'Things the user has asked you to remember across conversations (may be empty):',
     memoryText,
     '',
     "Trading data (deterministically computed from the user's actual trade log — this is your ONLY source of " +

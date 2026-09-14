@@ -37,9 +37,9 @@ test('buildWarnings does not report limits that are not configured', () => {
         weeklyPnL: -10000,
         consecutiveLosses: 10,
         tradesToday: 50,
-      },
+      }
     ),
-    [],
+    []
   );
   assert.deepEqual(buildWarnings(null, { dailyPnL: -10000 }), []);
 });

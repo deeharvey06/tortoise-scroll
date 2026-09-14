@@ -2,11 +2,28 @@ import mongoose from 'mongoose';
 
 const journalEntrySchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    accountId: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', default: null, index: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    accountId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Account',
+      default: null,
+      index: true,
+    },
     type: {
       type: String,
-      enum: ['pre-market', 'daily', 'post-market', 'weekly', 'monthly', 'freeform'],
+      enum: [
+        'pre-market',
+        'daily',
+        'post-market',
+        'weekly',
+        'monthly',
+        'freeform',
+      ],
       required: true,
       index: true,
     },

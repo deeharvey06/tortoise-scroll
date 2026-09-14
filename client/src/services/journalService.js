@@ -24,4 +24,10 @@ export async function deleteEntry(id) {
   await api.delete(`/journal/${id}`);
 }
 
-export default { fetchEntries, fetchEntry, createEntry, updateEntry, deleteEntry };
+export default {
+  fetchEntries,
+  fetchEntry,
+  createEntry,
+  updateEntry,
+  deleteEntry,
+};

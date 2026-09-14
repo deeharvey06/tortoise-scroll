@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { requireAdmin, requireRoot } from '../middleware/auth.js';
-import { changeUserRole, changeUserStatus, getUser, listAuditLog, listUsers } from '../controllers/adminController.js';
+import {
+  changeUserRole,
+  changeUserStatus,
+  getUser,
+  listAuditLog,
+  listUsers,
+} from '../controllers/adminController.js';
 
 const router = Router();
 

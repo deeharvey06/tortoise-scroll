@@ -20,7 +20,11 @@ export async function postTrade(req, res) {
 }
 
 export async function putTrade(req, res) {
-  const trade = await tradeService.updateTrade(req.params.id, req.body, req.user.id);
+  const trade = await tradeService.updateTrade(
+    req.params.id,
+    req.body,
+    req.user.id
+  );
   if (!trade) {
     res.status(404);
     throw new Error(`Trade ${req.params.id} not found`);
@@ -49,7 +53,12 @@ export async function bulkDeleteHandler(req, res) {
 
 export async function bulkTagHandler(req, res) {
   const { ids, tags } = req.body;
-  if (!Array.isArray(ids) || ids.length === 0 || !Array.isArray(tags) || tags.length === 0) {
+  if (
+    !Array.isArray(ids) ||
+    ids.length === 0 ||
+    !Array.isArray(tags) ||
+    tags.length === 0
+  ) {
     res.status(400);
     throw new Error('ids and tags must be non-empty arrays');
   }
@@ -58,8 +67,21 @@ export async function bulkTagHandler(req, res) {
 }
 
 const CSV_COLUMNS = [
-  'entryTime', 'exitTime', 'symbol', 'direction', 'quantity', 'entryPrice', 'exitPrice',
-  'grossPnL', 'netPnL', 'rMultiple', 'setup', 'session', 'tags', 'followedPlan', 'notes',
+  'entryTime',
+  'exitTime',
+  'symbol',
+  'direction',
+  'quantity',
+  'entryPrice',
+  'exitPrice',
+  'grossPnL',
+  'netPnL',
+  'rMultiple',
+  'setup',
+  'session',
+  'tags',
+  'followedPlan',
+  'notes',
 ];
 
 function csvEscape(value) {
@@ -79,7 +101,10 @@ export async function exportTradesCsv(req, res) {
     lines.push(row.join(','));
   }
   res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', `attachment; filename="trades-export.csv"`);
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="trades-export.csv"`
+  );
   res.send(lines.join('\n'));
 }
 

@@ -32,13 +32,13 @@ const userSchema = new mongoose.Schema(
     },
     lockedUntil: { type: Date, default: null, select: false },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 // Only documents whose role is ROOT participate in this unique index.
 userSchema.index(
   { role: 1 },
-  { unique: true, partialFilterExpression: { role: 'ROOT' } },
+  { unique: true, partialFilterExpression: { role: 'ROOT' } }
 );
 
 userSchema.set('toJSON', {

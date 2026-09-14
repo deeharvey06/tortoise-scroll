@@ -30,7 +30,7 @@ const renderPage = (node, path = '/') =>
   render(
     <ThemeProvider theme={createTortoiseTheme('light')}>
       <MemoryRouter initialEntries={[path]}>{node}</MemoryRouter>
-    </ThemeProvider>,
+    </ThemeProvider>
   );
 
 describe('Phase 5 account and session security UI', () => {
@@ -62,7 +62,7 @@ describe('Phase 5 account and session security UI', () => {
   it('renders account details, active sessions, and password controls', async () => {
     renderPage(<AccountSecurityPage />);
     expect(
-      screen.getByRole('heading', { name: 'Account & security' }),
+      screen.getByRole('heading', { name: 'Account & security' })
     ).toBeVisible();
     expect(await screen.findByText('Current browser')).toBeVisible();
     expect(screen.getByText('Other browser')).toBeVisible();
@@ -89,8 +89,8 @@ describe('Phase 5 account and session security UI', () => {
     await waitFor(() =>
       expect(securityApi.changePassword).toHaveBeenCalledWith(
         'original-password-123',
-        'new-password-value-123',
-      ),
+        'new-password-value-123'
+      )
     );
     expect(await screen.findByText(/1 other session/)).toBeVisible();
   });
@@ -106,10 +106,10 @@ describe('Phase 5 account and session security UI', () => {
       target: { value: user.email },
     });
     fireEvent.click(
-      screen.getByRole('button', { name: 'Request password reset' }),
+      screen.getByRole('button', { name: 'Request password reset' })
     );
     expect(
-      await screen.findByRole('link', { name: 'Open development reset link' }),
+      await screen.findByRole('link', { name: 'Open development reset link' })
     ).toHaveAttribute('href', '/reset-password?token=token-value');
   });
 
@@ -117,7 +117,7 @@ describe('Phase 5 account and session security UI', () => {
     authService.resetPassword.mockResolvedValue({ message: 'Password reset' });
     renderPage(
       <ResetPasswordPage />,
-      '/reset-password?token=valid-token-value-that-is-long-enough',
+      '/reset-password?token=valid-token-value-that-is-long-enough'
     );
     fireEvent.change(screen.getByLabelText(/^New password/), {
       target: { value: 'reset-password-value-123' },
@@ -128,7 +128,7 @@ describe('Phase 5 account and session security UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
     await waitFor(() => expect(authService.resetPassword).toHaveBeenCalled());
     expect(
-      await screen.findByText(/All existing sessions were signed out/),
+      await screen.findByText(/All existing sessions were signed out/)
     ).toBeVisible();
   });
 });

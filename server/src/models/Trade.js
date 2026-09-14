@@ -16,6 +16,10 @@ const executionSchema = new Schema(
     time: { type: Date, required: true },
     fees: { type: Number, default: 0 },
     commission: { type: Number, default: 0 },
+    multiplier: { type: Number, default: 1 },
+    brokerExecutionKey: { type: String, default: '' },
+    executionId: { type: String, default: '' },
+    orderId: { type: String, default: '' },
   },
   { _id: false }
 );
@@ -33,22 +37,57 @@ const screenshotSchema = new Schema(
 const tradeSchema = new Schema(
   {
     // Identity / linkage
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    accountId: { type: Schema.Types.ObjectId, ref: 'Account', required: true, index: true },
-    strategy: { type: Schema.Types.ObjectId, ref: 'Strategy', default: null, index: true },
-    playbook: { type: Schema.Types.ObjectId, ref: 'Playbook', default: null, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    accountId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Account',
+      required: true,
+      index: true,
+    },
+    strategy: {
+      type: Schema.Types.ObjectId,
+      ref: 'Strategy',
+      default: null,
+      index: true,
+    },
+    playbook: {
+      type: Schema.Types.ObjectId,
+      ref: 'Playbook',
+      default: null,
+      index: true,
+    },
 
     // Instrument
-    symbol: { type: String, required: true, uppercase: true, trim: true, index: true },
+    symbol: {
+      type: String,
+      required: true,
+      uppercase: true,
+      trim: true,
+      index: true,
+    },
     assetType: {
       type: String,
       enum: ['equity', 'option', 'future', 'forex', 'crypto', 'other'],
       default: 'equity',
     },
     market: { type: String, default: '' },
+    multiplier: { type: Number, default: 1 },
+    expiration: { type: Date, default: null },
+    strike: { type: Number, default: null },
+    optionType: { type: String, enum: ['call', 'put', null], default: null },
 
     // Direction / size
-    direction: { type: String, enum: ['long', 'short'], required: true, index: true },
+    direction: {
+      type: String,
+      enum: ['long', 'short'],
+      required: true,
+      index: true,
+    },
     quantity: { type: Number, required: true }, // net/aggregate size, derived if fills exist
 
     // Price / time — aggregate values. When `executions` is populated these
@@ -76,12 +115,25 @@ const tradeSchema = new Schema(
     netPnL: { type: Number, default: null },
     rMultiple: { type: Number, default: null },
     holdingTimeSeconds: { type: Number, default: null },
+    positionStatus: {
+      type: String,
+      enum: ['open', 'closed'],
+      default: undefined,
+    },
+    remainingQuantity: { type: Number, default: 0 },
 
     // Classification
     setup: { type: String, default: '', index: true },
     session: {
       type: String,
-      enum: ['pre-market', 'open', 'mid-day', 'power-hour', 'after-hours', 'unspecified'],
+      enum: [
+        'pre-market',
+        'open',
+        'mid-day',
+        'power-hour',
+        'after-hours',
+        'unspecified',
+      ],
       default: 'unspecified',
     },
     timeframe: { type: String, default: '' },
@@ -105,8 +157,13 @@ const tradeSchema = new Schema(
     chartImage: { type: String, default: '' },
 
     // Import provenance — never silently overwritten on re-import
-    importBatchId: { type: Schema.Types.ObjectId, ref: 'ImportJob', default: null },
-    sourceRowHash: { type: String, default: null, index: true }, // for duplicate detection
+    importBatchId: {
+      type: Schema.Types.ObjectId,
+      ref: 'ImportJob',
+      default: null,
+    },
+    sourceRowHash: { type: String, default: null, index: true }, // for legacy completed-trade duplicate detection
+    sourcePositionKey: { type: String, default: null, index: true },
     isDemoData: { type: Boolean, default: false },
   },
   { timestamps: true }
@@ -117,5 +174,12 @@ tradeSchema.index({ userId: 1, accountId: 1, entryTime: -1 });
 tradeSchema.index({ userId: 1, accountId: 1, symbol: 1, entryTime: -1 });
 tradeSchema.index({ userId: 1, strategy: 1 });
 tradeSchema.index({ userId: 1, tags: 1 });
+tradeSchema.index(
+  { userId: 1, accountId: 1, sourcePositionKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { sourcePositionKey: { $type: 'string' } },
+  }
+);
 
 export default mongoose.model('Trade', tradeSchema);

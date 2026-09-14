@@ -35,7 +35,7 @@ export async function handleTradeImport(payload, reportProgress) {
           row,
           mapping,
           brokerKey,
-          accountId,
+          accountId
         );
 
         if (trade.errors && trade.errors.length > 0) {
@@ -78,7 +78,7 @@ export async function handlePerformanceAnalysis(payload, reportProgress) {
     reportProgress(20);
     const summary = await performanceAgent.analyzePerformance(
       accountId,
-      closedTrades,
+      closedTrades
     );
     reportProgress(100);
     return summary;

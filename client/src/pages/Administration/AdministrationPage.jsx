@@ -62,7 +62,7 @@ function UsersTab({ isRoot }) {
         setLoading(false);
       }
     },
-    [search],
+    [search]
   );
   useEffect(() => {
     load(1);

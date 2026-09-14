@@ -21,8 +21,7 @@ export default function ForgotPasswordPage() {
       setResult(await authService.forgotPassword(email));
     } catch (err) {
       setError(
-        err.response?.data?.error?.message ||
-          'Unable to create a reset request',
+        err.response?.data?.error?.message || 'Unable to create a reset request'
       );
     } finally {
       setLoading(false);

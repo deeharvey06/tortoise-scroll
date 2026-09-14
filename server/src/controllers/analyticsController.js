@@ -7,8 +7,29 @@ import * as analyticsService from '../services/analyticsService.js';
  * bar drives Trades, Dashboard, Calendar, Analytics, and Reports.
  */
 function extractFilters(req) {
-  const { accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo } = req.query;
-  return { userId: req.user.id, accountId, symbol, strategy, setup, direction, session, tags, dateFrom, dateTo };
+  const {
+    accountId,
+    symbol,
+    strategy,
+    setup,
+    direction,
+    session,
+    tags,
+    dateFrom,
+    dateTo,
+  } = req.query;
+  return {
+    userId: req.user.id,
+    accountId,
+    symbol,
+    strategy,
+    setup,
+    direction,
+    session,
+    tags,
+    dateFrom,
+    dateTo,
+  };
 }
 
 export async function getDashboard(req, res) {
@@ -19,11 +40,17 @@ export async function getDashboard(req, res) {
   // across accounts with different starting capital isn't meaningful).
   let startingBalance = 0;
   if (filters.accountId) {
-    const account = await Account.findOne({ _id: filters.accountId, userId: req.user.id }).lean();
+    const account = await Account.findOne({
+      _id: filters.accountId,
+      userId: req.user.id,
+    }).lean();
     startingBalance = account?.startingBalance || 0;
   }
 
-  const data = await analyticsService.getDashboardAnalytics(filters, startingBalance);
+  const data = await analyticsService.getDashboardAnalytics(
+    filters,
+    startingBalance
+  );
   res.json(data);
 }
 

@@ -113,7 +113,8 @@ class JobQueue extends EventEmitter {
 
   getJobStatus(jobId, userId = undefined) {
     const job = this.jobs.get(jobId);
-    if (!job || (userId !== undefined && job.userId !== String(userId))) return null;
+    if (!job || (userId !== undefined && job.userId !== String(userId)))
+      return null;
 
     return {
       id: job.id,
@@ -155,20 +156,17 @@ class JobQueue extends EventEmitter {
   }
 
   getQueueStats(userId = undefined) {
-    const jobs = userId === undefined ? Array.from(this.jobs.values()) : Array.from(this.jobs.values()).filter((job) => job.userId === String(userId));
+    const jobs =
+      userId === undefined
+        ? Array.from(this.jobs.values())
+        : Array.from(this.jobs.values()).filter(
+            (job) => job.userId === String(userId)
+          );
     return {
-      pending: jobs.filter(
-        (j) => j.status === 'pending',
-      ).length,
-      running: jobs.filter(
-        (j) => j.status === 'running',
-      ).length,
-      completed: jobs.filter(
-        (j) => j.status === 'completed',
-      ).length,
-      failed: jobs.filter(
-        (j) => j.status === 'failed',
-      ).length,
+      pending: jobs.filter((j) => j.status === 'pending').length,
+      running: jobs.filter((j) => j.status === 'running').length,
+      completed: jobs.filter((j) => j.status === 'completed').length,
+      failed: jobs.filter((j) => j.status === 'failed').length,
       total: jobs.length,
     };
   }

@@ -41,26 +41,33 @@ async function callOpenAI(settings, messages) {
   });
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`OpenAI request failed (${response.status}): ${text.slice(0, 300)}`);
+    throw new Error(
+      `OpenAI request failed (${response.status}): ${text.slice(0, 300)}`
+    );
   }
   const data = await response.json();
   return data.choices?.[0]?.message?.content || '';
 }
 
 async function callOllama(settings, messages) {
-  const response = await fetch(`${settings.ollamaBaseUrl.replace(/\/$/, '')}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: settings.ollamaModel,
-      messages,
-      stream: false,
-      options: { temperature: settings.temperature },
-    }),
-  });
+  const response = await fetch(
+    `${settings.ollamaBaseUrl.replace(/\/$/, '')}/api/chat`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: settings.ollamaModel,
+        messages,
+        stream: false,
+        options: { temperature: settings.temperature },
+      }),
+    }
+  );
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Ollama request failed (${response.status}): ${text.slice(0, 300)}`);
+    throw new Error(
+      `Ollama request failed (${response.status}): ${text.slice(0, 300)}`
+    );
   }
   const data = await response.json();
   return data.message?.content || '';
@@ -75,7 +82,8 @@ export async function chatComplete(messages, userId) {
   const settings = await getEffectiveSettings(userId);
 
   if (settings.provider === 'openai') {
-    if (!settings.openaiApiKey) throw new Error('OpenAI is selected but no API key is configured.');
+    if (!settings.openaiApiKey)
+      throw new Error('OpenAI is selected but no API key is configured.');
     return callOpenAI(settings, messages);
   }
   if (settings.provider === 'ollama') {

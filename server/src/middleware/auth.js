@@ -27,7 +27,7 @@ export async function requireAuthentication(req, res, next) {
       throw new Error('Authentication required');
     }
     const user = await User.findById(req.session.userId).select(
-      '+sessionVersion',
+      '+sessionVersion'
     );
     if (!user) {
       await destroySession(req);

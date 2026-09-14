@@ -1,12 +1,18 @@
 import { renderHook, act } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import useFilterStore, { resolveDateRange, useFilterParams } from './useFilterStore';
+import useFilterStore, {
+  resolveDateRange,
+  useFilterParams,
+} from './useFilterStore';
 
 describe('resolveDateRange', () => {
   afterEach(() => vi.useRealTimers());
 
   it('resolves all-time to an unbounded range', () => {
-    expect(resolveDateRange('allTime')).toEqual({ dateFrom: null, dateTo: null });
+    expect(resolveDateRange('allTime')).toEqual({
+      dateFrom: null,
+      dateTo: null,
+    });
   });
 
   it('resolves a custom range without changing the supplied values', () => {

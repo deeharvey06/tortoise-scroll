@@ -14,31 +14,49 @@ export async function resolveSettings(accountId, userId) {
 export function buildWarnings(settings, current) {
   if (!settings) return [];
   const warnings = [];
-  if (settings.maxDailyLoss !== null && settings.maxDailyLoss !== undefined && current.dailyPnL <= -Math.abs(settings.maxDailyLoss)) {
-    warnings.push(`Daily loss limit reached: $${Math.abs(current.dailyPnL).toFixed(2)} lost today (limit $${settings.maxDailyLoss}).`);
+  if (
+    settings.maxDailyLoss !== null &&
+    settings.maxDailyLoss !== undefined &&
+    current.dailyPnL <= -Math.abs(settings.maxDailyLoss)
+  ) {
+    warnings.push(
+      `Daily loss limit reached: $${Math.abs(current.dailyPnL).toFixed(2)} lost today (limit $${settings.maxDailyLoss}).`
+    );
   } else if (
     settings.maxDailyLoss !== null &&
     settings.maxDailyLoss !== undefined &&
     current.dailyPnL <= -Math.abs(settings.maxDailyLoss) * 0.8
   ) {
-    warnings.push(`Approaching your daily loss limit: $${Math.abs(current.dailyPnL).toFixed(2)} of $${settings.maxDailyLoss} used.`);
+    warnings.push(
+      `Approaching your daily loss limit: $${Math.abs(current.dailyPnL).toFixed(2)} of $${settings.maxDailyLoss} used.`
+    );
   }
-  if (settings.maxWeeklyLoss !== null && settings.maxWeeklyLoss !== undefined && current.weeklyPnL <= -Math.abs(settings.maxWeeklyLoss)) {
-    warnings.push(`Weekly loss limit reached: $${Math.abs(current.weeklyPnL).toFixed(2)} lost this week (limit $${settings.maxWeeklyLoss}).`);
+  if (
+    settings.maxWeeklyLoss !== null &&
+    settings.maxWeeklyLoss !== undefined &&
+    current.weeklyPnL <= -Math.abs(settings.maxWeeklyLoss)
+  ) {
+    warnings.push(
+      `Weekly loss limit reached: $${Math.abs(current.weeklyPnL).toFixed(2)} lost this week (limit $${settings.maxWeeklyLoss}).`
+    );
   }
   if (
     settings.maxConsecutiveLosses !== null &&
     settings.maxConsecutiveLosses !== undefined &&
     current.consecutiveLosses >= settings.maxConsecutiveLosses
   ) {
-    warnings.push(`You've hit ${current.consecutiveLosses} consecutive losses (limit ${settings.maxConsecutiveLosses}).`);
+    warnings.push(
+      `You've hit ${current.consecutiveLosses} consecutive losses (limit ${settings.maxConsecutiveLosses}).`
+    );
   }
   if (
     settings.maxTradesPerDay !== null &&
     settings.maxTradesPerDay !== undefined &&
     current.tradesToday >= settings.maxTradesPerDay
   ) {
-    warnings.push(`You've placed ${current.tradesToday} trades today (limit ${settings.maxTradesPerDay}).`);
+    warnings.push(
+      `You've placed ${current.tradesToday} trades today (limit ${settings.maxTradesPerDay}).`
+    );
   }
   return warnings;
 }
@@ -64,8 +82,14 @@ export async function computeRiskDashboard(accountId, userId) {
 
   const [allTrades, todayTrades, weekTrades] = await Promise.all([
     analyticsService.getFilteredTrades(filters),
-    analyticsService.getFilteredTrades({ ...filters, dateFrom: startOfToday.toISOString() }),
-    analyticsService.getFilteredTrades({ ...filters, dateFrom: startOfWeek.toISOString() }),
+    analyticsService.getFilteredTrades({
+      ...filters,
+      dateFrom: startOfToday.toISOString(),
+    }),
+    analyticsService.getFilteredTrades({
+      ...filters,
+      dateFrom: startOfWeek.toISOString(),
+    }),
   ]);
 
   const closedAll = analyticsService.closedOnly(allTrades);
@@ -77,14 +101,23 @@ export async function computeRiskDashboard(accountId, userId) {
 
   const equityCurve = analyticsService.buildEquityCurve(closedAll);
   const { maxDrawdown } = analyticsService.buildDrawdownCurve(equityCurve);
-  const currentEquity = equityCurve.length ? equityCurve[equityCurve.length - 1].equity : 0;
-  const peak = equityCurve.length ? Math.max(...equityCurve.map((p) => p.equity)) : 0;
+  const currentEquity = equityCurve.length
+    ? equityCurve[equityCurve.length - 1].equity
+    : 0;
+  const peak = equityCurve.length
+    ? Math.max(...equityCurve.map((p) => p.equity))
+    : 0;
   const currentDrawdown = equityCurve.length ? currentEquity - peak : 0;
 
   const streaks = analyticsService.computeStreaks(closedAll);
 
-  const openTrades = allTrades.filter((t) => t.netPnL === null || t.netPnL === undefined);
-  const currentExposure = openTrades.reduce((sum, t) => sum + Math.abs(t.quantity * t.entryPrice), 0);
+  const openTrades = allTrades.filter(
+    (t) => t.netPnL === null || t.netPnL === undefined
+  );
+  const currentExposure = openTrades.reduce(
+    (sum, t) => sum + Math.abs(t.quantity * t.entryPrice),
+    0
+  );
 
   const current = {
     dailyPnL: Math.round(dailyPnL * 100) / 100,
@@ -92,7 +125,8 @@ export async function computeRiskDashboard(accountId, userId) {
     tradesToday: todayTrades.length,
     currentDrawdown: Math.round(currentDrawdown * 100) / 100,
     maxDrawdown: closedAll.length ? maxDrawdown : null,
-    consecutiveLosses: streaks.currentStreakType === 'loss' ? streaks.currentStreak : 0,
+    consecutiveLosses:
+      streaks.currentStreakType === 'loss' ? streaks.currentStreak : 0,
     openPositions: openTrades.length,
     currentExposure: Math.round(currentExposure * 100) / 100,
   };

@@ -1,9 +1,15 @@
 import Chip from '@mui/material/Chip';
 
-export default function Tag({ label, onDelete, selected = false, sx, ...props }) {
+export default function Tag({
+  label,
+  onDelete,
+  selected = false,
+  sx,
+  ...props
+}) {
   return (
     <Chip
-      size="small"
+      size='small'
       label={label}
       onDelete={onDelete}
       variant={selected ? 'filled' : 'outlined'}

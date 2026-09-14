@@ -70,7 +70,7 @@ test('jobQueue reports progress correctly', async () => {
 });
 
 test('jobQueue tracks queue statistics', async () => {
-  const handler = async (payload, reportProgress) => {
+  const handler = async () => {
     return 'result';
   };
 

@@ -14,16 +14,29 @@ import { narrate } from './narrate.js';
 export async function computePreMarketBriefing(filters = {}) {
   const trades = await analyticsService.getFilteredTrades(filters);
   const closed = analyticsService.closedOnly(trades);
-  const recent30 = [...closed].sort((a, b) => new Date(b.exitTime) - new Date(a.exitTime)).slice(0, 30);
+  const recent30 = [...closed]
+    .sort((a, b) => new Date(b.exitTime) - new Date(a.exitTime))
+    .slice(0, 30);
 
   const summary = analyticsService.computeSummary(recent30);
   const streaks = analyticsService.computeStreaks(closed);
-  const mistakes = analyticsService.computeTagBreakdown(recent30, 'mistake').slice(0, 3);
+  const mistakes = analyticsService
+    .computeTagBreakdown(recent30, 'mistake')
+    .slice(0, 3);
 
   const [strategies, riskSettings, lastPostMarket] = await Promise.all([
-    Strategy.find({ userId: filters.userId, isActive: true }).select('name').lean(),
-    RiskSettings.findOne({ userId: filters.userId, ...(filters.accountId ? { accountId: filters.accountId } : { accountId: null }) }).lean(),
-    JournalEntry.findOne({ userId: filters.userId, type: 'post-market' }).sort({ date: -1 }).lean(),
+    Strategy.find({ userId: filters.userId, isActive: true })
+      .select('name')
+      .lean(),
+    RiskSettings.findOne({
+      userId: filters.userId,
+      ...(filters.accountId
+        ? { accountId: filters.accountId }
+        : { accountId: null }),
+    }).lean(),
+    JournalEntry.findOne({ userId: filters.userId, type: 'post-market' })
+      .sort({ date: -1 })
+      .lean(),
   ]);
 
   const findings = [
@@ -43,18 +56,29 @@ export async function computePreMarketBriefing(filters = {}) {
     riskSettings?.maxDailyLoss
       ? `Your configured max daily loss limit is $${riskSettings.maxDailyLoss}.`
       : 'No max daily loss limit is configured on the Risk page yet.',
-    riskSettings?.maxTradesPerDay ? `Your configured max trades per day is ${riskSettings.maxTradesPerDay}.` : null,
+    riskSettings?.maxTradesPerDay
+      ? `Your configured max trades per day is ${riskSettings.maxTradesPerDay}.`
+      : null,
     lastPostMarket
       ? `Your most recent post-market review (${new Date(lastPostMarket.date).toDateString()}) is available in the Journal for reference.`
       : null,
   ].filter(Boolean);
 
-  return { summary, streaks, strategies: strategies.map((s) => s.name), riskSettings, findings };
+  return {
+    summary,
+    streaks,
+    strategies: strategies.map((s) => s.name),
+    riskSettings,
+    findings,
+  };
 }
 
 export async function generatePreMarketBriefing(filters = {}) {
   const briefing = await computePreMarketBriefing(filters);
-  const narrative = await narrate(briefing.findings, { title: 'Pre-Market Briefing', userId: filters.userId });
+  const narrative = await narrate(briefing.findings, {
+    title: 'Pre-Market Briefing',
+    userId: filters.userId,
+  });
   return { ...briefing, narrative };
 }
 

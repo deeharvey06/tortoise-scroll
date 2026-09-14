@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import asyncHandler from '../middleware/asyncHandler.js';
-import { getSession, getMarketDataStatus } from '../controllers/replayController.js';
+import {
+  getSession,
+  getMarketDataStatus,
+} from '../controllers/replayController.js';
 
 const router = Router();
 

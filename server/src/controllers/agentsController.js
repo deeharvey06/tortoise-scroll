@@ -6,14 +6,39 @@ import * as riskAgent from '../agents/riskAgent.js';
 import * as performanceAgent from '../agents/performanceAgent.js';
 
 function extractFilters(req) {
-  const { accountId, symbol, strategy, playbook, setup, direction, session, tags, dateFrom, dateTo } = req.query;
-  return { userId: req.user.id, accountId, symbol, strategy, playbook, setup, direction, session, tags, dateFrom, dateTo };
+  const {
+    accountId,
+    symbol,
+    strategy,
+    playbook,
+    setup,
+    direction,
+    session,
+    tags,
+    dateFrom,
+    dateTo,
+  } = req.query;
+  return {
+    userId: req.user.id,
+    accountId,
+    symbol,
+    strategy,
+    playbook,
+    setup,
+    direction,
+    session,
+    tags,
+    dateFrom,
+    dateTo,
+  };
 }
 
 // --- Tagging rules (Agent 1 config) ---
 
 export async function listTaggingRules(req, res) {
-  const rules = await TaggingRule.find({ userId: req.user.id }).sort({ createdAt: -1 }).lean();
+  const rules = await TaggingRule.find({ userId: req.user.id })
+    .sort({ createdAt: -1 })
+    .lean();
   res.json(rules);
 }
 
@@ -25,7 +50,11 @@ export async function createTaggingRule(req, res) {
 
 export async function updateTaggingRule(req, res) {
   const { userId: _ignored, ...safe } = req.body;
-  const rule = await TaggingRule.findOneAndUpdate({ _id: req.params.id, userId: req.user.id }, safe, { new: true, runValidators: true });
+  const rule = await TaggingRule.findOneAndUpdate(
+    { _id: req.params.id, userId: req.user.id },
+    safe,
+    { new: true, runValidators: true }
+  );
   if (!rule) {
     res.status(404);
     throw new Error('Tagging rule not found');
@@ -34,7 +63,10 @@ export async function updateTaggingRule(req, res) {
 }
 
 export async function deleteTaggingRule(req, res) {
-  const deleted = await TaggingRule.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+  const deleted = await TaggingRule.findOneAndDelete({
+    _id: req.params.id,
+    userId: req.user.id,
+  });
   if (!deleted) {
     res.status(404);
     throw new Error('Tagging rule not found');
@@ -58,7 +90,11 @@ export async function approveSuggestion(req, res) {
     res.status(400);
     throw new Error('tradeId and a non-empty tags array are required');
   }
-  const trade = await autoTaggerAgent.approveSuggestion(tradeId, tags, req.user.id);
+  const trade = await autoTaggerAgent.approveSuggestion(
+    tradeId,
+    tags,
+    req.user.id
+  );
   res.json(trade);
 }
 
@@ -70,14 +106,19 @@ export async function getSessionReview(req, res) {
     res.status(400);
     throw new Error('date query param (YYYY-MM-DD) is required');
   }
-  const review = await sessionReviewAgent.generateSessionReview(date, extractFilters(req));
+  const review = await sessionReviewAgent.generateSessionReview(
+    date,
+    extractFilters(req)
+  );
   res.json(review);
 }
 
 // --- Agent 3: Pre-Market Briefing ---
 
 export async function getPreMarketBriefing(req, res) {
-  const briefing = await preMarketAgent.generatePreMarketBriefing(extractFilters(req));
+  const briefing = await preMarketAgent.generatePreMarketBriefing(
+    extractFilters(req)
+  );
   res.json(briefing);
 }
 
@@ -85,14 +126,19 @@ export async function getPreMarketBriefing(req, res) {
 
 export async function getRiskAlert(req, res) {
   const { accountId } = req.query;
-  const alert = await riskAgent.generateRiskAlert(accountId || null, req.user.id);
+  const alert = await riskAgent.generateRiskAlert(
+    accountId || null,
+    req.user.id
+  );
   res.json(alert);
 }
 
 // --- Agent 5: Performance Patterns ---
 
 export async function getPerformancePatterns(req, res) {
-  const patterns = await performanceAgent.generatePerformancePatterns(extractFilters(req));
+  const patterns = await performanceAgent.generatePerformancePatterns(
+    extractFilters(req)
+  );
   res.json(patterns);
 }
 

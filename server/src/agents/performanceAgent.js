@@ -14,7 +14,8 @@ export function findDeviations(groups, overall, dimensionLabel) {
     if (overall.winRate !== null && g.winRate !== null) {
       const delta = g.winRate - overall.winRate;
       if (Math.abs(delta) >= WIN_RATE_DELTA_THRESHOLD) {
-        const direction = delta > 0 ? 'significantly better' : 'significantly worse';
+        const direction =
+          delta > 0 ? 'significantly better' : 'significantly worse';
         findings.push(
           `Your win rate is ${direction} for ${dimensionLabel} "${g.label}": ${g.winRate}% over ${g.count} trades, ` +
             `vs your overall ${overall.winRate}% over ${overall.closedTrades} trades.`
@@ -71,10 +72,22 @@ export async function computePerformancePatterns(filters = {}) {
   }
 
   const findings = [
-    ...findDeviations(analyticsService.buildBySession(closed), overall, 'session'),
-    ...findDeviations(analyticsService.buildByDayOfWeek(closed), overall, 'day of week'),
+    ...findDeviations(
+      analyticsService.buildBySession(closed),
+      overall,
+      'session'
+    ),
+    ...findDeviations(
+      analyticsService.buildByDayOfWeek(closed),
+      overall,
+      'day of week'
+    ),
     ...findDeviations(analyticsService.buildByHour(closed), overall, 'hour'),
-    ...findDeviations(analyticsService.buildByDirection(closed), overall, 'direction'),
+    ...findDeviations(
+      analyticsService.buildByDirection(closed),
+      overall,
+      'direction'
+    ),
     ...findDeviations(analyticsService.buildBySetup(closed), overall, 'setup'),
     ...tagAssociationFindings(closed, 'mistake', 'mistake'),
     ...tagAssociationFindings(closed, 'emotion', 'emotion'),
@@ -103,7 +116,10 @@ export async function computePerformancePatterns(filters = {}) {
 
 export async function generatePerformancePatterns(filters = {}) {
   const result = await computePerformancePatterns(filters);
-  const narrative = await narrate(result.findings, { title: 'Performance Patterns', userId: filters.userId });
+  const narrative = await narrate(result.findings, {
+    title: 'Performance Patterns',
+    userId: filters.userId,
+  });
   return { ...result, narrative };
 }
 

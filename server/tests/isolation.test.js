@@ -1,4 +1,4 @@
-import test, { after, before } from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import Trade from '../src/models/Trade.js';
@@ -9,6 +9,7 @@ import Playbook from '../src/models/Playbook.js';
 import Tag from '../src/models/Tag.js';
 import TaggingRule from '../src/models/TaggingRule.js';
 import ImportJob from '../src/models/ImportJob.js';
+import BrokerExecution from '../src/models/BrokerExecution.js';
 import RiskSettings from '../src/models/RiskSettings.js';
 import BacktestConfig from '../src/models/BacktestConfig.js';
 import AIConversation from '../src/models/AIConversation.js';
@@ -68,6 +69,7 @@ test('every user-owned model requires userId', () => {
     Tag,
     TaggingRule,
     ImportJob,
+    BrokerExecution,
     RiskSettings,
     BacktestConfig,
     AIConversation,
@@ -78,7 +80,7 @@ test('every user-owned model requires userId', () => {
     assert.equal(
       Model.schema.path('userId')?.options.required,
       true,
-      `${Model.modelName} must require userId`,
+      `${Model.modelName} must require userId`
     );
   }
 });
@@ -87,13 +89,13 @@ test('client-supplied userId is never trusted on creation', () => {
   assert.equal(
     String(
       ownedPayload({ user: { id: ownerB } }, { name: 'x', userId: ownerA })
-        .userId,
+        .userId
     ),
-    String(ownerB),
+    String(ownerB)
   );
   assert.equal(
     buildTradeQuery({ userId: ownerB, symbol: 'aapl' }).userId,
-    ownerB,
+    ownerB
   );
 });
 
@@ -107,7 +109,7 @@ test('User B cannot read, edit, or delete User A trade', async () => {
   assert.equal(await tradeService.getTradeById(resourceId, ownerB), null);
   assert.equal(
     await tradeService.updateTrade(resourceId, { notes: 'attack' }, ownerB),
-    null,
+    null
   );
   assert.equal(await tradeService.deleteTrade(resourceId, ownerB), null);
   assert.equal(filters.length, 3);
@@ -122,7 +124,7 @@ test('User B cannot approve an agent suggestion for User A trade', async () => {
     await assert.rejects(
       () => autoTaggerAgent.approveSuggestion(resourceId, ['foreign'], ownerB),
       (error) =>
-        error.statusCode === 404 && /Trade not found/.test(error.message),
+        error.statusCode === 404 && /Trade not found/.test(error.message)
     );
   } finally {
     Trade.findOne = originalFindOne;
@@ -135,7 +137,7 @@ test('User B cannot read User A journal entry', async () => {
   const res = response();
   await assert.rejects(
     () => getEntry({ params: { id: resourceId }, user: { id: ownerB } }, res),
-    /not found/i,
+    /not found/i
   );
   assert.equal(String(filters[0].userId), String(ownerB));
   assert.equal(res.statusCode, 404);
@@ -156,9 +158,9 @@ test('User B cannot modify User A strategy', async () => {
           body: { name: 'stolen', userId: ownerA },
           user: { id: ownerB },
         },
-        res,
+        res
       ),
-    /not found/i,
+    /not found/i
   );
   assert.equal(String(filter.userId), String(ownerB));
   assert.equal(res.statusCode, 404);
@@ -172,9 +174,9 @@ test('User B cannot access User A AI conversation', async () => {
     () =>
       getConversation(
         { params: { id: resourceId }, user: { id: ownerB } },
-        res,
+        res
       ),
-    /not found/i,
+    /not found/i
   );
   assert.equal(String(filters[0].userId), String(ownerB));
   assert.equal(res.statusCode, 404);
@@ -187,7 +189,7 @@ test('User B cannot access User A import job', async () => {
   await assert.rejects(
     () =>
       getImportJob({ params: { id: resourceId }, user: { id: ownerB } }, res),
-    /not found/i,
+    /not found/i
   );
   assert.equal(String(filters[0].userId), String(ownerB));
   assert.equal(res.statusCode, 404);
@@ -208,6 +210,7 @@ test('crafted backup cannot reference another user resource', async () => {
     Playbook,
     Trade,
     ImportJob,
+    BrokerExecution,
     AIConversation,
   ];
   const saved = models.map((Model) => [Model, Model.find]);
@@ -224,9 +227,9 @@ test('crafted backup cannot reference another user resource', async () => {
       () =>
         validateBackupRelationships(
           { data: { trades: [{ _id: resourceId, accountId: ownerA }] } },
-          ownerB,
+          ownerB
         ),
-      /Invalid backup relationship: trades.*accountId/,
+      /Invalid backup relationship: trades.*accountId/
     );
   } finally {
     for (const [Model, find] of saved) Model.find = find;

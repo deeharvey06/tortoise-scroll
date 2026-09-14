@@ -1,27 +1,18 @@
 /**
- * Broker adapters describe how a given export's columns typically map onto
- * our Trade fields, plus small per-broker parsing quirks (date formats,
- * how direction/side is expressed). They are a *starting point* the user
- * can freely override in the mapping step — real-world exports vary by
- * broker account settings and version, so we never claim perfect fidelity.
- * "Generic CSV" has no default mapping and requires the user to map columns
- * themselves.
- *
- * Target fields a mapping may point at (all optional except the required
- * set enforced in importService.validateRow):
- *   symbol, direction, quantity, entryPrice, exitPrice, entryTime, exitTime,
- *   fees, commission, stopLoss, notes
+ * Broker adapters. `mode: trade` preserves the existing completed-trade
+ * import contract. `mode: execution` means the source contains fills and
+ * must pass through the normalized execution ledger + reconstruction engine.
  */
-
 export const BROKER_ADAPTERS = {
   generic: {
     label: 'Generic CSV',
+    mode: 'trade',
     defaultMapping: {},
     parseDirection: (raw) => normalizeDirection(raw),
   },
-
   ninjatrader: {
     label: 'NinjaTrader',
+    mode: 'trade',
     defaultMapping: {
       symbol: 'Instrument',
       direction: 'Market pos.',
@@ -32,11 +23,12 @@ export const BROKER_ADAPTERS = {
       exitTime: 'Exit time',
       commission: 'Commission',
     },
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['long'], short: ['short'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, { long: ['long'], short: ['short'] }),
   },
-
   tradestation: {
     label: 'TradeStation',
+    mode: 'trade',
     defaultMapping: {
       symbol: 'Symbol',
       direction: 'Side',
@@ -48,29 +40,36 @@ export const BROKER_ADAPTERS = {
       commission: 'Commission',
       fees: 'Fees',
     },
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['buy', 'long'], short: ['sell', 'short', 'sell short'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, {
+        long: ['buy', 'long'],
+        short: ['sell', 'short', 'sell short'],
+      }),
   },
-
   thinkorswim: {
     label: 'Thinkorswim',
+    mode: 'execution',
     defaultMapping: {
       symbol: 'Symbol',
-      direction: 'Side',
+      side: 'Side',
       quantity: 'Qty',
-      entryPrice: 'Price',
-      entryTime: 'Exec Time',
+      price: 'Price',
+      timestamp: 'Exec Time',
+      positionEffect: 'Pos Effect',
+      expiration: 'Exp',
+      strike: 'Strike',
+      optionType: 'Type',
+      executionId: 'Exec ID',
+      orderId: 'Order ID',
       commission: 'Commission',
       fees: 'Misc Fees',
     },
-    // Thinkorswim's "Account Statement" export lists individual executions
-    // rather than closed round-trips; full fill-pairing support lands with
-    // the multi-fill import path in a later pass. For now the generic
-    // mapping step lets a user reshape an already-paired export.
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['bot', 'buy'], short: ['sld', 'sell'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, { long: ['bot', 'buy'], short: ['sld', 'sell'] }),
   },
-
   interactive_brokers: {
     label: 'Interactive Brokers',
+    mode: 'trade',
     defaultMapping: {
       symbol: 'Symbol',
       direction: 'Buy/Sell',
@@ -79,17 +78,20 @@ export const BROKER_ADAPTERS = {
       entryTime: 'Date/Time',
       commission: 'Comm/Fee',
     },
-    parseDirection: (raw) => normalizeDirection(raw, { long: ['buy', 'bot'], short: ['sell', 'sld'] }),
+    parseDirection: (raw) =>
+      normalizeDirection(raw, { long: ['buy', 'bot'], short: ['sell', 'sld'] }),
   },
 };
 
 function normalizeDirection(raw, overrides) {
-  const v = String(raw || '').trim().toLowerCase();
+  const v = String(raw || '')
+    .trim()
+    .toLowerCase();
   const longWords = overrides?.long || ['long', 'buy', 'bot', 'b'];
   const shortWords = overrides?.short || ['short', 'sell', 'sld', 'ss', 's'];
   if (longWords.includes(v)) return 'long';
   if (shortWords.includes(v)) return 'short';
-  return null; // unrecognized — surfaced as a row error, never guessed
+  return null;
 }
 
 export function getAdapter(brokerKey) {
@@ -97,7 +99,11 @@ export function getAdapter(brokerKey) {
 }
 
 export function listAdapters() {
-  return Object.entries(BROKER_ADAPTERS).map(([key, a]) => ({ key, label: a.label }));
+  return Object.entries(BROKER_ADAPTERS).map(([key, a]) => ({
+    key,
+    label: a.label,
+    mode: a.mode,
+  }));
 }
 
 export default { BROKER_ADAPTERS, getAdapter, listAdapters };

@@ -6,7 +6,9 @@ export async function fetchDashboard(params = {}) {
 }
 
 export async function fetchCalendarMonth(year, month, params = {}) {
-  const { data } = await api.get('/analytics/calendar', { params: { ...params, year, month } });
+  const { data } = await api.get('/analytics/calendar', {
+    params: { ...params, year, month },
+  });
   return data;
 }
 

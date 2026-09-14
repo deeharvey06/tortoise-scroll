@@ -13,11 +13,16 @@ export default function PhasePlaceholder({ title, phase, description }) {
   return (
     <Box sx={{ maxWidth: 640 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-        <Typography variant="h5">{title}</Typography>
-        <Chip size="small" label={`Phase ${phase}`} variant="outlined" color="warning" />
+        <Typography variant='h5'>{title}</Typography>
+        <Chip
+          size='small'
+          label={`Phase ${phase}`}
+          variant='outlined'
+          color='warning'
+        />
       </Box>
       <Paper sx={{ p: 3 }}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant='body2' color='text.secondary'>
           {description ||
             `${title} is scaffolded with a real route but not yet built. It will be implemented in Phase ${phase} of the build plan, with real data and calculations — not a mock.`}
         </Typography>

@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import asyncHandler from '../middleware/asyncHandler.js';
-import { getDashboard, getCalendar } from '../controllers/analyticsController.js';
+import {
+  getDashboard,
+  getCalendar,
+} from '../controllers/analyticsController.js';
 
 const router = Router();
 
