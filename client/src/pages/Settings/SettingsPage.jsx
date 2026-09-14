@@ -14,6 +14,7 @@ import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Link as RouterLink } from 'react-router-dom';
+import BrokerConnectionsTab from './components/BrokerConnectionsTab';
 
 import * as settingsApi from '../../services/settingsService';
 import * as tagApi from '../../services/tagService';
@@ -524,7 +525,11 @@ mongorestore --uri="mongodb://localhost:27017/trading-journal" ./backup/trading-
 }
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState('general');
+  const [tab, setTab] = useState(() =>
+    new URLSearchParams(window.location.search).has('brokerConnection')
+      ? 'brokers'
+      : 'general'
+  );
   const [settings, setSettings] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [strategies, setStrategies] = useState([]);
@@ -586,6 +591,7 @@ export default function SettingsPage() {
         <Tab value='general' label='General' />
         <Tab value='trading' label='Trading' />
         <Tab value='tags' label='Tags' />
+        <Tab value='brokers' label='Broker Connections' />
         <Tab value='ai' label='AI' />
         <Tab value='data' label='Data' />
       </Tabs>
@@ -618,6 +624,7 @@ export default function SettingsPage() {
         />
       )}
       {tab === 'tags' && <TagsTab />}
+      {tab === 'brokers' && <BrokerConnectionsTab accounts={accounts} />}
       {tab === 'ai' && (
         <Panel sx={{ maxWidth: 620 }}>
           <SectionHeader

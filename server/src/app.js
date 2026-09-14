@@ -26,6 +26,9 @@ import authRoutes from './routes/authRoutes.js';
 import jobsRoutes from './routes/jobsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import accountSecurityRoutes from './routes/accountSecurityRoutes.js';
+import brokerConnectionRoutes from './routes/brokerConnectionRoutes.js';
+import { registerBrokerProvider } from './services/brokers/providerRegistry.js';
+import { thinkorswimProvider } from './services/brokers/thinkorswimProvider.js';
 import { jobQueue } from './queue/jobQueue.js';
 import * as jobHandlers from './queue/handlers.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
@@ -47,6 +50,8 @@ jobQueue.register(
 );
 jobQueue.register('risk-assessment', jobHandlers.handleRiskAssessment);
 jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
+
+registerBrokerProvider(thinkorswimProvider);
 
 export function createApp(options = {}) {
   const app = express();
@@ -232,6 +237,7 @@ export function createApp(options = {}) {
   app.use('/api/jobs', requireAuth, jobsRoutes);
   app.use('/api/admin', requireAuth, adminRoutes);
   app.use('/api/account-security', requireAuth, accountSecurityRoutes);
+  app.use('/api/broker-connections', requireAuth, brokerConnectionRoutes);
 
   // Serves uploaded trade screenshots — /uploads/screenshots/<file>
   app.use(

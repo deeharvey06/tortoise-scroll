@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 dotenv.config({ path: fileURLToPath(new URL('./.env', import.meta.url)) });
 
+import { startBrokerSyncScheduler } from './src/services/brokerSyncScheduler.js';
+
 import { createApp } from './src/app.js';
 import { connectDB } from './src/config/db.js';
 import { provisionRootUser } from './src/auth/rootProvisioning.js';
@@ -38,6 +40,7 @@ async function start() {
   }
 
   const app = createApp();
+  startBrokerSyncScheduler();
   app.listen(config.port, () => {
     console.log(
       `[server] Trading journal API listening on http://localhost:${config.port}`

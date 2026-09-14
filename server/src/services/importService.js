@@ -378,6 +378,22 @@ async function commitThinkorswimExecutionImport({
     rows: [...initialRows, ...ledgerResult.outcomes],
   });
 
+  const executionKeys = parsed.normalized.map((e) => e.executionKey);
+  if (executionKeys.length) {
+    await BrokerExecution.updateMany(
+      { userId, accountId, broker, executionKey: { $in: executionKeys } },
+      {
+        $addToSet: {
+          sources: {
+            sourceType: 'csv',
+            importJobId: job._id,
+            brokerConnectionId: null,
+          },
+        },
+      }
+    );
+  }
+
   const reconstruction = await reconcileReconstructedTrades({
     accountId,
     broker,
