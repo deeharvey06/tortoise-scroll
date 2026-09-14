@@ -20,6 +20,12 @@ const brokerExecutionSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    brokerConnectionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BrokerConnection',
+      default: null,
+      index: true,
+    },
     broker: {
       type: String,
       required: true,
@@ -69,6 +75,25 @@ const brokerExecutionSchema = new mongoose.Schema(
       default: 'filled',
     },
     rawBrokerMetadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+    sources: {
+      type: [
+        {
+          _id: false,
+          sourceType: { type: String, enum: ['csv', 'api'], required: true },
+          importJobId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'ImportJob',
+            default: null,
+          },
+          brokerConnectionId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'BrokerConnection',
+            default: null,
+          },
+        },
+      ],
+      default: [],
+    },
     rawRowNumber: { type: Number, default: null },
     tradeId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -10,6 +10,9 @@ import Tag from '../src/models/Tag.js';
 import TaggingRule from '../src/models/TaggingRule.js';
 import ImportJob from '../src/models/ImportJob.js';
 import BrokerExecution from '../src/models/BrokerExecution.js';
+import BrokerConnection from '../src/models/BrokerConnection.js';
+import BrokerSyncRun from '../src/models/BrokerSyncRun.js';
+import BrokerAuthorizationState from '../src/models/BrokerAuthorizationState.js';
 import RiskSettings from '../src/models/RiskSettings.js';
 import BacktestConfig from '../src/models/BacktestConfig.js';
 import AIConversation from '../src/models/AIConversation.js';
@@ -70,6 +73,9 @@ test('every user-owned model requires userId', () => {
     TaggingRule,
     ImportJob,
     BrokerExecution,
+    BrokerConnection,
+    BrokerSyncRun,
+    BrokerAuthorizationState,
     RiskSettings,
     BacktestConfig,
     AIConversation,

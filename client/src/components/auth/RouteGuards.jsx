@@ -1,8 +1,8 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
-import Typography from '@mui/material/Typography'
-import useAuthStore from '../../store/useAuthStore'
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+import useAuthStore from '../../store/useAuthStore';
 
 export function AuthLoadingState() {
   return (
@@ -23,31 +23,31 @@ export function AuthLoadingState() {
         </Typography>
       </Box>
     </Box>
-  )
+  );
 }
 
 function StateBoundary({ children }) {
-  const status = useAuthStore((state) => state.status)
-  const location = useLocation()
-  if (status === 'INITIALIZING') return <AuthLoadingState />
+  const status = useAuthStore((state) => state.status);
+  const location = useLocation();
+  if (status === 'INITIALIZING') return <AuthLoadingState />;
   if (status === 'NETWORK_ERROR')
-    return <Navigate to='/network-error' replace />
+    return <Navigate to='/network-error' replace />;
   if (status === 'ACCOUNT_SUSPENDED')
-    return <Navigate to='/account-suspended' replace />
+    return <Navigate to='/account-suspended' replace />;
   if (status === 'SESSION_EXPIRED')
-    return <Navigate to='/session-expired' replace />
-  if (status === 'FORBIDDEN') return <Navigate to='/403' replace />
+    return <Navigate to='/session-expired' replace />;
+  if (status === 'FORBIDDEN') return <Navigate to='/403' replace />;
   if (status !== 'AUTHENTICATED')
-    return <Navigate to='/login' state={{ from: location }} replace />
-  return children
+    return <Navigate to='/login' state={{ from: location }} replace />;
+  return children;
 }
 
 export function ProtectedRoute({ children }) {
-  return <StateBoundary>{children || <Outlet />}</StateBoundary>
+  return <StateBoundary>{children || <Outlet />}</StateBoundary>;
 }
 
 function RoleRoute({ roles, children }) {
-  const user = useAuthStore((state) => state.user)
+  const user = useAuthStore((state) => state.user);
   return (
     <StateBoundary>
       {roles.includes(user?.role) ? (
@@ -56,14 +56,14 @@ function RoleRoute({ roles, children }) {
         <Navigate to='/403' replace />
       )}
     </StateBoundary>
-  )
+  );
 }
 
 export function AdminRoute({ children }) {
-  return <RoleRoute roles={['ADMIN', 'ROOT']}>{children}</RoleRoute>
+  return <RoleRoute roles={['ADMIN', 'ROOT']}>{children}</RoleRoute>;
 }
 export function RootRoute({ children }) {
-  return <RoleRoute roles={['ROOT']}>{children}</RoleRoute>
+  return <RoleRoute roles={['ROOT']}>{children}</RoleRoute>;
 }
 
-export default ProtectedRoute
+export default ProtectedRoute;
