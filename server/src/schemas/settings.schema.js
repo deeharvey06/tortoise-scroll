@@ -39,6 +39,7 @@ export const appSettingsSchema = z.object({
  */
 export const importPreviewSchema = z.object({
   broker: z.string().min(1, 'Broker is required'),
+  sourceTimezone: z.string().min(1).optional(),
 });
 
 /**
@@ -48,6 +49,7 @@ export const importPreviewSchema = z.object({
 export const importCommitSchema = z.object({
   accountId: z.string().min(1, 'Account ID is required'),
   broker: z.string().min(1, 'Broker is required'),
+  sourceTimezone: z.string().min(1).optional(),
   mapping: z
     .object({
       symbol: z.string().optional(),

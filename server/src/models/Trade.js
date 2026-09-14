@@ -16,6 +16,10 @@ const executionSchema = new Schema(
     time: { type: Date, required: true },
     fees: { type: Number, default: 0 },
     commission: { type: Number, default: 0 },
+    multiplier: { type: Number, default: 1 },
+    brokerExecutionKey: { type: String, default: '' },
+    executionId: { type: String, default: '' },
+    orderId: { type: String, default: '' },
   },
   { _id: false }
 );
@@ -72,6 +76,10 @@ const tradeSchema = new Schema(
       default: 'equity',
     },
     market: { type: String, default: '' },
+    multiplier: { type: Number, default: 1 },
+    expiration: { type: Date, default: null },
+    strike: { type: Number, default: null },
+    optionType: { type: String, enum: ['call', 'put', null], default: null },
 
     // Direction / size
     direction: {
@@ -107,6 +115,12 @@ const tradeSchema = new Schema(
     netPnL: { type: Number, default: null },
     rMultiple: { type: Number, default: null },
     holdingTimeSeconds: { type: Number, default: null },
+    positionStatus: {
+      type: String,
+      enum: ['open', 'closed'],
+      default: undefined,
+    },
+    remainingQuantity: { type: Number, default: 0 },
 
     // Classification
     setup: { type: String, default: '', index: true },
@@ -148,7 +162,8 @@ const tradeSchema = new Schema(
       ref: 'ImportJob',
       default: null,
     },
-    sourceRowHash: { type: String, default: null, index: true }, // for duplicate detection
+    sourceRowHash: { type: String, default: null, index: true }, // for legacy completed-trade duplicate detection
+    sourcePositionKey: { type: String, default: null, index: true },
     isDemoData: { type: Boolean, default: false },
   },
   { timestamps: true }
@@ -159,5 +174,12 @@ tradeSchema.index({ userId: 1, accountId: 1, entryTime: -1 });
 tradeSchema.index({ userId: 1, accountId: 1, symbol: 1, entryTime: -1 });
 tradeSchema.index({ userId: 1, strategy: 1 });
 tradeSchema.index({ userId: 1, tags: 1 });
+tradeSchema.index(
+  { userId: 1, accountId: 1, sourcePositionKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { sourcePositionKey: { $type: 'string' } },
+  }
+);
 
 export default mongoose.model('Trade', tradeSchema);

@@ -52,6 +52,9 @@ export default function ImportPage() {
 
   const [adapters, setAdapters] = useState([]);
   const [broker, setBroker] = useState('generic');
+  const [sourceTimezone, setSourceTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  );
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -62,6 +65,10 @@ export default function ImportPage() {
   const [previewRows, setPreviewRows] = useState([]);
   const [totalRows, setTotalRows] = useState(0);
   const [mapping, setMapping] = useState({});
+  const [importMode, setImportMode] = useState('trade');
+  const [executionSummary, setExecutionSummary] = useState(null);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [validationWarnings, setValidationWarnings] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [job, setJob] = useState(null);
@@ -116,22 +123,27 @@ export default function ImportPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await importApi.previewCsv(file, broker);
+      const data = await importApi.previewCsv(file, broker, sourceTimezone);
       setHeaders(data.headers);
       setPreviewRows(data.previewRows);
       setTotalRows(data.totalRows);
       setMapping(data.suggestedMapping || {});
+      setImportMode(data.mode || 'trade');
+      setExecutionSummary(data.executionSummary || null);
+      setValidationErrors(data.validationErrors || []);
+      setValidationWarnings(data.validationWarnings || []);
       setActiveStep(1);
     } catch (err) {
       setError(err.response?.data?.error?.message || err.message);
     } finally {
       setLoading(false);
     }
-  }, [file, broker]);
+  }, [file, broker, sourceTimezone]);
 
-  const missingRequired = TARGET_FIELDS.filter(
-    (f) => f.required && !mapping[f.key]
-  );
+  const missingRequired =
+    importMode === 'execution'
+      ? []
+      : TARGET_FIELDS.filter((f) => f.required && !mapping[f.key]);
 
   const goToPreviewStep = () => {
     if (missingRequired.length > 0) {
@@ -157,6 +169,7 @@ export default function ImportPage() {
         accountId,
         broker,
         mapping,
+        sourceTimezone,
       });
       setJob(result);
       setActiveStep(3);
@@ -173,6 +186,10 @@ export default function ImportPage() {
     setHeaders([]);
     setPreviewRows([]);
     setMapping({});
+    setImportMode('trade');
+    setExecutionSummary(null);
+    setValidationErrors([]);
+    setValidationWarnings([]);
     setJob(null);
     setError(null);
   };
@@ -234,6 +251,18 @@ export default function ImportPage() {
             ))}
           </TextField>
 
+          {broker === 'thinkorswim' && (
+            <TextField
+              label='Statement timezone'
+              value={sourceTimezone}
+              onChange={(e) => setSourceTimezone(e.target.value)}
+              helperText='Thinkorswim execution timestamps often omit a timezone. Use the timezone configured for the broker statement/account.'
+              fullWidth
+              size='small'
+              sx={{ mb: 3, maxWidth: 420 }}
+            />
+          )}
+
           <Box
             onDragOver={(e) => {
               e.preventDefault();
@@ -288,53 +317,114 @@ export default function ImportPage() {
         <Panel>
           <SectionHeader
             eyebrow='Detect · Map'
-            title='Confirm column mapping'
-            description='Review the detected headers before any rows are imported.'
+            title={
+              importMode === 'execution'
+                ? 'Execution format detected'
+                : 'Confirm column mapping'
+            }
+            description={
+              importMode === 'execution'
+                ? 'Thinkorswim executions are normalized first, then reconstructed into positions. No broker row is treated as a completed trade.'
+                : 'Review the detected headers before any rows are imported.'
+            }
           />
-          <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-            {totalRows} rows detected. Map each field to a column from your
-            file. Fields marked * are required — rows that fail to resolve them
-            will be reported as errors, never silently skipped.
-          </Typography>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell>Trade field</TableCell>
-                <TableCell>CSV column</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {TARGET_FIELDS.map((f) => (
-                <TableRow key={f.key}>
-                  <TableCell>
-                    {f.label}
-                    {f.required && ' *'}
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      select
-                      size='small'
-                      fullWidth
-                      value={mapping[f.key] || ''}
-                      onChange={(e) =>
-                        setMapping((m) => ({
-                          ...m,
-                          [f.key]: e.target.value || undefined,
-                        }))
-                      }
-                    >
-                      <MenuItem value=''>— not mapped —</MenuItem>
-                      {headers.map((h) => (
-                        <MenuItem key={h} value={h}>
-                          {h}
-                        </MenuItem>
+          {importMode === 'execution' ? (
+            <>
+              <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                {totalRows} broker rows detected ·{' '}
+                {executionSummary?.executionsDetected ?? 0} valid executions ·{' '}
+                {executionSummary?.rejectedRows ?? 0} rejected rows ·{' '}
+                {executionSummary?.warnings ?? 0} warnings.
+              </Typography>
+              {validationWarnings.length > 0 && (
+                <Alert severity='warning' sx={{ mb: 2 }}>
+                  {validationWarnings
+                    .slice(0, 3)
+                    .map(
+                      (item) => `Row ${item.rowNumber ?? '—'}: ${item.message}`
+                    )
+                    .join(' · ')}
+                </Alert>
+              )}
+              {validationErrors.length > 0 && (
+                <Alert severity='error' sx={{ mb: 2 }}>
+                  {validationErrors
+                    .slice(0, 3)
+                    .map(
+                      (item) => `Row ${item.rowNumber ?? '—'}: ${item.message}`
+                    )
+                    .join(' · ')}
+                </Alert>
+              )}
+              <TableContainer sx={{ maxHeight: 320 }}>
+                <Table size='small' stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      {headers.slice(0, 8).map((header) => (
+                        <TableCell key={header}>{header}</TableCell>
                       ))}
-                    </TextField>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {previewRows.map((row, index) => (
+                      <TableRow key={index}>
+                        {headers.slice(0, 8).map((header) => (
+                          <TableCell key={header}>{row[header]}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          ) : (
+            <>
+              <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                {totalRows} rows detected. Map each field to a column from your
+                file. Fields marked * are required — rows that fail to resolve
+                them will be reported as errors, never silently skipped.
+              </Typography>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Trade field</TableCell>
+                    <TableCell>CSV column</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {TARGET_FIELDS.map((f) => (
+                    <TableRow key={f.key}>
+                      <TableCell>
+                        {f.label}
+                        {f.required && ' *'}
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          select
+                          size='small'
+                          fullWidth
+                          value={mapping[f.key] || ''}
+                          onChange={(e) =>
+                            setMapping((m) => ({
+                              ...m,
+                              [f.key]: e.target.value || undefined,
+                            }))
+                          }
+                        >
+                          <MenuItem value=''>— not mapped —</MenuItem>
+                          {headers.map((h) => (
+                            <MenuItem key={h} value={h}>
+                              {h}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
+          )}
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
             <Button onClick={() => setActiveStep(0)}>Back</Button>
@@ -349,8 +439,16 @@ export default function ImportPage() {
         <Panel>
           <SectionHeader
             eyebrow='Validate · Review'
-            title='Review interpreted trades'
-            description='Choose the destination account and verify how the mapped values will be interpreted.'
+            title={
+              importMode === 'execution'
+                ? 'Review detected executions'
+                : 'Review interpreted trades'
+            }
+            description={
+              importMode === 'execution'
+                ? 'Choose the destination account. Thinkorswim fills will be added to the execution ledger and reconstructed using FIFO position accounting.'
+                : 'Choose the destination account and verify how the mapped values will be interpreted.'
+            }
           />
           <TextField
             select
@@ -370,24 +468,40 @@ export default function ImportPage() {
           </TextField>
 
           <Typography variant='body2' sx={{ mb: 1 }}>
-            First {previewRows.length} of {totalRows} rows, as they'll be
-            interpreted with your mapping:
+            First {previewRows.length} of {totalRows}{' '}
+            {importMode === 'execution'
+              ? 'execution rows detected from the broker statement:'
+              : `rows, as they'll be interpreted with your mapping:`}
           </Typography>
           <TableContainer sx={{ maxHeight: 320 }}>
             <Table size='small' stickyHeader>
               <TableHead>
                 <TableRow>
-                  {TARGET_FIELDS.filter((f) => mapping[f.key]).map((f) => (
-                    <TableCell key={f.key}>{f.label}</TableCell>
-                  ))}
+                  {importMode === 'execution'
+                    ? headers
+                        .slice(0, 8)
+                        .map((header) => (
+                          <TableCell key={header}>{header}</TableCell>
+                        ))
+                    : TARGET_FIELDS.filter((f) => mapping[f.key]).map((f) => (
+                        <TableCell key={f.key}>{f.label}</TableCell>
+                      ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {previewRows.map((row, i) => (
                   <TableRow key={i}>
-                    {TARGET_FIELDS.filter((f) => mapping[f.key]).map((f) => (
-                      <TableCell key={f.key}>{row[mapping[f.key]]}</TableCell>
-                    ))}
+                    {importMode === 'execution'
+                      ? headers
+                          .slice(0, 8)
+                          .map((header) => (
+                            <TableCell key={header}>{row[header]}</TableCell>
+                          ))
+                      : TARGET_FIELDS.filter((f) => mapping[f.key]).map((f) => (
+                          <TableCell key={f.key}>
+                            {row[mapping[f.key]]}
+                          </TableCell>
+                        ))}
                   </TableRow>
                 ))}
               </TableBody>
@@ -420,11 +534,19 @@ export default function ImportPage() {
           />
           <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
             <StatusBadge
-              label={`${job.summary.imported} imported`}
+              label={
+                job.mode === 'execution'
+                  ? `${job.summary.tradesReconstructed ?? 0} new trades`
+                  : `${job.summary.imported} imported`
+              }
               tone='positive'
             />
             <StatusBadge
-              label={`${job.summary.duplicates} duplicates skipped`}
+              label={
+                job.mode === 'execution'
+                  ? `${job.summary.duplicates} duplicate executions skipped`
+                  : `${job.summary.duplicates} duplicates skipped`
+              }
               tone='warning'
             />
             <StatusBadge
@@ -432,6 +554,39 @@ export default function ImportPage() {
               tone={job.summary.errors > 0 ? 'negative' : 'neutral'}
             />
           </Box>
+
+          {job.mode === 'execution' && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+              <StatusBadge
+                label={`${job.summary.executionsDetected ?? 0} executions detected`}
+                tone='neutral'
+              />
+              <StatusBadge
+                label={`${job.summary.executionsImported ?? 0} executions added`}
+                tone='positive'
+              />
+              <StatusBadge
+                label={`${job.summary.tradesReconstructed ?? 0} trades reconstructed`}
+                tone='positive'
+              />
+              <StatusBadge
+                label={`${job.summary.tradesUpdated ?? 0} trades updated`}
+                tone='neutral'
+              />
+              <StatusBadge
+                label={`${job.summary.openPositions ?? 0} open positions`}
+                tone='neutral'
+              />
+              <StatusBadge
+                label={`${job.summary.warnings ?? 0} warnings`}
+                tone={job.summary.warnings > 0 ? 'warning' : 'neutral'}
+              />
+              <StatusBadge
+                label={`${job.summary.rejectedRows ?? 0} rejected rows`}
+                tone={job.summary.rejectedRows > 0 ? 'negative' : 'neutral'}
+              />
+            </Box>
+          )}
 
           {job.summary.errors > 0 && (
             <>

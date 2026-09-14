@@ -9,6 +9,7 @@ import Playbook from '../src/models/Playbook.js';
 import Tag from '../src/models/Tag.js';
 import TaggingRule from '../src/models/TaggingRule.js';
 import ImportJob from '../src/models/ImportJob.js';
+import BrokerExecution from '../src/models/BrokerExecution.js';
 import RiskSettings from '../src/models/RiskSettings.js';
 import BacktestConfig from '../src/models/BacktestConfig.js';
 import AIConversation from '../src/models/AIConversation.js';
@@ -68,6 +69,7 @@ test('every user-owned model requires userId', () => {
     Tag,
     TaggingRule,
     ImportJob,
+    BrokerExecution,
     RiskSettings,
     BacktestConfig,
     AIConversation,
@@ -208,6 +210,7 @@ test('crafted backup cannot reference another user resource', async () => {
     Playbook,
     Trade,
     ImportJob,
+    BrokerExecution,
     AIConversation,
   ];
   const saved = models.map((Model) => [Model, Model.find]);

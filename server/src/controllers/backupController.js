@@ -11,6 +11,7 @@ import AIMemory from '../models/AIMemory.js';
 import AIConversation from '../models/AIConversation.js';
 import AISettings from '../models/AISettings.js';
 import ImportJob from '../models/ImportJob.js';
+import BrokerExecution from '../models/BrokerExecution.js';
 import AppSettings from '../models/AppSettings.js';
 
 const BACKUP_VERSION = 1;
@@ -27,6 +28,7 @@ const COLLECTIONS_IN_ORDER = [
   ['riskSettings', RiskSettings],
   ['trades', Trade],
   ['importJobs', ImportJob],
+  ['brokerExecutions', BrokerExecution],
   ['journalEntries', JournalEntry],
   ['backtestConfigs', BacktestConfig],
   ['aiConversations', AIConversation],
@@ -73,6 +75,12 @@ export async function validateBackupRelationships(backup, userId) {
     playbooks: await allowedIds(backup, 'playbooks', Playbook, userId),
     trades: await allowedIds(backup, 'trades', Trade, userId),
     importJobs: await allowedIds(backup, 'importJobs', ImportJob, userId),
+    brokerExecutions: await allowedIds(
+      backup,
+      'brokerExecutions',
+      BrokerExecution,
+      userId
+    ),
     aiConversations: await allowedIds(
       backup,
       'aiConversations',
@@ -129,6 +137,33 @@ export async function validateBackupRelationships(backup, userId) {
       true
     );
   }
+
+  for (const execution of backup.data.brokerExecutions || []) {
+    requireAllowed(
+      'brokerExecutions',
+      execution._id,
+      'accountId',
+      execution.accountId,
+      'accounts'
+    );
+    requireAllowed(
+      'brokerExecutions',
+      execution._id,
+      'importJobId',
+      execution.importJobId,
+      'importJobs',
+      true
+    );
+    requireAllowed(
+      'brokerExecutions',
+      execution._id,
+      'tradeId',
+      execution.tradeId,
+      'trades',
+      true
+    );
+  }
+
   for (const entry of backup.data.journalEntries || []) {
     requireAllowed(
       'journalEntries',

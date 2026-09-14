@@ -26,6 +26,7 @@ export function deriveAggregatesFromExecutions(trade) {
       exitTime: trade.exitTime,
       fees: trade.fees ?? 0,
       commission: trade.commission ?? 0,
+      multiplier: trade.multiplier ?? 1,
     };
   }
 
@@ -56,19 +57,29 @@ export function deriveAggregatesFromExecutions(trade) {
 
   const allFees = fills.reduce((sum, f) => sum.plus(D(f.fees)), D(0));
   const allComm = fills.reduce((sum, f) => sum.plus(D(f.commission)), D(0));
+  const multiplier =
+    fills.find((f) => Number(f.multiplier) > 0)?.multiplier ??
+    trade.multiplier ??
+    1;
 
   const times = fills
     .map((f) => new Date(f.time).getTime())
     .sort((a, b) => a - b);
 
+  const explicitlyOpen = trade.positionStatus === 'open';
   return {
     quantity: entryAgg.qty || trade.quantity,
     entryPrice: entryAgg.price ?? trade.entryPrice,
-    exitPrice: exitAgg.price,
+    exitPrice: explicitlyOpen ? null : exitAgg.price,
     entryTime: times.length ? new Date(times[0]) : trade.entryTime,
-    exitTime: closes.length ? new Date(times[times.length - 1]) : null,
+    exitTime: explicitlyOpen
+      ? null
+      : closes.length
+        ? new Date(times[times.length - 1])
+        : null,
     fees: allFees.toNumber(),
     commission: allComm.toNumber(),
+    multiplier,
   };
 }
 
@@ -92,9 +103,14 @@ export function computeTradeFinancials(tradeInput) {
   let netPnL = null;
   let holdingTimeSeconds = null;
 
-  if (exit !== null && qty.gt(0)) {
+  const isExplicitlyOpen = tradeInput.positionStatus === 'open';
+  if (!isExplicitlyOpen && exit !== null && qty.gt(0)) {
     const diff = direction === 'long' ? exit.minus(entry) : entry.minus(exit);
-    grossPnL = diff.times(qty).toDecimalPlaces(2).toNumber();
+    grossPnL = diff
+      .times(qty)
+      .times(D(agg.multiplier ?? tradeInput.multiplier ?? 1))
+      .toDecimalPlaces(2)
+      .toNumber();
 
     const costs = D(agg.fees).plus(D(agg.commission));
     netPnL = D(grossPnL).minus(costs).toDecimalPlaces(2).toNumber();
@@ -133,7 +149,10 @@ export function computeTradeFinancials(tradeInput) {
       direction === 'long'
         ? entry.minus(D(tradeInput.stopLoss))
         : D(tradeInput.stopLoss).minus(entry);
-    const derivedRisk = stopDistance.abs().times(qty);
+    const derivedRisk = stopDistance
+      .abs()
+      .times(qty)
+      .times(D(agg.multiplier ?? tradeInput.multiplier ?? 1));
     if (derivedRisk.gt(0)) {
       rMultiple = D(netPnL).div(derivedRisk).toDecimalPlaces(3).toNumber();
     }
@@ -147,6 +166,7 @@ export function computeTradeFinancials(tradeInput) {
     exitTime: agg.exitTime,
     fees: agg.fees,
     commission: agg.commission,
+    multiplier: agg.multiplier ?? tradeInput.multiplier ?? 1,
     grossPnL,
     netPnL,
     rMultiple,

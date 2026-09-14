@@ -2,9 +2,15 @@ import { Readable } from 'stream';
 import csvParser from 'csv-parser';
 import Trade from '../models/Trade.js';
 import ImportJob from '../models/ImportJob.js';
+import BrokerExecution from '../models/BrokerExecution.js';
 import { getAdapter } from '../utils/csvAdapters.js';
+import { parseThinkorswimExecutions } from '../utils/thinkorswimParser.js';
 import { computeRowHash } from '../utils/hash.js';
-import { createTrade } from './tradeService.js';
+import { createTrade, updateTrade } from './tradeService.js';
+import {
+  reconstructPositions,
+  positionToTradePayload,
+} from './positionReconstructionService.js';
 
 const REQUIRED_TARGET_FIELDS = [
   'symbol',
@@ -29,15 +35,36 @@ export function parseCsvBuffer(buffer) {
   });
 }
 
-/**
- * Returns headers + a small preview of parsed rows, plus the suggested
- * default mapping for the chosen broker adapter (the user edits this
- * before committing — never applied blindly).
- */
-export async function previewImport(buffer, brokerKey) {
-  const { headers, rows } = await parseCsvBuffer(buffer);
+export async function previewImport(
+  buffer,
+  brokerKey,
+  { sourceTimezone = 'UTC' } = {}
+) {
   const adapter = getAdapter(brokerKey);
+  if (adapter.mode === 'execution' && brokerKey === 'thinkorswim') {
+    const parsed = await parseThinkorswimExecutions(buffer, {
+      broker: brokerKey,
+      sourceTimeZone: sourceTimezone,
+    });
+    return {
+      mode: 'execution',
+      headers: parsed.headers,
+      totalRows: parsed.rows.length,
+      previewRows: parsed.rows.slice(0, 10),
+      suggestedMapping: adapter.defaultMapping,
+      executionSummary: {
+        executionsDetected: parsed.normalized.length,
+        rejectedRows: parsed.errors.length,
+        warnings: parsed.warnings.length,
+      },
+      validationErrors: parsed.errors.slice(0, 25),
+      validationWarnings: parsed.warnings.slice(0, 25),
+    };
+  }
+
+  const { headers, rows } = await parseCsvBuffer(buffer);
   return {
+    mode: 'trade',
     headers,
     totalRows: rows.length,
     previewRows: rows.slice(0, 10),
@@ -63,15 +90,8 @@ function toDate(v) {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-/**
- * Builds a candidate trade payload from one CSV row using the given
- * mapping/adapter, and returns { payload, errors }. Never throws for a bad
- * row — errors are collected so the row can be reported, not discarded
- * silently.
- */
 function buildRowPayload(row, mapping, adapter, accountId) {
   const errors = [];
-
   const symbol = readMapped(row, mapping, 'symbol');
   const rawDirection = readMapped(row, mapping, 'direction');
   const direction = adapter.parseDirection(rawDirection);
@@ -91,8 +111,7 @@ function buildRowPayload(row, mapping, adapter, accountId) {
   if (quantity === undefined) errors.push('Missing or invalid quantity');
   if (entryPrice === undefined) errors.push('Missing or invalid entry price');
   if (!entryTime) errors.push('Missing or unparseable entry time');
-
-  if (errors.length > 0) return { payload: null, errors };
+  if (errors.length) return { payload: null, errors };
 
   const payload = {
     accountId,
@@ -110,16 +129,10 @@ function buildRowPayload(row, mapping, adapter, accountId) {
     isDemoData: false,
   };
   payload.sourceRowHash = computeRowHash(payload);
-
   return { payload, errors: [] };
 }
 
-/**
- * Processes the full CSV synchronously (appropriate for personal-use
- * broker exports) and returns a saved ImportJob with a per-row outcome —
- * imported / duplicate / error — so nothing is ever silently dropped.
- */
-export async function commitImport({
+async function commitLegacyTradeImport({
   accountId,
   broker,
   mapping,
@@ -129,37 +142,29 @@ export async function commitImport({
 }) {
   const adapter = getAdapter(broker);
   const effectiveMapping = { ...adapter.defaultMapping, ...mapping };
-
   for (const field of REQUIRED_TARGET_FIELDS) {
-    if (!effectiveMapping[field]) {
+    if (!effectiveMapping[field])
       throw new Error(`Column mapping is missing a required field: "${field}"`);
-    }
   }
-
   const { rows } = await parseCsvBuffer(buffer);
-
   const jobRows = [];
   let imported = 0;
   let duplicates = 0;
   let errorCount = 0;
 
   for (let i = 0; i < rows.length; i += 1) {
-    const rowNumber = i + 2; // account for header row, 1-indexed data rows
-    const row = rows[i];
-
+    const rowNumber = i + 2;
     const { payload, errors } = buildRowPayload(
-      row,
+      rows[i],
       effectiveMapping,
       adapter,
       accountId
     );
-
-    if (errors.length > 0) {
+    if (errors.length) {
       errorCount += 1;
       jobRows.push({ rowNumber, outcome: 'error', message: errors.join('; ') });
       continue;
     }
-
     const existing = await Trade.findOne({
       userId,
       accountId,
@@ -175,7 +180,6 @@ export async function commitImport({
       });
       continue;
     }
-
     try {
       const trade = await createTrade(payload, userId);
       imported += 1;
@@ -197,6 +201,7 @@ export async function commitImport({
     broker,
     originalFilename,
     status: 'completed',
+    mode: 'trade',
     mapping: effectiveMapping,
     summary: {
       totalRows: rows.length,
@@ -206,8 +211,6 @@ export async function commitImport({
     },
     rows: jobRows,
   });
-
-  // Tag every imported trade with its import batch for provenance/audit
   await Trade.updateMany(
     {
       userId,
@@ -219,8 +222,185 @@ export async function commitImport({
     },
     { $set: { importBatchId: job._id } }
   );
-
   return job.toObject();
+}
+
+async function persistExecutionLedger({ parsed, accountId, userId }) {
+  const outcomes = [];
+  let inserted = 0;
+  let duplicates = 0;
+
+  for (const execution of parsed.normalized) {
+    try {
+      await BrokerExecution.create({ ...execution, accountId, userId });
+      inserted += 1;
+      outcomes.push({
+        rowNumber: execution.rawRowNumber,
+        outcome: 'execution_imported',
+        message: 'Execution added to ledger',
+        executionKey: execution.executionKey,
+      });
+    } catch (err) {
+      if (err?.code === 11000) {
+        duplicates += 1;
+        outcomes.push({
+          rowNumber: execution.rawRowNumber,
+          outcome: 'duplicate',
+          message: 'Duplicate execution skipped',
+          executionKey: execution.executionKey,
+        });
+      } else {
+        outcomes.push({
+          rowNumber: execution.rawRowNumber,
+          outcome: 'error',
+          message: err.message,
+          executionKey: execution.executionKey,
+        });
+      }
+    }
+  }
+  return { outcomes, inserted, duplicates };
+}
+
+async function reconcileReconstructedTrades({
+  accountId,
+  broker,
+  userId,
+  importJobId,
+}) {
+  const ledger = await BrokerExecution.find({
+    userId,
+    accountId,
+    broker,
+    status: { $nin: ['cancelled', 'rejected'] },
+  })
+    .sort({ timestamp: 1, executionKey: 1 })
+    .lean();
+  const { positions, openPositions, warnings } = reconstructPositions(ledger, {
+    policy: 'fifo',
+  });
+  let created = 0;
+  let updated = 0;
+  const tradeIds = [];
+
+  for (const position of positions) {
+    const payload = positionToTradePayload(position, accountId);
+    const existing = await Trade.findOne({
+      userId,
+      accountId,
+      sourcePositionKey: position.sourcePositionKey,
+    });
+    let trade;
+    if (existing) {
+      trade = await updateTrade(existing._id, payload, userId);
+      updated += 1;
+    } else {
+      trade = await createTrade(
+        { ...payload, importBatchId: importJobId },
+        userId
+      );
+      created += 1;
+    }
+    tradeIds.push(trade._id);
+    const sourceKeys = new Set(
+      position.executions.map((e) => e.sourceExecutionKey || e.executionKey)
+    );
+    await BrokerExecution.updateMany(
+      { userId, accountId, broker, executionKey: { $in: [...sourceKeys] } },
+      { $set: { tradeId: trade._id, importJobId } }
+    );
+  }
+  return {
+    created,
+    updated,
+    total: positions.length,
+    openPositions: openPositions.length,
+    warnings,
+    tradeIds,
+  };
+}
+
+async function commitThinkorswimExecutionImport({
+  accountId,
+  broker,
+  buffer,
+  originalFilename,
+  userId,
+  sourceTimezone = 'UTC',
+}) {
+  const parsed = await parseThinkorswimExecutions(buffer, {
+    broker,
+    sourceTimeZone: sourceTimezone,
+  });
+  const initialRows = [
+    ...parsed.errors.map((e) => ({
+      rowNumber: e.rowNumber,
+      outcome: 'error',
+      message: e.message,
+    })),
+    ...parsed.warnings.map((w) => ({
+      rowNumber: w.rowNumber,
+      outcome: 'warning',
+      message: w.message,
+    })),
+  ];
+  const ledgerResult = await persistExecutionLedger({
+    parsed,
+    accountId,
+    userId,
+  });
+
+  const job = await ImportJob.create({
+    userId,
+    accountId,
+    broker,
+    originalFilename,
+    status: 'completed',
+    mode: 'execution',
+    reconstructionPolicy: 'fifo',
+    sourceTimezone,
+    mapping: getAdapter(broker).defaultMapping,
+    summary: {
+      totalRows: parsed.rows.length,
+      imported: 0,
+      duplicates: ledgerResult.duplicates,
+      errors:
+        parsed.errors.length +
+        ledgerResult.outcomes.filter((r) => r.outcome === 'error').length,
+      executionsDetected: parsed.normalized.length,
+      executionsImported: ledgerResult.inserted,
+      tradesReconstructed: 0,
+      tradesUpdated: 0,
+      openPositions: 0,
+      warnings: parsed.warnings.length,
+      rejectedRows: parsed.errors.length,
+    },
+    rows: [...initialRows, ...ledgerResult.outcomes],
+  });
+
+  const reconstruction = await reconcileReconstructedTrades({
+    accountId,
+    broker,
+    userId,
+    importJobId: job._id,
+  });
+  job.summary.imported = reconstruction.created;
+  job.summary.tradesReconstructed = reconstruction.created;
+  job.summary.tradesUpdated = reconstruction.updated;
+  job.summary.openPositions = reconstruction.openPositions;
+  job.summary.warnings += reconstruction.warnings.length;
+  for (const warning of reconstruction.warnings)
+    job.rows.push({ outcome: 'warning', message: warning });
+  await job.save();
+  return job.toObject();
+}
+
+export async function commitImport(args) {
+  const adapter = getAdapter(args.broker);
+  if (adapter.mode === 'execution' && args.broker === 'thinkorswim') {
+    return commitThinkorswimExecutionImport(args);
+  }
+  return commitLegacyTradeImport(args);
 }
 
 export default { previewImport, commitImport };

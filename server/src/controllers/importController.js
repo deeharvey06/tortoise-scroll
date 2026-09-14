@@ -19,7 +19,9 @@ export async function postPreview(req, res) {
   }
   // Validate request body
   const validated = importPreviewSchema.parse(req.body);
-  const preview = await previewImport(req.file.buffer, validated.broker);
+  const preview = await previewImport(req.file.buffer, validated.broker, {
+    sourceTimezone: validated.sourceTimezone || 'UTC',
+  });
   res.json(preview);
 }
 
@@ -67,6 +69,7 @@ export async function postCommit(req, res) {
     buffer: req.file.buffer,
     originalFilename: req.file.originalname,
     userId: req.user.id,
+    sourceTimezone: validated.sourceTimezone || 'UTC',
   });
 
   res.status(201).json(job);
