@@ -7,6 +7,7 @@ import { getAdapter } from '../utils/csvAdapters.js';
 import { parseThinkorswimExecutions } from '../utils/thinkorswimParser.js';
 import { computeRowHash } from '../utils/hash.js';
 import { createTrade, updateTrade } from './tradeService.js';
+import { enrichExecutionsWithInstrumentSpecifications } from './instrumentSpecificationService.js';
 import {
   reconstructPositions,
   positionToTradePayload,
@@ -332,6 +333,19 @@ async function commitThinkorswimExecutionImport({
     broker,
     sourceTimeZone: sourceTimezone,
   });
+  const executionsDetected = parsed.normalized.length;
+  const enrichment = await enrichExecutionsWithInstrumentSpecifications(
+    userId,
+    parsed.normalized
+  );
+  parsed.normalized = enrichment.accepted;
+  for (const rejected of enrichment.rejected) {
+    parsed.errors.push({
+      rowNumber: rejected.execution?.rawRowNumber ?? null,
+      message: rejected.message,
+      raw: rejected.execution?.rawBrokerMetadata || null,
+    });
+  }
   const initialRows = [
     ...parsed.errors.map((e) => ({
       rowNumber: e.rowNumber,
@@ -367,7 +381,7 @@ async function commitThinkorswimExecutionImport({
       errors:
         parsed.errors.length +
         ledgerResult.outcomes.filter((r) => r.outcome === 'error').length,
-      executionsDetected: parsed.normalized.length,
+      executionsDetected,
       executionsImported: ledgerResult.inserted,
       tradesReconstructed: 0,
       tradesUpdated: 0,

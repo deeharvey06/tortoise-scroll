@@ -27,7 +27,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        'NODE_ENV=test LOG_LEVEL=info MONGO_URI=mongodb://localhost:27017/trading-journal-e2e SESSION_SECRET=e2e-only-session-secret-at-least-32-characters ALLOWED_ORIGINS=http://127.0.0.1:5174 CSRF_PROTECTION_ENABLED=true ROOT_USER_EMAIL=e2e-root@tortoise-scroll.test ROOT_USER_INITIAL_PASSWORD=e2e-root-password-strong-123 node ../server/server.js',
+        'NODE_ENV=test LOG_LEVEL=info MONGO_URI=mongodb://localhost:27017/trading-journal-e2e SESSION_SECRET=e2e-only-session-secret-at-least-32-characters ALLOWED_ORIGINS=http://127.0.0.1:5174 CSRF_PROTECTION_ENABLED=true PASSWORD_RESET_DEV_EXPOSE_TOKEN=true ROOT_USER_EMAIL=e2e-root@tortoise-scroll.test ROOT_USER_INITIAL_PASSWORD=e2e-root-password-strong-123 node ../server/server.js',
       url: 'http://127.0.0.1:5050/api/health',
       reuseExistingServer: false,
       timeout: 60_000,

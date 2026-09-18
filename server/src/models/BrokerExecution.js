@@ -58,7 +58,13 @@ const brokerExecutionSchema = new mongoose.Schema(
     multiplier: { type: Number, default: 1 },
     multiplierSource: {
       type: String,
-      enum: ['broker', 'contract-spec', 'asset-default', 'mapping'],
+      enum: [
+        'broker',
+        'contract-spec',
+        'user-spec',
+        'asset-default',
+        'mapping',
+      ],
       default: 'asset-default',
     },
     expiration: { type: Date, default: null },

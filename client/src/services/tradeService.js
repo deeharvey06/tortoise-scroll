@@ -1,4 +1,5 @@
 import api from './api';
+import * as accountService from './accountService';
 
 export async function fetchTrades(params = {}) {
   const { data } = await api.get('/trades', { params });
@@ -25,13 +26,11 @@ export async function deleteTrade(id) {
 }
 
 export async function fetchAccounts() {
-  const { data } = await api.get('/accounts');
-  return data;
+  return accountService.fetchAccounts({ activeOnly: true });
 }
 
 export async function createAccount(payload) {
-  const { data } = await api.post('/accounts', payload);
-  return data;
+  return accountService.createAccount(payload);
 }
 
 export async function bulkDeleteTrades(ids) {

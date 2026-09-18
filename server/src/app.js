@@ -27,6 +27,7 @@ import jobsRoutes from './routes/jobsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import accountSecurityRoutes from './routes/accountSecurityRoutes.js';
 import brokerConnectionRoutes from './routes/brokerConnectionRoutes.js';
+import instrumentSpecificationRoutes from './routes/instrumentSpecificationRoutes.js';
 import { registerBrokerProvider } from './services/brokers/providerRegistry.js';
 import { thinkorswimProvider } from './services/brokers/thinkorswimProvider.js';
 import { jobQueue } from './queue/jobQueue.js';
@@ -238,6 +239,11 @@ export function createApp(options = {}) {
   app.use('/api/admin', requireAuth, adminRoutes);
   app.use('/api/account-security', requireAuth, accountSecurityRoutes);
   app.use('/api/broker-connections', requireAuth, brokerConnectionRoutes);
+  app.use(
+    '/api/instrument-specifications',
+    requireAuth,
+    instrumentSpecificationRoutes
+  );
 
   // Serves uploaded trade screenshots — /uploads/screenshots/<file>
   app.use(

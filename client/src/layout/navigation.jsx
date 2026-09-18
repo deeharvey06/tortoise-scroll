@@ -14,6 +14,7 @@ import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import ImportIcon from '@mui/icons-material/UploadFileOutlined';
 import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import SecurityIcon from '@mui/icons-material/ShieldOutlined';
+import AccountsIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 
 export const NAVIGATION_GROUPS = [
   {
@@ -24,6 +25,7 @@ export const NAVIGATION_GROUPS = [
     label: 'Trading',
     items: [
       { to: '/trades', label: 'Trades', icon: ListAltIcon },
+      { to: '/accounts', label: 'Accounts', icon: AccountsIcon },
       { to: '/calendar', label: 'Calendar', icon: CalendarIcon },
       { to: '/journal', label: 'The Scroll', icon: JournalIcon },
     ],
@@ -68,6 +70,7 @@ export const NAVIGATION_GROUPS = [
 export const ROUTE_TITLES = {
   '/': 'Dashboard',
   '/trades': 'Trades',
+  '/accounts': 'Accounts & Instruments',
   '/calendar': 'Calendar',
   '/journal': 'The Scroll',
   '/strategies': 'Strategies',

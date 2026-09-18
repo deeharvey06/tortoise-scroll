@@ -16,6 +16,7 @@ import AIConversation from '../src/models/AIConversation.js';
 import AIMemory from '../src/models/AIMemory.js';
 import AISettings from '../src/models/AISettings.js';
 import AppSettings from '../src/models/AppSettings.js';
+import InstrumentSpecification from '../src/models/InstrumentSpecification.js';
 
 export const OWNED_MODELS = {
   Account,
@@ -32,6 +33,7 @@ export const OWNED_MODELS = {
   AIMemory,
   AISettings,
   AppSettings,
+  InstrumentSpecification,
 };
 
 const unowned = { $or: [{ userId: { $exists: false } }, { userId: null }] };

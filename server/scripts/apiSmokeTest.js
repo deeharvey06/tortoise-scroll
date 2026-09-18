@@ -7,18 +7,19 @@
  * Usage:
  *   1. Start MongoDB and the server (npm run dev --prefix server), or the
  *      whole app (npm run dev from the repo root).
- *   2. node server/scripts/apiSmokeTest.js
+ *   2. SMOKE_EMAIL=... SMOKE_PASSWORD=... node server/scripts/apiSmokeTest.js
  *
  * Exits with code 0 and prints "ALL CHECKS PASSED" on success, or exits
  * non-zero with the first failing check printed — suitable as a CI gate
  * (e.g. a pre-deploy or pre-merge check) without needing a browser runner.
  *
- * Cleans up every record it creates (account, trade, strategy, playbook)
- * at the end, in a finally block, so it's safe to run repeatedly against a
- * real development database without accumulating test data.
+ * Use a dedicated test user/database. Trades, strategies and playbooks are
+ * removed afterward; accounts with retained risk settings are archived,
+ * honoring the account deletion safeguards.
  */
 
 const BASE_URL = process.env.API_BASE_URL || 'http://localhost:5050/api';
+let sessionCookie = '';
 
 const created = {
   accountId: null,
@@ -49,9 +50,16 @@ async function check(name, fn) {
 async function req(method, path, body) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers: {
+      'X-CSRF-Protection': '1',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(sessionCookie ? { Cookie: sessionCookie } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
+  const cookies = res.headers.getSetCookie();
+  if (cookies.length)
+    sessionCookie = cookies.map((cookie) => cookie.split(';')[0]).join('; ');
   const text = await res.text();
   let json = null;
   try {
@@ -74,6 +82,22 @@ async function main() {
     assert(status === 200, `expected 200, got ${status}`);
     assert(body?.status === 'ok', 'expected {status: "ok"}');
   });
+
+  await check(
+    'POST /auth/login authenticates the smoke-test user',
+    async () => {
+      assert(
+        process.env.SMOKE_EMAIL && process.env.SMOKE_PASSWORD,
+        'Set SMOKE_EMAIL and SMOKE_PASSWORD to a dedicated test user'
+      );
+      const { status } = await req('POST', '/auth/login', {
+        email: process.env.SMOKE_EMAIL,
+        password: process.env.SMOKE_PASSWORD,
+      });
+      assert(status === 200, `expected 200, got ${status}`);
+      assert(sessionCookie, 'expected a session cookie');
+    }
+  );
 
   await check('POST /accounts creates an account', async () => {
     const { status, body } = await req('POST', '/accounts', {
@@ -328,11 +352,34 @@ async function main() {
     }
   );
 
-  await check('DELETE /accounts/:id now succeeds', async () => {
-    const { status } = await req('DELETE', `/accounts/${created.accountId}`);
-    assert(status === 204, `expected 204, got ${status}`);
-    created.accountId = null;
-  });
+  await check(
+    'risk settings retain the account; archive preserves its history',
+    async () => {
+      const { status } = await req('DELETE', `/accounts/${created.accountId}`);
+      assert(status === 409, `expected 409, got ${status}`);
+      const archived = await req(
+        'POST',
+        `/accounts/${created.accountId}/archive`
+      );
+      assert(archived.status === 200, `expected 200, got ${archived.status}`);
+      assert(archived.body.isActive === false, 'expected an archived account');
+      created.accountId = null;
+    }
+  );
+
+  await check(
+    'DELETE /accounts/:id succeeds for an unreferenced account',
+    async () => {
+      const account = await req('POST', '/accounts', {
+        name: '[SMOKE TEST] Empty account',
+      });
+      assert(account.status === 201, `expected 201, got ${account.status}`);
+      created.accountId = account.body._id;
+      const { status } = await req('DELETE', `/accounts/${created.accountId}`);
+      assert(status === 204, `expected 204, got ${status}`);
+      created.accountId = null;
+    }
+  );
 }
 
 async function cleanup() {
@@ -340,16 +387,24 @@ async function cleanup() {
   // to clean up. This only matters if a check failed partway through and
   // threw before reaching the deletion steps.
   const leftovers = Object.entries(created).filter(([, v]) => v);
-  if (leftovers.length === 0) return;
-  console.log('\nRemoving leftover smoke-test data from the failed run...');
+  if (leftovers.length)
+    console.log('\nRemoving leftover smoke-test data from the failed run...');
   if (created.tradeId)
     await req('DELETE', `/trades/${created.tradeId}`).catch(() => {});
   if (created.strategyId)
     await req('DELETE', `/strategies/${created.strategyId}`).catch(() => {});
   if (created.playbookId)
     await req('DELETE', `/playbooks/${created.playbookId}`).catch(() => {});
-  if (created.accountId)
-    await req('DELETE', `/accounts/${created.accountId}`).catch(() => {});
+  if (created.accountId) {
+    const deleted = await req('DELETE', `/accounts/${created.accountId}`).catch(
+      () => null
+    );
+    if (deleted?.status === 409)
+      await req('POST', `/accounts/${created.accountId}/archive`).catch(
+        () => {}
+      );
+  }
+  if (sessionCookie) await req('POST', '/auth/logout').catch(() => {});
 }
 
 main()

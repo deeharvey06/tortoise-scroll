@@ -65,7 +65,7 @@ Settings page.
 
 ## Prerequisites
 
-- Node.js 20.x LTS (supported range: `>=20 <23`)
+- Node.js 22.23.2 (pinned in `.nvmrc`; run `nvm install && nvm use`; supported range: `>=20 <23`)
 - MongoDB running locally (Community Edition). Install via Homebrew on macOS:
 
   ```bash
@@ -583,15 +583,17 @@ what I assumed the UI would do.
 ### `server/scripts/apiSmokeTest.js` — fast CI gate, no browser needed
 
 ```bash
-# with the server + MongoDB running:
-npm run smoke --prefix server
+# with the server + MongoDB running against a dedicated test database:
+SMOKE_EMAIL=your-test-user@example.test SMOKE_PASSWORD=your-test-password npm run smoke --prefix server
 ```
 
 Hits the core MVP API path directly (health check → create account →
 create trade with computed P&L/R → dashboard analytics → calendar →
 strategy/playbook creation and assignment → performance rollup → risk
 settings → backup export → deletion and its 409 safety guards) in about a
-second, and cleans up everything it created. This is what a CI pipeline
+second. It removes its trades, strategies, and playbooks, and archives the
+test account because its retained risk settings prevent deletion. It also
+verifies deletion of an unreferenced account and logs out its session. This is what a CI pipeline
 should run on every commit; the Playwright suite is slower and better
 suited to pre-release checks. **This one I could reason through more
 confidently** — it's plain HTTP requests with no DOM/rendering involved,

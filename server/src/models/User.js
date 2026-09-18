@@ -54,6 +54,7 @@ export function normalizeEmail(email) {
     .trim()
     .toLowerCase();
 }
+
 export function toSafeUser(user) {
   return {
     id: String(user._id),
