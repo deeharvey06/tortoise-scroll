@@ -84,6 +84,10 @@ export async function runConfig(req, res) {
   }
 
   const bars = await marketDataService.fetchCandles({
+    userId: req.user.id,
+    // The existing engine calculates price difference × quantity, with no
+    // contract multiplier. Do not silently activate incorrect futures P&L.
+    requireContractMultiplier: 1,
     symbol: config.symbol,
     timeframe: config.timeframe,
     from: config.dateFrom,

@@ -1,5 +1,12 @@
 # Trading Journal (Local-First) — Complete (Phases 1–8)
 
+**Current infrastructure update:** Phase 4 real historical market data adds an
+owner-scoped local CSV provider, canonical candles, explicit calendars, validation,
+and caching. See [setup and service contract](md/MARKET_DATA.md) and the
+[Phase 4 report](md/PHASE4_REPORT.md). The phase numbering below describes the
+original implementation history; this update does not implement Replay 2.0 or
+Backtesting 2.0.
+
 A personal, local-first trading journal inspired by TradeZella's feature set,
 built with an independent codebase (no TradeZella source, assets, or IP).
 Built in phases. **Phase 1**: scaffolding, DB connection, Trade CRUD, app
@@ -357,7 +364,7 @@ but even 2-3 closed trades are enough to confirm the math is right.
    - Add a note and a tag to a trade, click **Save**, then reload the
      session and confirm it persisted (this is a real write to the same
      Trade document Phase 2's Trade Detail page edits).
-   - Confirm the info banner about no market-data provider appears, and
+   - Confirm the info banner identifying the chart as recorded fills appears, and
      that the chart only plots real points (no smooth candlestick-looking
      price path).
 3. **Backtesting:**
@@ -368,13 +375,10 @@ but even 2-3 closed trades are enough to confirm the math is right.
      stop/target/commission/slippage, save. Confirm it appears in the
      table and can be edited and deleted.
    - Try deleting it and confirm it's removed.
-   - (Optional, advanced) If you want to see the engine actually run end to
-     end, you'd need to implement a real provider in
-     `marketDataService.js` and set `MARKET_DATA_PROVIDER` — not expected
-     for this phase, just confirming the gate works as designed: with no
-     provider, attempting to hit `POST /api/backtest/configs/:id/run`
-     directly (e.g. via curl) should return a `501` with a clear message,
-     not a crash or fabricated result.
+   - To supply real historical prices, configure the local CSV provider using
+     [the market-data guide](md/MARKET_DATA.md). The existing engine requires a
+     complete range and a confirmed unit contract multiplier. With no configured
+     provider, `POST /api/backtest/configs/:id/run` retains its `501` gate.
 
 ## Verifying Phase 6 works
 
@@ -698,11 +702,10 @@ distance when no risk amount is given, open trades correctly returning
 Everything from the original spec has a real, working implementation
 except:
 
-- **A real market-data provider.** Replay and Backtesting are both built
-  against a clean `marketDataService.js` abstraction, but no actual
-  provider (Alpaca, Polygon, etc.) is implemented, since this app has no
-  business fabricating historical price data to fill that gap. Wiring one
-  in requires implementing `fetchCandles()` for it — no other code changes.
+- **Cloud market-data adapters.** A real local-file provider is now available
+  through `marketDataService.js`; see [Phase 4](md/MARKET_DATA.md). No cloud vendor
+  or downloaded historical prices are bundled. Replay's current chart continues
+  to display recorded fills; a new replay interface remains out of scope.
 - **MongoDB aggregation pipelines for the analytics engine.** Everything
   computes correctly in Node from fetched documents (verified against
   1,000 seeded trades), but at genuinely large scale (100k+ trades) this

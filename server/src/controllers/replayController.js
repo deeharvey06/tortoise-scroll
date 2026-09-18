@@ -18,8 +18,8 @@ export async function getSession(req, res) {
   const dateTo = new Date(`${date}T23:59:59.999Z`);
 
   const query = buildTradeQuery({
-    userId: req.user.id,
     ...rest,
+    userId: req.user.id,
     dateFrom: dateFrom.toISOString(),
     dateTo: dateTo.toISOString(),
   });
