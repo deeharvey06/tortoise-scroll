@@ -1,11 +1,11 @@
 # Trading Journal (Local-First) — Complete (Phases 1–8)
 
-**Current infrastructure update:** Phase 4 real historical market data adds an
-owner-scoped local CSV provider, canonical candles, explicit calendars, validation,
-and caching. See [setup and service contract](md/MARKET_DATA.md) and the
-[Phase 4 report](md/PHASE4_REPORT.md). The phase numbering below describes the
-original implementation history; this update does not implement Replay 2.0 or
-Backtesting 2.0.
+**Current update:** Phase 5 adds true bar-by-bar market replay on the Phase 4
+historical-data service: blind training, saved decisions, execution overlays,
+notes, drawings and chart screenshots. See [Replay usage and contract](md/REPLAY.md),
+the [Phase 5 report](md/PHASE5_REPORT.md), and [market-data setup](md/MARKET_DATA.md).
+The phase numbering below describes the original implementation history.
+Backtesting 2.0 remains out of scope.
 
 A personal, local-first trading journal inspired by TradeZella's feature set,
 built with an independent codebase (no TradeZella source, assets, or IP).
@@ -355,7 +355,7 @@ but even 2-3 closed trades are enough to confirm the math is right.
    unsupported rule type throwing a clear error instead of silently
    no-opping.
 2. **Replay:**
-   - Go to **Replay**, pick a date you have at least one trade on, click
+   - Go to **Replay → Trade review**, pick a date you have at least one trade on, click
      **Load session**.
    - Step through with the forward/back buttons and the slider; confirm
      each trade's real entry/exit prices, P&L, and R show correctly.

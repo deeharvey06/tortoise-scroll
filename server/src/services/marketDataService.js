@@ -107,7 +107,7 @@ export function createMarketDataService({
         // Cache canonical source data: identical AND overlapping ranges avoid
         // rereading/parsing the file. Revision includes metadata and file identity.
         const key = JSON.stringify([
-          'candles-v1',
+          'candles-v2',
           userId,
           adapter.name,
           dataset.id,

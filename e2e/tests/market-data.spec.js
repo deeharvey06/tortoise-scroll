@@ -139,6 +139,7 @@ test('local historical candles stay deterministic and private through authentica
       ).status(),
     ).toBe(201);
     await page.goto('/replay');
+    await page.getByRole('tab', { name: 'Trade review', exact: true }).click();
     await page.getByLabel('Session date').fill('2026-03-09');
     await page.getByRole('button', { name: 'Load session' }).click();
     await expect(

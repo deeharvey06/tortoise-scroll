@@ -382,11 +382,13 @@ test('daily bars group multiple session segments once and preserve different tra
   assert.deepEqual(expectedSlots(calendar, '1d'), [
     {
       timestamp: '2026-03-09T12:00:00.000Z',
+      endTimestamp: '2026-03-09T20:00:00.000Z',
       session: 'daily',
       tradingDate: '2026-03-09',
     },
     {
       timestamp: '2026-03-10T13:30:00.000Z',
+      endTimestamp: '2026-03-10T17:00:00.000Z',
       session: 'daily',
       tradingDate: '2026-03-10',
     },
@@ -403,4 +405,11 @@ test('daily bars group multiple session segments once and preserve different tra
     () => normalizeCalendar(changed, 'UTC'),
     code('MARKET_DATA_INVALID_CALENDAR')
   );
+});
+
+test('canonical candle close times honor shortened session bars and overnight boundaries', () => {
+  const item = metadata({ timeframe: '5m' });
+  const normalized = normalizeCandles([row()], item);
+  assert.equal(normalized.candles[0].timestamp, '2026-03-09T13:30:00.000Z');
+  assert.equal(normalized.candles[0].endTimestamp, '2026-03-09T13:33:00.000Z');
 });

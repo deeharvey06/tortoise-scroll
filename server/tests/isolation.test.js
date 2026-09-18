@@ -20,6 +20,7 @@ import AIMemory from '../src/models/AIMemory.js';
 import AISettings from '../src/models/AISettings.js';
 import AppSettings from '../src/models/AppSettings.js';
 import InstrumentSpecification from '../src/models/InstrumentSpecification.js';
+import ReplayRun from '../src/models/ReplayRun.js';
 import * as tradeService from '../src/services/tradeService.js';
 import { getEntry } from '../src/controllers/journalController.js';
 import { updateStrategy } from '../src/controllers/strategyController.js';
@@ -84,6 +85,7 @@ test('every user-owned model requires userId', () => {
     AISettings,
     AppSettings,
     InstrumentSpecification,
+    ReplayRun,
   ]) {
     assert.equal(
       Model.schema.path('userId')?.options.required,

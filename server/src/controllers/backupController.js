@@ -14,6 +14,7 @@ import ImportJob from '../models/ImportJob.js';
 import BrokerExecution from '../models/BrokerExecution.js';
 import AppSettings from '../models/AppSettings.js';
 import InstrumentSpecification from '../models/InstrumentSpecification.js';
+import ReplayRun from '../models/ReplayRun.js';
 
 const BACKUP_VERSION = 1;
 
@@ -33,6 +34,7 @@ const COLLECTIONS_IN_ORDER = [
   ['brokerExecutions', BrokerExecution],
   ['journalEntries', JournalEntry],
   ['backtestConfigs', BacktestConfig],
+  ['replayRuns', ReplayRun],
   ['aiConversations', AIConversation],
   ['aiMemories', AIMemory],
   ['appSettings', AppSettings],
@@ -247,7 +249,10 @@ export async function validateBackupRelationships(backup, userId) {
 export async function exportAll(req, res) {
   const data = {};
   for (const [key, Model] of COLLECTIONS_IN_ORDER) {
-    data[key] = await Model.find({ userId: req.user.id }).lean();
+    const query = Model.find({ userId: req.user.id });
+    data[key] = await (
+      key === 'replayRuns' ? query.select('+historicalTrades') : query
+    ).lean();
   }
 
   // AI settings are included so the provider/model choice round-trips, but

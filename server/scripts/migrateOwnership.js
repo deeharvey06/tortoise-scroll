@@ -17,6 +17,7 @@ import AIMemory from '../src/models/AIMemory.js';
 import AISettings from '../src/models/AISettings.js';
 import AppSettings from '../src/models/AppSettings.js';
 import InstrumentSpecification from '../src/models/InstrumentSpecification.js';
+import ReplayRun from '../src/models/ReplayRun.js';
 
 export const OWNED_MODELS = {
   Account,
@@ -34,6 +35,7 @@ export const OWNED_MODELS = {
   AISettings,
   AppSettings,
   InstrumentSpecification,
+  ReplayRun,
 };
 
 const unowned = { $or: [{ userId: { $exists: false } }, { userId: null }] };

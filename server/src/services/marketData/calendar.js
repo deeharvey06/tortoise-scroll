@@ -57,11 +57,14 @@ export function expectedSlots(calendar, timeframe, session = 'all') {
       );
     const dates = new Map();
     for (const window of calendar.sessions) {
-      if (!dates.has(window.tradingDate)) dates.set(window.tradingDate, window);
+      if (!dates.has(window.tradingDate))
+        dates.set(window.tradingDate, { ...window });
+      else dates.get(window.tradingDate).end = window.end;
     }
     for (const window of dates.values())
       slots.push({
         timestamp: window.start,
+        endTimestamp: window.end,
         session: 'daily',
         tradingDate: window.tradingDate,
       });
@@ -81,6 +84,9 @@ export function expectedSlots(calendar, timeframe, session = 'all') {
           );
         slots.push({
           timestamp: new Date(ms).toISOString(),
+          endTimestamp: new Date(
+            Math.min(ms + TIMEFRAMES[timeframe], Date.parse(window.end))
+          ).toISOString(),
           session: window.kind,
           tradingDate: window.tradingDate,
         });

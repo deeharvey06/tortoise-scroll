@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { ThemeProvider } from '@mui/material/styles';
 import { createTortoiseTheme } from '../../theme/theme';
-import ReplayPage from './ReplayPage';
+import ReplayPage from './TradeReviewPage';
 import * as replayApi from '../../services/replayService';
 
 vi.mock('../../services/replayService', () => ({
