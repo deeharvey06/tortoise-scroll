@@ -62,6 +62,7 @@ export function normalizeCandles(rows, dataset) {
       symbol: dataset.symbol,
       timeframe: dataset.timeframe,
       timestamp,
+      endTimestamp: slot.endTimestamp,
       open,
       high,
       low,
