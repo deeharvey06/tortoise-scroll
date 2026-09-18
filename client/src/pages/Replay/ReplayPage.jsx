@@ -209,14 +209,13 @@ export default function ReplayPage() {
 
       {session && trades.length > 0 && (
         <>
-          {!session.marketData.configured && (
-            <Alert severity='info' sx={{ mb: 2 }}>
-              No market-data provider is connected, so there's no real intraday
-              price chart to show. The chart below plots only your actual logged
-              entry/exit/fill prices — the dashed line connecting them does not
-              represent real price movement.
-            </Alert>
-          )}
+          <Alert severity='info' sx={{ mb: 2 }}>
+            {!session.marketData.configured &&
+              'No market-data provider is connected. '}
+            The chart below plots only your actual logged entry/exit/fill prices
+            — the dashed line connecting them does not represent real price
+            movement.
+          </Alert>
 
           <Panel sx={{ mb: 4 }}>
             <Box

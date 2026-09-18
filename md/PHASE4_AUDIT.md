@@ -1,0 +1,15 @@
+# Phase 4 pre-implementation audit
+
+Scope: real historical market-data infrastructure only. Replay 2.0, Backtesting 2.0, and Tortoise AI are excluded.
+
+- Architecture: Express/Mongoose ES modules, cookie-session authentication, owner-scoped services; React/MUI frontend. Existing marketDataService exports provider status and an unimplemented fetchCandles function.
+- Frontend: ReplayPage reviews recorded fills; BacktestingPage saves configurations and runs the existing SMA engine. Their service clients already use protected API routes. Reuse the current UI; no new replay interface.
+- Backend: replayController/getSession queries Trade; backtestController/runConfig reads owned BacktestConfig and calls marketDataService.fetchCandles. backtestEngine expects time/open/high/low/close bars. Existing status routes retain configured/provider fields.
+- Models: Trade and BacktestConfig remain unchanged. InstrumentSpecification and its owner-scoped resolver remain authoritative for contract specifications. Historical CSVs will be local files, not new Mongo models.
+- Utilities: csv-parser, zod, asyncHandler, requireAuth, existing instrument specification resolver, shared API error envelope, MUI Alert, existing test/session helpers.
+- Tests: backend backtestEngine, ownership/security suites, frontend UI suites, and Playwright replay/backtest flows exist. No market-data normalization/provider/cache/calendar tests exist.
+- Gaps: no real provider, candle contract, strict timezone policy, trading calendar, validation, availability diagnostics, cache, or historical API. Unknown provider names currently claim configured. Replay's fill-only warning depends on provider status and would become misleading when a provider is enabled.
+- Planned changes: extend marketDataService; add provider, CSV, time/calendar/normalization/cache modules and authenticated market-data routes; pass trusted user identity to Backtesting; preserve its legacy time alias and reject incomplete data. Keep Replay's recorded-fill disclosure accurate. Add fixtures, unit/integration/authorization/browser tests and operating documentation.
+- Migration: none. Opt-in MARKET_DATA_PROVIDER=local-csv and MARKET_DATA_LOCAL_ROOT; server-managed per-user manifests and CSV files. Existing Mongo documents and default unconfigured behavior remain intact.
+- Security: ownership comes only from req.user.id; datasets and cache are user scoped, including ADMIN/ROOT. No client paths, uploads, remote URLs, executable configuration, or vendor credentials. Bound file sizes, rows, calendars, requests, cache and concurrency; reject traversal/symlink escapes; return safe typed errors.
+- Risks: timestamp/DST ambiguity, futures overnight sessions, holiday gaps, cache staleness, expired-contract mixing, and silently running backtests on partial bars. Require explicit timestamps, exact symbols, price basis, finite calendar coverage and session windows. No inferred holidays, resampling, forward fills, zero-volume fills, continuous-contract stitching, or adjustment calculations.

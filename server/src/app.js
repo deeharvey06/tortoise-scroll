@@ -18,6 +18,7 @@ import playbookRoutes from './routes/playbookRoutes.js';
 import riskRoutes from './routes/riskRoutes.js';
 import replayRoutes from './routes/replayRoutes.js';
 import backtestRoutes from './routes/backtestRoutes.js';
+import { createMarketDataRouter } from './routes/marketDataRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import agentsRoutes from './routes/agentsRoutes.js';
 import backupRoutes from './routes/backupRoutes.js';
@@ -231,6 +232,11 @@ export function createApp(options = {}) {
   app.use('/api/risk', requireAuth, riskRoutes);
   app.use('/api/replay', requireAuth, replayRoutes);
   app.use('/api/backtest', requireAuth, backtestRoutes);
+  app.use(
+    '/api/market-data',
+    requireAuth,
+    createMarketDataRouter(options.marketDataService)
+  );
   app.use('/api/ai', requireAuth, aiRoutes);
   app.use('/api/agents', requireAuth, agentsRoutes);
   app.use('/api/backup', requireAuth, backupRoutes);
