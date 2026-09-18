@@ -19,6 +19,7 @@ import AIConversation from '../src/models/AIConversation.js';
 import AIMemory from '../src/models/AIMemory.js';
 import AISettings from '../src/models/AISettings.js';
 import AppSettings from '../src/models/AppSettings.js';
+import InstrumentSpecification from '../src/models/InstrumentSpecification.js';
 import * as tradeService from '../src/services/tradeService.js';
 import { getEntry } from '../src/controllers/journalController.js';
 import { updateStrategy } from '../src/controllers/strategyController.js';
@@ -82,6 +83,7 @@ test('every user-owned model requires userId', () => {
     AIMemory,
     AISettings,
     AppSettings,
+    InstrumentSpecification,
   ]) {
     assert.equal(
       Model.schema.path('userId')?.options.required,

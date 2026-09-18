@@ -1,8 +1,7 @@
+import { startBrokerSyncScheduler } from './src/services/brokerSyncScheduler.js';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 dotenv.config({ path: fileURLToPath(new URL('./.env', import.meta.url)) });
-
-import { startBrokerSyncScheduler } from './src/services/brokerSyncScheduler.js';
 
 import { createApp } from './src/app.js';
 import { connectDB } from './src/config/db.js';

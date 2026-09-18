@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import BrokerConnectionsTab from './BrokerConnectionsTab';
 import * as brokerApi from '../../../services/brokerConnectionService';
 

@@ -10,7 +10,9 @@ async function registerFromUi(page, user) {
   await page.goto('/register');
   await page.getByLabel('Display name').fill(user.displayName);
   await page.getByLabel('Email').fill(user.email);
-  await page.getByLabel('Password', { exact: true }).fill(user.password);
+  await page
+    .getByRole('textbox', { name: 'Password', exact: true })
+    .fill(user.password);
   await page.getByLabel('Confirm password').fill(user.password);
   await page.getByRole('button', { name: 'Create account' }).click();
 }
@@ -125,12 +127,13 @@ test('authenticated user changes password and keeps only the rotated current ses
   await page.getByLabel('Email').fill(user.email);
   await page.getByLabel('Password').fill(user.password);
   await page.getByRole('button', { name: 'Log in' }).click();
+  await expect(page).toHaveURL(/\/$/);
   await page.goto('/security');
   await expect(
     page.getByRole('heading', { name: 'Account & security' }),
   ).toBeVisible();
   await page.getByLabel('Current password').fill(user.password);
-  await page.getByLabel('New password').fill('phase-five-new-password-123');
+  await page.getByLabel(/^New password/).fill('phase-five-new-password-123');
   await page
     .getByLabel('Confirm new password')
     .fill('phase-five-new-password-123');
@@ -158,7 +161,7 @@ test('development password-reset link is single-use and resets the password', as
     'token',
   );
   await page.getByRole('link', { name: 'Open development reset link' }).click();
-  await page.getByLabel('New password').fill('phase-five-reset-password-123');
+  await page.getByLabel(/^New password/).fill('phase-five-reset-password-123');
   await page
     .getByLabel('Confirm new password')
     .fill('phase-five-reset-password-123');
@@ -173,7 +176,7 @@ test('development password-reset link is single-use and resets the password', as
       })
     ).status(),
   ).toBe(400);
-  await page.getByRole('link', { name: 'Sign in' }).click();
+  await page.getByRole('link', { name: 'Sign in', exact: true }).click();
   await page.getByLabel('Email').fill(user.email);
   await page.getByLabel('Password').fill('phase-five-reset-password-123');
   await page.getByRole('button', { name: 'Log in' }).click();
@@ -194,8 +197,16 @@ test.describe('auth themes and responsive layout', () => {
   }) => {
     const errors = [];
     page.on('console', (message) => {
+      // The session probe intentionally returns 401 for a signed-out visitor.
+      if (
+        new URL(message.location().url || 'http://localhost').pathname ===
+          '/api/auth/me' &&
+        message.text().includes('401 (Unauthorized)')
+      )
+        return;
       if (message.type() === 'error') errors.push(message.text());
     });
+    page.on('pageerror', (error) => errors.push(error.message));
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/login');
     await expect(page.locator('main')).toBeVisible();

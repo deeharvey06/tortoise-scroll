@@ -4,6 +4,7 @@ import Account from '../models/Account.js';
 import Strategy from '../models/Strategy.js';
 import Playbook from '../models/Playbook.js';
 import { requireOwnedReference } from '../utils/ownership.js';
+import { resolveInstrumentSpecification } from './instrumentSpecificationService.js';
 
 /**
  * Builds the persisted trade payload by merging user input with computed
@@ -114,9 +115,23 @@ export async function getTradeById(id, userId) {
   return tradeRepository.findTradeById(id, userId);
 }
 
-async function assertOwnedRelationships(userId, input) {
+async function assertOwnedRelationships(
+  userId,
+  input,
+  { requireActiveAccount = false } = {}
+) {
+  if (input.accountId) {
+    const accountFilter = { _id: input.accountId, userId };
+    if (requireActiveAccount) accountFilter.isActive = true;
+    if (!(await Account.exists(accountFilter))) {
+      const error = new Error(
+        requireActiveAccount ? 'Active account not found' : 'Account not found'
+      );
+      error.statusCode = 404;
+      throw error;
+    }
+  }
   const checks = [
-    [Account, input.accountId, 'Account'],
     [Strategy, input.strategy, 'Strategy'],
     [Playbook, input.playbook, 'Playbook'],
   ];
@@ -124,10 +139,32 @@ async function assertOwnedRelationships(userId, input) {
     await requireOwnedReference(Model, id, userId, label);
 }
 
+async function withResolvedInstrumentSpecification(input, userId) {
+  if (Number(input.multiplier) > 0) return input;
+  const assetType = input.assetType || 'equity';
+  const spec = await resolveInstrumentSpecification({
+    userId,
+    symbol: input.symbol,
+    assetType,
+  });
+  if (assetType === 'future' && !spec) {
+    const error = new Error(
+      `Instrument specification required for futures symbol ${input.symbol}`
+    );
+    error.statusCode = 422;
+    throw error;
+  }
+  return { ...input, multiplier: spec?.contractMultiplier ?? 1 };
+}
+
 export async function createTrade(input, userId) {
-  await assertOwnedRelationships(userId, input);
+  await assertOwnedRelationships(userId, input, { requireActiveAccount: true });
   const { userId: _ignored, ...safeInput } = input;
-  const payload = withComputedFields({ ...safeInput, userId });
+  const enrichedInput = await withResolvedInstrumentSpecification(
+    safeInput,
+    userId
+  );
+  const payload = withComputedFields({ ...enrichedInput, userId });
   return tradeRepository.createTrade(payload);
 }
 
@@ -137,7 +174,11 @@ export async function updateTrade(id, input, userId) {
   await assertOwnedRelationships(userId, input);
   const { userId: _ignored, ...safeInput } = input;
   const merged = { ...existing, ...safeInput, userId };
-  const payload = withComputedFields(merged);
+  const enrichedInput = await withResolvedInstrumentSpecification(
+    merged,
+    userId
+  );
+  const payload = withComputedFields(enrichedInput);
 
   return tradeRepository.updateTradeDocument(id, userId, payload);
 }

@@ -16,6 +16,7 @@ describe('application navigation', () => {
     ).toEqual([
       '/',
       '/trades',
+      '/accounts',
       '/calendar',
       '/journal',
       '/strategies',
@@ -36,6 +37,7 @@ describe('application navigation', () => {
   it('provides workspace titles for index and detail routes', () => {
     expect(getRouteTitle('/')).toBe('Dashboard');
     expect(getRouteTitle('/trades/123')).toBe('Trade Detail');
+    expect(getRouteTitle('/accounts')).toBe('Accounts & Instruments');
     expect(getRouteTitle('/ai-partner')).toBe('Tortoise AI');
     expect(getRouteTitle('/administration')).toBe('Administration');
     expect(getRouteTitle('/security')).toBe('Account & Security');

@@ -1,3 +1,7 @@
+// Create a script to create a demo user
+// User will not be an admin
+// The email and password will be hardcoded for demo purposes
+// Seed demo data in the database
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import { connectDB } from '../src/config/db.js';
@@ -8,6 +12,7 @@ import Tag from '../src/models/Tag.js';
 import JournalEntry from '../src/models/JournalEntry.js';
 import { computeTradeFinancials } from '../src/services/calculationsService.js';
 import User, { normalizeEmail } from '../src/models/User.js';
+import { hashPassword } from '../src/auth/passwords.js';
 
 /**
  * Generates realistic-looking DEMO data so a new install has something to
@@ -236,24 +241,59 @@ function buildJournalEntry() {
   };
 }
 
+async function createDemoUser() {
+  const email = process.env.DEMO_USER_EMAIL;
+  const emailNormalized = normalizeEmail(process.env.DEMO_USER_EMAIL);
+  const password = process.env.DEMO_USER_PASSWORD;
+  const passwordHash = await hashPassword(password);
+  const displayName = 'Demo user';
+  const role = 'USER';
+  const status = 'ACTIVE';
+
+  if (!email || !password) {
+    throw new Error(
+      'Missing DEMO_USER_EMAIL or DEMO_USER_PASSWORD in environment variables'
+    );
+  }
+
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = new User({
+      email,
+      emailNormalized,
+      password,
+      passwordHash,
+      displayName,
+      role,
+      status,
+    });
+
+    await user.save();
+    console.log(`[seed] Created demo user: ${email}`);
+  } else {
+    console.log(`[seed] Demo user already exists: ${email}`);
+  }
+
+  return user;
+}
+
 async function seed() {
   console.log('[seed] Connecting to MongoDB...');
   await connectDB();
-  const root = await User.findOne({
-    role: 'ROOT',
-    emailNormalized: normalizeEmail(process.env.ROOT_USER_EMAIL),
-    status: 'ACTIVE',
-  });
 
-  if (!root)
+  const demoUser = await createDemoUser();
+
+  if (!demoUser)
     throw new Error(
-      'Configured active ROOT account is required before seeding'
+      'Failed to create or find demo user. Check environment variables and database connection.'
     );
-  const userId = root._id;
+
+  const userId = demoUser._id;
 
   console.log(
     '[seed] Clearing previously seeded [DEMO] data (real data is untouched)...'
   );
+
   await Trade.deleteMany({ userId, isDemoData: true });
   await Account.deleteMany({ userId, name: /^\[DEMO\]/ });
   await Strategy.deleteMany({ userId, name: /^\[DEMO\]/ });
@@ -325,14 +365,17 @@ async function seed() {
       })
     ),
   ];
+
   await Tag.insertMany(demoTagNames);
 
   console.log(
     `[seed] Generating ${TRADE_COUNT} demo trades (this reuses the real calculationsService, so all P&L/R figures are computed exactly as they would be for a real trade)...`
   );
+
   const accountIds = accounts.map((a) => a._id);
   const strategyIds = strategies.map((s) => s._id);
   const tradeDocs = [];
+
   for (let i = 0; i < TRADE_COUNT; i += 1) {
     tradeDocs.push({
       ...buildRandomTrade({ accountId: pick(accountIds), strategyIds }),

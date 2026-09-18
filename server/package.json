@@ -13,7 +13,7 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "cluster": "pm2 start server.js -i max",
-    "seed": "node scripts/seed.js",
+    "seed": "node scripts/seedDemo.js",
     "migrate:ownership": "node scripts/migrateOwnership.js",
     "smoke": "node scripts/apiSmokeTest.js",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=75 --test-coverage-functions=70 --test-coverage-branches=85 tests/*.test.js",

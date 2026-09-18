@@ -33,6 +33,7 @@ const NetworkErrorPage = lazy(() => import('./pages/Auth/NetworkErrorPage'));
 // on first load vs. navigating to a not-yet-visited page.
 const DashboardPage = lazy(() => import('./pages/Dashboard/DashboardPage'));
 const TradesPage = lazy(() => import('./pages/Trades/TradesPage'));
+const AccountsPage = lazy(() => import('./pages/Accounts/AccountsPage'));
 const TradeDetailPage = lazy(() => import('./pages/Trades/TradeDetailPage'));
 const CalendarPage = lazy(() => import('./pages/Calendar/CalendarPage'));
 const JournalPage = lazy(() => import('./pages/Journal/JournalPage'));
@@ -121,6 +122,7 @@ export function createRouter() {
       children: [
         { index: true, element: withSuspense(DashboardPage) },
         { path: 'trades', element: withSuspense(TradesPage) },
+        { path: 'accounts', element: withSuspense(AccountsPage) },
         { path: 'trades/:id', element: withSuspense(TradeDetailPage) },
         { path: 'calendar', element: withSuspense(CalendarPage) },
         { path: 'journal', element: withSuspense(JournalPage) },

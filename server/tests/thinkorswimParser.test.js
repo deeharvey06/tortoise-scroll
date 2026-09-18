@@ -27,14 +27,18 @@ test('normalizes Thinkorswim futures executions with deterministic ES multiplier
   assert.equal(parsed.normalized[0].executionKey, 'id:E1');
 });
 
-test('unknown future contract multiplier is rejected rather than guessed', async () => {
+test('unknown future remains normalized but unresolved so a user-owned specification can enrich it before persistence', async () => {
   const csv = Buffer.from(
     `Trade History\nExec Time,Spread,Side,Qty,Pos Effect,Symbol,Price\n09/01/2026 09:30:00,SINGLE,BOT,1,TO OPEN,/ZZZU26,100\n`
   );
   const parsed = await parseThinkorswimExecutions(csv);
-  assert.equal(parsed.normalized.length, 0);
-  assert.equal(parsed.errors.length, 1);
-  assert.match(parsed.errors[0].message, /Unknown futures multiplier/);
+  assert.equal(parsed.normalized.length, 1);
+  assert.equal(parsed.errors.length, 0);
+  assert.equal(parsed.normalized[0].multiplier, null);
+  assert.match(
+    parsed.warnings.map((warning) => warning.message).join(' '),
+    /instrument specification/i
+  );
 });
 
 test('options preserve expiration, strike, call-put and use 100 multiplier', async () => {

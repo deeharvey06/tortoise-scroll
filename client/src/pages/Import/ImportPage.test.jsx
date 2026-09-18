@@ -105,7 +105,9 @@ describe('ImportPage execution workflow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     await screen.findByText('Execution format detected');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    fireEvent.mouseDown(screen.getByLabelText('Import into account'));
+    fireEvent.mouseDown(
+      screen.getByRole('combobox', { name: /Import into account/ })
+    );
     fireEvent.click(await screen.findByRole('option', { name: 'Main' }));
     fireEvent.click(screen.getByRole('button', { name: /^Import 3 rows$/ }));
 

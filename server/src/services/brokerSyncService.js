@@ -10,14 +10,13 @@ import {
   decryptSecret,
   redactConnection,
 } from './brokerSecretService.js';
-
 import { getBrokerProvider } from './brokers/providerRegistry.js';
 import {
   reconstructPositions,
   positionToTradePayload,
 } from './positionReconstructionService.js';
-
 import { createTrade, updateTrade } from './tradeService.js';
+import { enrichExecutionsWithInstrumentSpecifications } from './instrumentSpecificationService.js';
 
 const sha256 = (value) =>
   crypto.createHash('sha256').update(String(value)).digest('hex');
@@ -42,12 +41,10 @@ export async function beginBrokerAuthorization({
         statusCode: 404,
       });
   }
-
   const state = crypto.randomBytes(32).toString('base64url');
   await BrokerAuthorizationState.create({
     userId,
     provider: provider.key,
-    connectionId,
     stateHash: sha256(state),
     sessionHash: sha256(sessionId),
     redirectUri,
@@ -70,19 +67,16 @@ export async function completeBrokerAuthorization({
   const authState = await BrokerAuthorizationState.findOne({
     userId,
     provider: provider.key,
-    connectionId: authState.connectionId,
     stateHash: sha256(state),
     consumedAt: null,
     expiresAt: { $gt: new Date() },
   });
-
   if (!authState || authState.sessionHash !== sha256(sessionId)) {
     throw Object.assign(
       new Error('Invalid or expired broker authorization state'),
       { statusCode: 400 }
     );
   }
-
   authState.consumedAt = new Date();
   await authState.save();
 
@@ -90,7 +84,6 @@ export async function completeBrokerAuthorization({
     code,
     redirectUri: authState.redirectUri,
   });
-
   let connection;
   if (authState.connectionId) {
     connection = await BrokerConnection.findOne({
@@ -98,26 +91,20 @@ export async function completeBrokerAuthorization({
       userId,
       provider: provider.key,
     });
-
     if (!connection)
       throw Object.assign(new Error('Broker connection not found'), {
         statusCode: 404,
       });
-
     connection.status = 'connected';
     connection.accessTokenEncrypted = encryptSecret(tokens.access_token);
-
     if (tokens.refresh_token)
       connection.refreshTokenEncrypted = encryptSecret(tokens.refresh_token);
-
     connection.tokenExpiresAt = tokens.expires_in
       ? nowPlus(Number(tokens.expires_in) * 1000)
       : null;
-
     connection.grantedScopes = String(tokens.scope || '')
       .split(/\s+/)
       .filter(Boolean);
-
     connection.revokedAt = null;
     connection.lastError = undefined;
     connection.nextSyncAt = new Date();
@@ -138,7 +125,6 @@ export async function completeBrokerAuthorization({
       nextSyncAt: null,
     });
   }
-
   const accounts = await discoverAccounts(connection);
   return { connection: redactConnection(connection), accounts };
 }
@@ -148,23 +134,18 @@ async function ensureAccessToken(connection) {
   const shouldRefresh =
     connection.tokenExpiresAt &&
     connection.tokenExpiresAt.getTime() < Date.now() + 60_000;
-
   if (shouldRefresh) {
     const refresh = decryptSecret(connection.refreshTokenEncrypted);
     if (!refresh) throw new Error('Broker refresh token is unavailable');
-
     const tokens = await provider.refreshAuthorization(refresh);
     connection.accessTokenEncrypted = encryptSecret(tokens.access_token);
-
     if (tokens.refresh_token)
       connection.refreshTokenEncrypted = encryptSecret(tokens.refresh_token);
-
     connection.tokenExpiresAt = tokens.expires_in
       ? nowPlus(Number(tokens.expires_in) * 1000)
       : connection.tokenExpiresAt;
     await connection.save();
   }
-
   return decryptSecret(connection.accessTokenEncrypted);
 }
 
@@ -173,22 +154,19 @@ export async function discoverAccounts(connectionOrId, userId = null) {
     typeof connectionOrId === 'string'
       ? await BrokerConnection.findOne({ _id: connectionOrId, userId })
       : connectionOrId;
-
   if (!connection)
     throw Object.assign(new Error('Broker connection not found'), {
       statusCode: 404,
     });
-
   const provider = getBrokerProvider(connection.provider);
   const accessToken = await ensureAccessToken(connection);
   const accounts = await provider.getAccounts(accessToken);
   connection.providerMetadata = {
     ...connection.providerMetadata,
-    discoveredAccounts: accounts.map(({ raw, ...a }) => a),
+    discoveredAccounts: accounts.map(({ raw: _raw, ...a }) => a),
   };
-
   await connection.save();
-  return accounts.map(({ raw, ...a }) => a);
+  return accounts.map(({ raw: _raw, ...a }) => a);
 }
 
 export async function mapBrokerAccount({
@@ -199,32 +177,26 @@ export async function mapBrokerAccount({
 }) {
   const [connection, account] = await Promise.all([
     BrokerConnection.findOne({ _id: connectionId, userId }),
-    Account.findOne({ _id: accountId, userId }),
+    Account.findOne({ _id: accountId, userId, isActive: true }),
   ]);
-
   if (!connection)
     throw Object.assign(new Error('Broker connection not found'), {
       statusCode: 404,
     });
-
   if (!account)
     throw Object.assign(new Error('Account not found'), { statusCode: 404 });
-
   const discovered = connection.providerMetadata?.discoveredAccounts || [];
   const brokerAccount = discovered.find(
     (a) => a.providerAccountId === providerAccountId
   );
-
   if (!brokerAccount)
     throw Object.assign(
       new Error('Broker account was not discovered for this connection'),
       { statusCode: 400 }
     );
-
   connection.accountMappings = connection.accountMappings.filter(
     (m) => m.providerAccountId !== providerAccountId
   );
-
   connection.accountMappings.push({
     providerAccountId,
     providerAccountNumberMasked:
@@ -232,7 +204,6 @@ export async function mapBrokerAccount({
     providerAccountName: brokerAccount.providerAccountName || '',
     accountId,
   });
-
   connection.nextSyncAt = new Date();
   await connection.save();
   return redactConnection(connection);
@@ -247,11 +218,9 @@ async function reconstructAccount({ userId, accountId, broker, connectionId }) {
   })
     .sort({ timestamp: 1, executionKey: 1 })
     .lean();
-
   const result = reconstructPositions(ledger, { policy: 'fifo' });
   let created = 0;
   let updated = 0;
-
   for (const position of result.positions) {
     const payload = positionToTradePayload(position, accountId);
     const existing = await Trade.findOne({
@@ -259,7 +228,6 @@ async function reconstructAccount({ userId, accountId, broker, connectionId }) {
       accountId,
       sourcePositionKey: position.sourcePositionKey,
     });
-
     const trade = existing
       ? await updateTrade(existing._id, payload, userId)
       : await createTrade(payload, userId);
@@ -267,13 +235,11 @@ async function reconstructAccount({ userId, accountId, broker, connectionId }) {
     const keys = position.executions.map(
       (e) => e.sourceExecutionKey || e.executionKey
     );
-
     await BrokerExecution.updateMany(
       { userId, accountId, broker, executionKey: { $in: keys } },
       { $set: { tradeId: trade._id, brokerConnectionId: connectionId } }
     );
   }
-
   return {
     created,
     updated,
@@ -300,7 +266,6 @@ async function persistExecutions({
 }) {
   let inserted = 0;
   let duplicates = 0;
-
   for (const execution of executions) {
     try {
       await BrokerExecution.create({
@@ -310,7 +275,6 @@ async function persistExecutions({
         brokerConnectionId: connectionId,
         sources: [{ sourceType: 'api', brokerConnectionId: connectionId }],
       });
-
       inserted++;
     } catch (error) {
       if (error?.code === 11000) {
@@ -331,7 +295,6 @@ async function persistExecutions({
       } else throw error;
     }
   }
-
   return { inserted, duplicates };
 }
 
@@ -344,17 +307,14 @@ export async function syncBrokerConnection({
     _id: connectionId,
     userId,
   });
-
   if (!connection)
     throw Object.assign(new Error('Broker connection not found'), {
       statusCode: 404,
     });
-
   if (connection.status === 'disconnected')
     throw Object.assign(new Error('Broker connection is disconnected'), {
       statusCode: 409,
     });
-
   const provider = getBrokerProvider(connection.provider);
   const run = await BrokerSyncRun.create({
     userId,
@@ -363,11 +323,9 @@ export async function syncBrokerConnection({
     syncType,
     checkpointBefore: connection.syncCheckpoint || {},
   });
-
   connection.status = 'syncing';
   connection.lastAttemptedSyncAt = new Date();
   await connection.save();
-
   try {
     const accessToken = await ensureAccessToken(connection);
     let totalFetched = 0;
@@ -380,67 +338,67 @@ export async function syncBrokerConnection({
     const warnings = [];
     const pendingCheckpoint = structuredClone(connection.syncCheckpoint || {});
     pendingCheckpoint.accounts ||= {};
-
     for (const mapping of connection.accountMappings) {
-      const owned = await Account.exists({ _id: mapping.accountId, userId });
-      if (!owned)
-        throw new Error(
-          'Mapped Tortoise Scroll account is not owned by the authenticated user'
+      const owned = await Account.exists({
+        _id: mapping.accountId,
+        userId,
+        isActive: true,
+      });
+      if (!owned) {
+        warnings.push(
+          `Skipped broker account ${mapping.providerAccountId}: mapped Tortoise Scroll account is inactive or unavailable`
         );
-
+        continue;
+      }
       const priorTimestamp =
         pendingCheckpoint.accounts?.[mapping.providerAccountId]?.timestamp ||
         null;
-
       const response = await provider.fetchExecutions(accessToken, {
         providerAccountId: mapping.providerAccountId,
         from: priorTimestamp,
       });
-
       totalFetched += response.fetched || response.executions.length;
       totalRejected += response.rejected?.length || 0;
       warnings.push(...(response.warnings || []));
-
+      const enrichment = await enrichExecutionsWithInstrumentSpecifications(
+        userId,
+        response.executions
+      );
+      totalRejected += enrichment.rejected.length;
+      warnings.push(...enrichment.rejected.map((item) => item.message));
       const persisted = await persistExecutions({
         userId,
         accountId: mapping.accountId,
         connectionId,
         provider: connection.provider,
-        executions: response.executions,
+        executions: enrichment.accepted,
       });
-
       totalInserted += persisted.inserted;
       totalDuplicates += persisted.duplicates;
-
       const recon = await reconstructAccount({
         userId,
         accountId: mapping.accountId,
         broker: connection.provider,
         connectionId,
       });
-
       totalCreated += recon.created;
       totalUpdated += recon.updated;
       totalOpen += recon.openPositions;
       warnings.push(...recon.warnings);
-
       if (provider.getCapabilities().positions && provider.fetchPositions) {
         const brokerPositions = await provider.fetchPositions(accessToken, {
           providerAccountId: mapping.providerAccountId,
         });
-
         const localBySymbol = new Map();
         for (const position of recon.openPositionSummaries)
           localBySymbol.set(
             position.symbol,
             (localBySymbol.get(position.symbol) || 0) + position.quantity
           );
-
         for (const brokerPosition of brokerPositions) {
           const localQuantity = Number(
             localBySymbol.get(brokerPosition.symbol) || 0
           );
-
           if (
             Math.abs(localQuantity - Number(brokerPosition.quantity || 0)) >
             1e-9
@@ -448,21 +406,17 @@ export async function syncBrokerConnection({
             warnings.push(
               `Position mismatch for ${brokerPosition.symbol}: broker ${brokerPosition.quantity}, Tortoise Scroll ${localQuantity}`
             );
-
           localBySymbol.delete(brokerPosition.symbol);
         }
-
         for (const [symbol, quantity] of localBySymbol)
           if (Math.abs(quantity) > 1e-9)
             warnings.push(
               `Position mismatch for ${symbol}: broker 0, Tortoise Scroll ${quantity}`
             );
       }
-
-      const timestamps = response.executions
+      const timestamps = enrichment.accepted
         .map((e) => new Date(e.timestamp).getTime())
         .filter(Number.isFinite);
-
       if (timestamps.length) {
         const newestTimestamp = new Date(
           Math.max(
@@ -475,17 +429,14 @@ export async function syncBrokerConnection({
         };
       }
     }
-
     connection.syncCheckpoint = pendingCheckpoint;
     connection.lastSuccessfulSyncAt = new Date();
     connection.nextSyncAt = nowPlus(
       Number(process.env.BROKER_SYNC_INTERVAL_MS || 300000)
     );
-
     connection.status = 'connected';
     connection.lastError = undefined;
     await connection.save();
-
     run.status = 'completed';
     run.completedAt = new Date();
     run.checkpointAfter = connection.syncCheckpoint;
@@ -503,7 +454,6 @@ export async function syncBrokerConnection({
       rejectedRecords: totalRejected,
       errors: 0,
     };
-
     await run.save();
     return run.toObject();
   } catch (error) {
@@ -516,15 +466,12 @@ export async function syncBrokerConnection({
           : normalized.code === 'PROVIDER_UNAVAILABLE'
             ? 'provider_unavailable'
             : 'attention_required';
-
     connection.lastError = { ...normalized, at: new Date() };
     await connection.save();
-
     run.status = 'failed';
     run.completedAt = new Date();
     run.errors = [normalized.message];
     run.summary.errors = 1;
-
     await run.save();
     throw Object.assign(new Error(normalized.message), {
       statusCode: normalized.category === 'USER_ACTION_REQUIRED' ? 409 : 502,

@@ -57,9 +57,13 @@ export async function postCommit(req, res) {
   if (validated.mapping) {
     mapping = validated.mapping;
   }
-  if (!(await Account.exists(ownedFilter(req, { _id: validated.accountId })))) {
+  if (
+    !(await Account.exists(
+      ownedFilter(req, { _id: validated.accountId, isActive: true })
+    ))
+  ) {
     res.status(404);
-    throw new Error('Account not found');
+    throw new Error('Active account not found');
   }
 
   const job = await commitImport({

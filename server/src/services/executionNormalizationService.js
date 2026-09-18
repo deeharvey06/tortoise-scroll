@@ -1,25 +1,6 @@
 import { createHash } from 'crypto';
 
-const FUTURES_MULTIPLIERS = new Map([
-  ['ES', 50],
-  ['MES', 5],
-  ['NQ', 20],
-  ['MNQ', 2],
-  ['YM', 5],
-  ['MYM', 0.5],
-  ['RTY', 50],
-  ['M2K', 5],
-  ['CL', 1000],
-  ['MCL', 100],
-  ['GC', 100],
-  ['MGC', 10],
-  ['SI', 5000],
-  ['SIL', 1000],
-  ['HG', 25000],
-  ['NG', 10000],
-  ['ZB', 1000],
-  ['ZN', 1000],
-]);
+import { resolveInstrumentSpecificationSync } from './instrumentSpecificationService.js';
 
 function cleanNumber(value) {
   if (value === undefined || value === null || value === '') return null;
@@ -57,14 +38,6 @@ function normalizeStatus(raw) {
   return 'unknown';
 }
 
-function futureRoot(symbol) {
-  const s = String(symbol || '')
-    .toUpperCase()
-    .replace(/^\//, '');
-  const match = s.match(/^([A-Z0-9]+?)(?:[FGHJKMNQUVXZ]\d{1,2})?$/);
-  return match?.[1] || s;
-}
-
 export function inferAssetType({
   symbol,
   expiration,
@@ -83,15 +56,9 @@ export function resolveMultiplier({ assetType, symbol, explicitMultiplier }) {
   const explicit = cleanNumber(explicitMultiplier);
   if (explicit && explicit > 0)
     return { multiplier: explicit, source: 'broker' };
-  if (assetType === 'option')
-    return { multiplier: 100, source: 'asset-default' };
-  if (assetType === 'future') {
-    const root = futureRoot(symbol);
-    const known = FUTURES_MULTIPLIERS.get(root);
-    if (known) return { multiplier: known, source: 'contract-spec' };
-    return { multiplier: null, source: null };
-  }
-  return { multiplier: 1, source: 'asset-default' };
+  const spec = resolveInstrumentSpecificationSync({ symbol, assetType });
+  if (!spec) return { multiplier: null, source: null };
+  return { multiplier: spec.contractMultiplier, source: 'contract-spec' };
 }
 
 export function createInstrumentKey({
@@ -172,8 +139,8 @@ export function normalizeExecution(input) {
   if (expiration && Number.isNaN(expiration.getTime()))
     errors.push('Invalid option expiration');
   if (assetType === 'future' && !multiplierInfo.multiplier) {
-    errors.push(
-      `Unknown futures multiplier for ${input.symbol}; provide a multiplier rather than guessing`
+    warnings.push(
+      `Unresolved futures multiplier for ${input.symbol}; an instrument specification is required before persistence`
     );
   }
   if (status === 'cancelled' || status === 'rejected') {

@@ -13,6 +13,7 @@ import AISettings from '../models/AISettings.js';
 import ImportJob from '../models/ImportJob.js';
 import BrokerExecution from '../models/BrokerExecution.js';
 import AppSettings from '../models/AppSettings.js';
+import InstrumentSpecification from '../models/InstrumentSpecification.js';
 
 const BACKUP_VERSION = 1;
 
@@ -21,6 +22,7 @@ const BACKUP_VERSION = 1;
 // Each entry maps the backup JSON key to its Mongoose model.
 const COLLECTIONS_IN_ORDER = [
   ['accounts', Account],
+  ['instrumentSpecifications', InstrumentSpecification],
   ['strategies', Strategy],
   ['playbooks', Playbook],
   ['tags', Tag],
