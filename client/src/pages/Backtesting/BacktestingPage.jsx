@@ -1,3 +1,6 @@
+import StrategyEditor from './StrategyEditor';
+import ResultDetails from './ResultDetails';
+import { Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -56,13 +59,15 @@ const emptyForm = {
   slippage: 0,
 };
 
-function fmtMoney(v) {
+function fmtMoney(v, currency = 'USD') {
   if (v === null || v === undefined) return '—';
   const sign = v < 0 ? '-' : '';
-  return `${sign}$${Math.abs(v).toFixed(2)}`;
+  return `${sign}${currency === 'USD' ? '$' : `${currency} `}${Math.abs(v).toFixed(2)}`;
 }
 
 export default function BacktestingPage() {
+  const [strategyEditor, setStrategyEditor] = useState(undefined);
+  const [success, setSuccess] = useState('');
   const [status, setStatus] = useState(null);
   const [configs, setConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +109,10 @@ export default function BacktestingPage() {
   };
 
   const openEdit = (c) => {
+    if (c.engineVersion === 2) {
+      setStrategyEditor(c);
+      return;
+    }
     setEditing(c);
     setForm({
       name: c.name,
@@ -191,17 +200,44 @@ export default function BacktestingPage() {
         title='Backtesting'
         description='Define and evaluate repeatable rules against connected historical market data.'
         actions={
-          <Button
-            variant='contained'
-            size='small'
-            startIcon={<AddIcon />}
-            onClick={openCreate}
-          >
-            New backtest
-          </Button>
+          <Stack direction='row' spacing={1} flexWrap='wrap'>
+            <Button variant='contained' onClick={() => setStrategyEditor(null)}>
+              New strategy backtest
+            </Button>
+            <Button
+              variant='contained'
+              size='small'
+              startIcon={<AddIcon />}
+              onClick={openCreate}
+            >
+              New SMA configuration
+            </Button>
+          </Stack>
         }
       />
 
+      {strategyEditor !== undefined && (
+        <StrategyEditor
+          config={strategyEditor}
+          onClose={() => setStrategyEditor(undefined)}
+          onSaved={() => {
+            setStrategyEditor(undefined);
+            setSuccess('Strategy configuration saved.');
+            load();
+          }}
+        />
+      )}
+      {success && (
+        <Alert severity='success' onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
+      <Alert severity='info' sx={{ mb: 2 }}>
+        Signals use completed bars and orders start on the next bar. Select
+        explicit execution assumptions in a strategy backtest. Legacy SMA
+        configurations use disclosed compatibility policies; archived results
+        retain their original engine behavior.
+      </Alert>
       {!status?.configured && (
         <Alert severity='info' sx={{ mb: 2 }}>
           No market-data provider is connected, so backtests can't run against
@@ -250,7 +286,11 @@ export default function BacktestingPage() {
                   <TableCell>
                     <Chip
                       size='small'
-                      label={`SMA ${c.entryRule.fastPeriod}/${c.entryRule.slowPeriod} · ${c.direction}`}
+                      label={
+                        c.engineVersion === 2
+                          ? c.strategyDefinition.name
+                          : `SMA ${c.entryRule.fastPeriod}/${c.entryRule.slowPeriod} · ${c.direction}`
+                      }
                       variant='outlined'
                     />
                   </TableCell>
@@ -273,7 +313,10 @@ export default function BacktestingPage() {
                           setResultView({ config: c, result: c.lastResult })
                         }
                       >
-                        {fmtMoney(c.lastResult.summary.netPnL)}
+                        {fmtMoney(
+                          c.lastResult.summary.netPnL,
+                          c.lastResult.contract?.currency
+                        )}
                       </Box>
                     ) : (
                       '—'
@@ -537,7 +580,10 @@ export default function BacktestingPage() {
                 <Grid item xs={4}>
                   <KpiCard
                     label='Net P&L'
-                    value={fmtMoney(resultView.result.summary.netPnL)}
+                    value={fmtMoney(
+                      resultView.result.summary.netPnL,
+                      resultView.result.contract?.currency
+                    )}
                     colorByValue
                   />
                 </Grid>
@@ -563,14 +609,20 @@ export default function BacktestingPage() {
                 <Grid item xs={4}>
                   <KpiCard
                     label='Expectancy'
-                    value={fmtMoney(resultView.result.summary.expectancy)}
+                    value={fmtMoney(
+                      resultView.result.summary.expectancy,
+                      resultView.result.contract?.currency
+                    )}
                     colorByValue
                   />
                 </Grid>
                 <Grid item xs={4}>
                   <KpiCard
                     label='Max drawdown'
-                    value={fmtMoney(resultView.result.summary.maxDrawdown)}
+                    value={fmtMoney(
+                      resultView.result.summary.maxDrawdown,
+                      resultView.result.contract?.currency
+                    )}
                     colorByValue
                   />
                 </Grid>
@@ -601,6 +653,7 @@ export default function BacktestingPage() {
                   </LineChart>
                 </ResponsiveContainer>
               )}
+              <ResultDetails result={resultView.result} />
             </>
           )}
         </DialogContent>

@@ -35,14 +35,15 @@ test('long SMA crossover enters and exits on opposite crossover, computes correc
   assert.ok(result.trades.length >= 1, 'expected at least one simulated trade');
   const t = result.trades[0];
   assert.equal(t.direction, 'long');
-  // Entry should happen on the up-ramp, exit on the down-ramp — net P&L
-  // should be positive since it captures the middle of the move.
-  assert.ok(t.netPnL > 0, `expected a profitable trade, got ${t.netPnL}`);
+  // Crosses at bars 4 and 10 become fills at opens 5 and 11.
+  assert.equal(t.entryPrice, 12);
+  assert.equal(t.exitPrice, 12);
+  assert.equal(t.netPnL, 0);
 });
 
-test('stop loss triggers via bar low, produces correct capped loss', () => {
+test('opening gap through stop fills at open rather than incorrectly capping the loss', () => {
   // Enter, then price gaps down hard through the bar's low — stop should
-  // fire at the stop price, not at the close.
+  // execute at the opening gap price, not a fictitious stop-price fill.
   const closes = [10, 10, 10, 10, 11, 12, 13, 20, 5, 5, 5, 5, 5, 5, 5, 5];
   const bars = closes.map((c, i) => makeBar(i, c));
   // Make bar index 8 (close=5) have a very low "low" so the stop is hit intrabar
@@ -63,13 +64,10 @@ test('stop loss triggers via bar low, produces correct capped loss', () => {
   const stopped = result.trades.find((t) => t.exitReason === 'stop');
   assert.ok(stopped, 'expected a stop-loss exit given the sharp drop');
   assert.ok(stopped.netPnL < 0, 'stop-loss exit should be a loss');
-  // Loss should be roughly bounded near 5% of entry * quantity, not a much
-  // larger loss reflecting the close price after the gap.
-  const approxMaxLoss = stopped.entryPrice * 0.05 * 10 * 1.5; // generous margin
-  assert.ok(
-    Math.abs(stopped.netPnL) <= approxMaxLoss,
-    `stop should cap the loss, got ${stopped.netPnL}`
-  );
+  // Entry at next open (12); opening gap to 5 loses 7 × 10 = 70.
+  assert.equal(stopped.entryPrice, 12);
+  assert.equal(stopped.exitPrice, 5);
+  assert.equal(stopped.netPnL, -70);
 });
 
 test('commission and slippage reduce net P&L relative to gross', () => {

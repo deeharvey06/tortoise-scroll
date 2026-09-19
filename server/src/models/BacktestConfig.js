@@ -15,6 +15,10 @@ const backtestConfigSchema = new Schema(
     timeframe: { type: String, default: '1d' },
     dateFrom: { type: Date, required: true },
     dateTo: { type: Date, required: true },
+    engineVersion: { type: Number, enum: [1, 2], default: 1 },
+    datasetId: { type: String, default: '' },
+    strategyDefinition: { type: Schema.Types.Mixed, default: null },
+    execution: { type: Schema.Types.Mixed, default: null },
     direction: { type: String, enum: ['long', 'short'], default: 'long' },
     entryRule: {
       type: { type: String, enum: ['smaCrossover'], default: 'smaCrossover' },
