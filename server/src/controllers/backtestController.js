@@ -1,11 +1,12 @@
+import { executeStrategy } from '../services/backtestService.js';
+import {
+  parseDefinition,
+  BacktestError,
+} from '../engines/backtest/definition.js';
 import BacktestConfig from '../models/BacktestConfig.js';
 import * as marketDataService from '../services/marketDataService.js';
 import { runBacktest } from '../engines/backtestEngine.js';
-import {
-  ownedFilter,
-  ownedPayload,
-  withoutOwnership,
-} from '../utils/ownership.js';
+import { ownedFilter, ownedPayload } from '../utils/ownership.js';
 
 export async function getStatus(req, res) {
   res.json({
@@ -32,15 +33,79 @@ export async function getConfig(req, res) {
   res.json(config);
 }
 
+const writable = [
+  'name',
+  'symbol',
+  'timeframe',
+  'dateFrom',
+  'dateTo',
+  'direction',
+  'entryRule',
+  'stopLossPct',
+  'takeProfitPct',
+  'positionSize',
+  'commission',
+  'slippage',
+  'engineVersion',
+  'datasetId',
+  'strategyDefinition',
+  'execution',
+];
+function payload(input, previous = {}) {
+  if (!input || typeof input !== 'object' || Array.isArray(input))
+    throw new BacktestError('Configuration must be an object.', 400);
+  if (
+    input.engineVersion !== undefined &&
+    ![1, 2].includes(input.engineVersion)
+  )
+    throw new BacktestError('Invalid engine version.', 400);
+  const values = Object.fromEntries(
+    writable
+      .filter((key) => Object.hasOwn(input, key))
+      .map((key) => [key, input[key]])
+  );
+  const merged = { ...previous, ...values };
+  if (merged.engineVersion === 2) {
+    parseDefinition(merged.strategyDefinition, merged.execution);
+    if (
+      !merged.datasetId ||
+      !merged.name ||
+      !merged.symbol ||
+      !Number.isFinite(Date.parse(merged.dateFrom)) ||
+      !Number.isFinite(Date.parse(merged.dateTo)) ||
+      Date.parse(merged.dateFrom) >= Date.parse(merged.dateTo)
+    )
+      throw new BacktestError(
+        'Name, dataset, symbol and an increasing timestamp range are required.',
+        400
+      );
+  }
+  return values;
+}
 export async function createConfig(req, res) {
-  const config = await BacktestConfig.create(ownedPayload(req, req.body));
+  const config = await BacktestConfig.create(
+    ownedPayload(req, payload(req.body))
+  );
   res.status(201).json(config);
 }
-
 export async function updateConfig(req, res) {
+  const previous = await BacktestConfig.findOne(
+    ownedFilter(req, { _id: req.params.id })
+  ).lean();
+  if (!previous) {
+    res.status(404);
+    throw new Error('Backtest config not found');
+  }
   const config = await BacktestConfig.findOneAndUpdate(
     ownedFilter(req, { _id: req.params.id }),
-    withoutOwnership(req.body),
+    {
+      $set: {
+        ...payload(req.body, previous),
+        lastResult: null,
+        lastRunAt: null,
+      },
+      $inc: { __v: 1 },
+    },
     { new: true, runValidators: true }
   );
   if (!config) {
@@ -81,6 +146,21 @@ export async function runConfig(req, res) {
       'No market data provider is connected, so this backtest cannot run against real historical prices. ' +
         'The configuration is saved and will run as soon as a provider is set up in server/.env.'
     );
+  }
+
+  if (config.engineVersion === 2) {
+    const result = await executeStrategy(config, req.user.id);
+    const saved = await BacktestConfig.findOneAndUpdate(
+      ownedFilter(req, { _id: config._id, __v: config.__v }),
+      { $set: { lastResult: result, lastRunAt: new Date() } },
+      { new: true }
+    );
+    if (!saved)
+      throw new BacktestError(
+        'Configuration changed during simulation. Run the saved configuration again.',
+        409
+      );
+    return res.json(result);
   }
 
   const bars = await marketDataService.fetchCandles({

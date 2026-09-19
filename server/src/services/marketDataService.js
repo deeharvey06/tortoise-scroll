@@ -142,6 +142,8 @@ export function createMarketDataService({
             timestampConvention: 'start',
           },
           contractMetadata,
+          // Keep schedule and candles on the same described source revision.
+          calendar: dataset.calendar,
         };
       } catch (error) {
         throw safeProviderError(error);

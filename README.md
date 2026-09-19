@@ -1,11 +1,11 @@
 # Trading Journal (Local-First) — Complete (Phases 1–8)
 
-**Current update:** Phase 5 adds true bar-by-bar market replay on the Phase 4
-historical-data service: blind training, saved decisions, execution overlays,
-notes, drawings and chart screenshots. See [Replay usage and contract](md/REPLAY.md),
-the [Phase 5 report](md/PHASE5_REPORT.md), and [market-data setup](md/MARKET_DATA.md).
-The phase numbering below describes the original implementation history.
-Backtesting 2.0 remains out of scope.
+**Current update:** Phase 6 adds deterministic Backtesting 2.0 on the existing
+Phase 4 market-data service, with versioned rules, explicit execution policies,
+causal signals and shared analytics. See [Backtesting usage and policies](md/BACKTESTING.md),
+[Phase 6 report](md/PHASE6_REPORT.md), [Replay](md/REPLAY.md), and
+[market-data setup](md/MARKET_DATA.md). The phase numbering below describes the
+original implementation history. No Tortoise AI changes were made.
 
 A personal, local-first trading journal inspired by TradeZella's feature set,
 built with an independent codebase (no TradeZella source, assets, or IP).
