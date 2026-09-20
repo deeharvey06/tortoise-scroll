@@ -1,3 +1,6 @@
+import { EmailDelivery } from '../services/email/delivery.js';
+import logger from '../config/logger.js';
+import { createEmailProvider } from '../services/email/index.js';
 import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import User, { normalizeEmail, toSafeUser } from '../models/User.js';
@@ -10,6 +13,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
 } from '../schemas/auth.schema.js';
+
 import {
   listSessions,
   registerSession,
@@ -21,6 +25,7 @@ import {
 
 const fail = (statusCode, message) =>
   Object.assign(new Error(message), { statusCode });
+
 const parse = (schema, body) => {
   const result = schema.safeParse(body);
   if (!result.success)
@@ -30,18 +35,24 @@ const parse = (schema, body) => {
     );
   return result.data;
 };
+
 const regenerate = (req) =>
   new Promise((resolve, reject) =>
     req.session.regenerate((error) => (error ? reject(error) : resolve()))
   );
+
 const tokenHash = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
+
 const auditMetadata = (req) => ({
   ipAddress: String(req.ip || '').slice(0, 128),
   userAgent: String(req.get?.('user-agent') || '').slice(0, 512),
 });
-const audit = (req, userId, action, before, after) =>
-  AuditLog.create({
+
+const audit = (req, userId, action, before, after) => {
+  logger.info({ event: action, requestId: req.requestId, outcome: 'success' });
+
+  return AuditLog.create({
     actorUserId: userId,
     targetUserId: userId,
     action,
@@ -49,6 +60,7 @@ const audit = (req, userId, action, before, after) =>
     after,
     ...auditMetadata(req),
   });
+};
 
 export async function getAccountSecurity(req, res) {
   res.json({
@@ -95,11 +107,14 @@ export async function changePassword(req, res) {
     changePasswordSchema,
     req.body
   );
+
   const user = await User.findById(req.user.id).select(
     '+passwordHash +sessionVersion'
   );
+
   if (!user || !(await verifyPassword(user.passwordHash, currentPassword)))
     throw fail(400, 'Current password is incorrect');
+
   if (await verifyPassword(user.passwordHash, newPassword))
     throw fail(400, 'New password must be different from the current password');
 
@@ -108,13 +123,17 @@ export async function changePassword(req, res) {
   user.sessionVersion = Number(user.sessionVersion || 0) + 1;
   user.failedLoginAttempts = 0;
   user.lockedUntil = null;
+
   await user.save();
   const oldSessionId = req.sessionID;
   const revoked = await revokeOtherSessions(req, user._id, oldSessionId);
+
   await removeSessionRecord(oldSessionId);
   await regenerate(req);
+
   req.session.userId = String(user._id);
   req.session.sessionVersion = user.sessionVersion;
+
   await registerSession(req, user._id);
   await audit(
     req,
@@ -123,6 +142,7 @@ export async function changePassword(req, res) {
     {},
     { otherSessionsRevoked: revoked }
   );
+
   res.json({ user: toSafeUser(user), otherSessionsRevoked: revoked });
 }
 
@@ -132,28 +152,50 @@ export async function forgotPassword(req, res) {
     emailNormalized: normalizeEmail(email),
     status: 'ACTIVE',
   });
+
+  const config = getConfig();
+  const provider = req.app.locals.emailProvider || createEmailProvider(config);
   let developmentResetToken;
   if (user) {
     const token = crypto.randomBytes(32).toString('base64url');
-    const config = getConfig();
+
     await PasswordResetToken.deleteMany({ userId: user._id, usedAt: null });
     await PasswordResetToken.create({
       userId: user._id,
       tokenHash: tokenHash(token),
       expiresAt: new Date(Date.now() + config.passwordResetTtlMs),
     });
+
     if (config.exposeDevelopmentResetToken) developmentResetToken = token;
+    if (provider.enabled) {
+      const url = new URL(config.resetUrl);
+      url.searchParams.set('token', token);
+      let delivery = req.app.locals.emailDelivery;
+
+      if (!delivery || delivery.provider !== provider)
+        delivery = req.app.locals.emailDelivery = new EmailDelivery(provider);
+
+      delivery.submit(
+        {
+          to: user.email,
+          url: url.toString(),
+          expiresInMinutes: Math.ceil(config.passwordResetTtlMs / 60000),
+        },
+        req.requestId
+      );
+    }
   }
   res.json({
     message:
       'If an active account matches that email, a password reset request has been created.',
-    deliveryConfigured: false,
+    deliveryConfigured: provider.enabled,
     ...(developmentResetToken ? { developmentResetToken } : {}),
   });
 }
 
 export async function resetPassword(req, res) {
   const { token, newPassword } = parse(resetPasswordSchema, req.body);
+
   const reset = await PasswordResetToken.findOneAndUpdate(
     {
       tokenHash: tokenHash(token),
@@ -163,24 +205,30 @@ export async function resetPassword(req, res) {
     { $set: { usedAt: new Date() } },
     { new: true }
   );
+
   if (!reset) throw fail(400, 'Reset link is invalid or has expired');
   const user = await User.findOne({
     _id: reset.userId,
     status: 'ACTIVE',
   }).select('+passwordHash +sessionVersion');
+
   if (!user) throw fail(400, 'Reset link is invalid or has expired');
+
   user.passwordHash = await hashPassword(newPassword);
   user.passwordChangedAt = new Date();
   user.sessionVersion = Number(user.sessionVersion || 0) + 1;
   user.failedLoginAttempts = 0;
   user.lockedUntil = null;
+
   await user.save();
   const revoked = await revokeAllSessions(req, user._id);
+
   if (req.session?.userId) {
     await new Promise((resolve, reject) =>
       req.session.destroy((error) => (error ? reject(error) : resolve()))
     );
   }
+
   await audit(
     req,
     user._id,
@@ -188,6 +236,7 @@ export async function resetPassword(req, res) {
     {},
     { sessionsRevoked: revoked }
   );
+
   res.json({ message: 'Password reset. Sign in with your new password.' });
 }
 

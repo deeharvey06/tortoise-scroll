@@ -96,7 +96,7 @@ npm run install:all
 The first `npm run dev` generates a unique local `SESSION_SECRET` if the copied
 value is blank, too short, or still a placeholder. It preserves every other
 setting in `server/.env` and never prints the secret. Production still requires
-an explicitly configured secret and fails closed when it is unsafe.
+an explicitly configured secret and fails closed when it is unsafe. For deployment configuration, readiness, shared rate limiting, email delivery, and the tested encrypted recovery procedure, see [Production operations](md/PRODUCTION_OPERATIONS.md).
 
 
 ## Reproducible quality baseline

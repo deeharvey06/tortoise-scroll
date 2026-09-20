@@ -1,8 +1,8 @@
 /**
  * Job Queue abstraction layer
  *
- * Supports in-memory queue for development and file-based persistence.
- * Can be upgraded to Bull + Redis for production.
+ * Process-local, in-memory queue with graceful draining; jobs are not durable.
+ * Multi-worker deployments require coordinated routing or a future shared queue.
  *
  * Usage:
  *   jobQueue.register('import-trades', importHandler)
@@ -12,10 +12,12 @@
 
 import { EventEmitter } from 'events';
 import { randomUUID } from 'crypto';
+import logger from '../config/logger.js';
 
-class JobQueue extends EventEmitter {
+export class JobQueue extends EventEmitter {
   constructor() {
     super();
+    this.accepting = true;
     this.handlers = new Map();
     this.jobs = new Map();
     this.queue = [];
@@ -32,6 +34,11 @@ class JobQueue extends EventEmitter {
   }
 
   async enqueue(jobType, payload = {}, userId = null) {
+    if (!this.accepting)
+      throw Object.assign(new Error('Server is shutting down'), {
+        statusCode: 503,
+      });
+
     if (!this.handlers.has(jobType)) {
       throw new Error(`No handler registered for job type: ${jobType}`);
     }
@@ -55,8 +62,12 @@ class JobQueue extends EventEmitter {
     this.queue.push(jobId);
 
     this.emit('job:enqueued', { jobId, jobType });
-    this.process().catch((err) => {
-      console.error('Queue processing error:', err);
+    this.process().catch(() => {
+      logger.error({
+        event: 'QUEUE_PROCESSING_FAILED',
+        component: 'queue',
+        outcome: 'failure',
+      });
     });
 
     return jobId;
@@ -76,6 +87,13 @@ class JobQueue extends EventEmitter {
         this.activeJobs.add(jobId);
         this.executeJob(job).finally(() => {
           this.activeJobs.delete(jobId);
+          this.process().catch(() =>
+            logger.error({
+              event: 'QUEUE_PROCESSING_FAILED',
+              component: 'queue',
+              outcome: 'failure',
+            })
+          );
         });
       }
     } finally {
@@ -105,10 +123,15 @@ class JobQueue extends EventEmitter {
       job.completedAt = new Date();
       this.emit('job:failed', { jobId: job.id, error: error.message });
     }
+  }
 
-    this.process().catch((err) => {
-      console.error('Queue processing error:', err);
-    });
+  async drain() {
+    this.accepting = false;
+    await this.process();
+    while (this.queue.length || this.activeJobs.size) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      await this.process();
+    }
   }
 
   getJobStatus(jobId, userId = undefined) {

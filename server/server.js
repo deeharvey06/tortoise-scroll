@@ -1,50 +1,26 @@
-import { startBrokerSyncScheduler } from './src/services/brokerSyncScheduler.js';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
-dotenv.config({ path: fileURLToPath(new URL('./.env', import.meta.url)) });
 
-import { createApp } from './src/app.js';
-import { connectDB } from './src/config/db.js';
-import { provisionRootUser } from './src/auth/rootProvisioning.js';
-import { getConfig } from './src/config/index.js';
+dotenv.config({
+  path: fileURLToPath(new URL('./.env', import.meta.url)),
+  quiet: true,
+});
 
-async function start() {
-  let config;
-  try {
-    config = getConfig();
-  } catch (err) {
-    console.error('[startup] Invalid server configuration:', err.message);
-    console.error('[startup] For local development, run: npm run dev');
-    process.exit(1);
-  }
+try {
+  const { getConfig } = await import('./src/config/index.js');
+  getConfig(); // Validate before modules create storage directories or clients.
 
-  try {
-    await connectDB();
-  } catch (err) {
-    console.error('[startup] Failed to connect to MongoDB:', err.message);
-    console.error(
-      '[startup] Is MongoDB running? Try: mongod --dbpath <your-db-path>'
-    );
-    process.exit(1);
-  }
+  const { startServer } = await import('./src/operations/startServer.js');
+  await startServer();
+} catch (error) {
+  const { default: logger } = await import('./src/config/logger.js');
 
-  try {
-    await provisionRootUser();
-  } catch (err) {
-    console.error(
-      '[startup] Failed to provision the ROOT account:',
-      err.message
-    );
-    process.exit(1);
-  }
-
-  const app = createApp();
-  startBrokerSyncScheduler();
-  app.listen(config.port, () => {
-    console.log(
-      `[server] Trading journal API listening on http://localhost:${config.port}`
-    );
+  logger.fatal({
+    event: 'STARTUP_FAILED',
+    component: 'startup',
+    code: error.code,
+    outcome: 'failure',
   });
-}
 
-start();
+  process.exitCode = 1;
+}
