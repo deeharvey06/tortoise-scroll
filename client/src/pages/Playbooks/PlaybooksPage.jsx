@@ -26,10 +26,12 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
+import { MethodologyLinks } from '../Knowledge/shared';
 import * as playbookApi from '../../services/playbookService';
 import * as tradeApi from '../../services/tradeService';
 import KpiCard from '../../components/KpiCard';
 import PageHeader from '../../components/PageHeader';
+
 import {
   ConfirmationDialog,
   EmptyState,
@@ -148,7 +150,13 @@ export default function PlaybooksPage() {
 
   const openEdit = (p) => {
     setEditing(p);
-    setForm({ ...p });
+    setForm(
+      Object.fromEntries(
+        Object.entries(p).filter(
+          ([key]) => !['knowledgeIds', 'knowledgeDraftKey'].includes(key)
+        )
+      )
+    );
     setDialogOpen(true);
   };
 
@@ -315,6 +323,8 @@ export default function PlaybooksPage() {
                     </IconButton>
                   </Box>
                 </Box>
+
+                <MethodologyLinks type='playbook' targetId={selected._id} />
 
                 <SectionHeader
                   eyebrow='Performance'
@@ -683,6 +693,20 @@ export default function PlaybooksPage() {
               </Grid>
             ))}
           </Grid>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.isActive !== false}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    isActive: event.target.checked,
+                  }))
+                }
+              />
+            }
+            label='Active — reviewed and ready'
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>

@@ -33,6 +33,7 @@ export const NAVIGATION_GROUPS = [
   {
     label: 'Edge',
     items: [
+      { to: '/knowledge', label: 'Methodology', icon: JournalIcon },
       { to: '/strategies', label: 'Strategies', icon: StrategyIcon },
       { to: '/playbooks', label: 'Playbooks', icon: PlaybookIcon },
       { to: '/reports', label: 'Reports', icon: ReportsIcon },
@@ -73,6 +74,7 @@ export const ROUTE_TITLES = {
   '/accounts': 'Accounts & Instruments',
   '/calendar': 'Calendar',
   '/journal': 'The Scroll',
+  '/knowledge': 'Methodology',
   '/strategies': 'Strategies',
   '/playbooks': 'Playbooks',
   '/reports': 'Reports',

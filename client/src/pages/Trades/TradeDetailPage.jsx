@@ -1,3 +1,4 @@
+import TradeMethodology from '../Knowledge/TradeMethodology';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -38,6 +39,7 @@ import {
   Tag,
   TradeDirection,
 } from '../../components/ui';
+
 import * as tagApi from '../../services/tagService';
 import * as tradeApi from '../../services/tradeService';
 
@@ -50,16 +52,19 @@ const MISTAKES = [
   'Poor Exit',
   'Failed Follow-through',
 ];
+
 const EMOTIONS = ['Calm', 'Confident', 'Fear', 'Frustrated', 'Revenge', 'FOMO'];
 
 const money = (value) =>
   value == null ? '—' : `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
+
 function duration(seconds) {
   if (seconds == null) return '—';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.round((seconds % 3600) / 60);
   return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
+
 function DataPoint({ label, children }) {
   return (
     <Box>
@@ -80,12 +85,14 @@ function DataPoint({ label, children }) {
 export default function TradeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [trade, setTrade] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [allTags, setAllTags] = useState([]);
+
   const [journal, setJournal] = useState({
     notes: '',
     entryReason: '',
@@ -103,6 +110,7 @@ export default function TradeDetailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
       const value = await tradeApi.fetchTrade(id);
       setTrade(value);
@@ -140,9 +148,11 @@ export default function TradeDetailPage() {
 
   const updateJournal = (key, value) =>
     setJournal((current) => ({ ...current, [key]: value }));
+
   const saveJournal = async () => {
     setSaving(true);
     setError(null);
+
     try {
       setTrade(await tradeApi.updateTrade(id, journal));
       setToast('Journal saved');
@@ -154,6 +164,7 @@ export default function TradeDetailPage() {
       setSaving(false);
     }
   };
+
   const upload = async (file) => {
     if (!file) return;
     try {
@@ -166,6 +177,7 @@ export default function TradeDetailPage() {
       );
     }
   };
+
   const caption = async (shotId, value) => {
     try {
       setTrade(await tradeApi.updateScreenshotCaption(id, shotId, value));
@@ -177,6 +189,7 @@ export default function TradeDetailPage() {
       );
     }
   };
+
   const removeShot = async (shotId) => {
     try {
       setTrade(await tradeApi.deleteScreenshot(id, shotId));
@@ -274,6 +287,7 @@ export default function TradeDetailPage() {
 
       <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid item xs={12} lg={8}>
+          <TradeMethodology tradeId={trade._id} />
           <Panel>
             <SectionHeader eyebrow='Execution' title='Order and fill record' />
             <Grid container spacing={3}>

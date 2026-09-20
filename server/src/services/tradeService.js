@@ -1,3 +1,4 @@
+import { guardKnowledgeFields } from './knowledge/integration.js';
 import { computeTradeFinancials } from './calculationsService.js';
 import * as tradeRepository from '../repositories/tradeRepository.js';
 import Account from '../models/Account.js';
@@ -158,6 +159,7 @@ async function withResolvedInstrumentSpecification(input, userId) {
 }
 
 export async function createTrade(input, userId) {
+  guardKnowledgeFields(input);
   await assertOwnedRelationships(userId, input, { requireActiveAccount: true });
   const { userId: _ignored, ...safeInput } = input;
   const enrichedInput = await withResolvedInstrumentSpecification(
@@ -169,6 +171,7 @@ export async function createTrade(input, userId) {
 }
 
 export async function updateTrade(id, input, userId) {
+  guardKnowledgeFields(input);
   const existing = await tradeRepository.findTradeById(id, userId);
   if (!existing) return null;
   await assertOwnedRelationships(userId, input);

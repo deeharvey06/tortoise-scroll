@@ -42,10 +42,20 @@ const playbookSchema = new Schema(
     checklist: { type: [String], default: CHECKLIST_DEFAULTS },
     screenshots: { type: [imageSchema], default: [] },
     isActive: { type: Boolean, default: true },
+    knowledgeIds: [{ type: Schema.Types.ObjectId, ref: 'KnowledgeItem' }],
+    knowledgeDraftKey: String,
   },
   { timestamps: true }
 );
 
 playbookSchema.index({ userId: 1, isActive: 1, setupName: 1 });
+
+playbookSchema.index(
+  { userId: 1, knowledgeDraftKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { knowledgeDraftKey: { $type: 'string' } },
+  }
+);
 
 export default mongoose.model('Playbook', playbookSchema);

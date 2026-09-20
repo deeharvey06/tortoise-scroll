@@ -19,6 +19,7 @@ describe('application navigation', () => {
       '/accounts',
       '/calendar',
       '/journal',
+      '/knowledge',
       '/strategies',
       '/playbooks',
       '/reports',

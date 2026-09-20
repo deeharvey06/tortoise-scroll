@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const journalEntrySchema = new mongoose.Schema(
   {
+    preparation: { type: mongoose.Schema.Types.Mixed, default: undefined },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

@@ -1,3 +1,4 @@
+import { guardKnowledgeFields } from '../services/knowledge/integration.js';
 import Strategy from '../models/Strategy.js';
 import Trade from '../models/Trade.js';
 import { getPerformanceFor } from '../services/performanceService.js';
@@ -26,11 +27,13 @@ export async function getStrategy(req, res) {
 }
 
 export async function createStrategy(req, res) {
+  guardKnowledgeFields(req.body);
   const strategy = await Strategy.create(ownedPayload(req, req.body));
   res.status(201).json(strategy);
 }
 
 export async function updateStrategy(req, res) {
+  guardKnowledgeFields(req.body);
   const strategy = await Strategy.findOneAndUpdate(
     ownedFilter(req, { _id: req.params.id }),
     withoutOwnership(req.body),

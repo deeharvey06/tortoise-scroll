@@ -1,3 +1,6 @@
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import { MethodologyLinks } from '../Knowledge/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
@@ -142,7 +145,13 @@ export default function StrategiesPage() {
 
   const openEdit = (s) => {
     setEditing(s);
-    setForm({ ...s });
+    setForm(
+      Object.fromEntries(
+        Object.entries(s).filter(
+          ([key]) => !['knowledgeIds', 'knowledgeDraftKey'].includes(key)
+        )
+      )
+    );
     setDialogOpen(true);
   };
 
@@ -310,6 +319,8 @@ export default function StrategiesPage() {
                     </IconButton>
                   </Box>
                 </Box>
+
+                <MethodologyLinks type='strategy' targetId={selected._id} />
 
                 <SectionHeader
                   eyebrow='Performance'
@@ -646,6 +657,20 @@ export default function StrategiesPage() {
               </Grid>
             ))}
           </Grid>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={form.isActive !== false}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    isActive: event.target.checked,
+                  }))
+                }
+              />
+            }
+            label='Active — reviewed and ready'
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>

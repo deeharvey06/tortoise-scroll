@@ -1,3 +1,8 @@
+import {
+  KNOWLEDGE_COLLECTIONS,
+  validateKnowledgeBackup,
+  restoredKnowledge,
+} from '../services/knowledge/backup.js';
 import Account from '../models/Account.js';
 import Trade from '../models/Trade.js';
 import Strategy from '../models/Strategy.js';
@@ -22,6 +27,7 @@ const BACKUP_VERSION = 1;
 // references (Trade.accountId, Trade.strategy, etc.) resolve correctly.
 // Each entry maps the backup JSON key to its Mongoose model.
 const COLLECTIONS_IN_ORDER = [
+  ...KNOWLEDGE_COLLECTIONS,
   ['accounts', Account],
   ['instrumentSpecifications', InstrumentSpecification],
   ['strategies', Strategy],
@@ -73,6 +79,7 @@ async function allowedIds(backup, key, Model, userId) {
  * existing records.
  */
 export async function validateBackupRelationships(backup, userId) {
+  await validateKnowledgeBackup(backup.data, userId);
   const allowed = {
     accounts: await allowedIds(backup, 'accounts', Account, userId),
     strategies: await allowedIds(backup, 'strategies', Strategy, userId),
@@ -264,6 +271,7 @@ export async function exportAll(req, res) {
     exportedAt: new Date().toISOString(),
     version: BACKUP_VERSION,
     note:
+      'Restored knowledge requires renewed review. Source originals are in private uploads/knowledge and must be backed up separately. ' +
       'Screenshot/media image files are NOT included in this JSON export — only their metadata (captions, URLs). ' +
       'Back up the server/uploads folder separately to preserve the actual image files. ' +
       'The OpenAI API key (if any) is redacted and must be re-entered after restore.',
@@ -297,7 +305,7 @@ export async function importAll(req, res) {
       if (docs.length > 0) {
         await Model.insertMany(
           docs.map(({ userId: _ignored, ...doc }) => ({
-            ...doc,
+            ...restoredKnowledge(key, doc),
             userId: req.user.id,
           })),
           { ordered: false }

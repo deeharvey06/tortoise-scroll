@@ -36,6 +36,7 @@ const TradesPage = lazy(() => import('./pages/Trades/TradesPage'));
 const AccountsPage = lazy(() => import('./pages/Accounts/AccountsPage'));
 const TradeDetailPage = lazy(() => import('./pages/Trades/TradeDetailPage'));
 const CalendarPage = lazy(() => import('./pages/Calendar/CalendarPage'));
+const KnowledgePage = lazy(() => import('./pages/Knowledge/KnowledgePage'));
 const JournalPage = lazy(() => import('./pages/Journal/JournalPage'));
 const StrategiesPage = lazy(() => import('./pages/Strategies/StrategiesPage'));
 const PlaybooksPage = lazy(() => import('./pages/Playbooks/PlaybooksPage'));
@@ -126,6 +127,7 @@ export function createRouter() {
         { path: 'trades/:id', element: withSuspense(TradeDetailPage) },
         { path: 'calendar', element: withSuspense(CalendarPage) },
         { path: 'journal', element: withSuspense(JournalPage) },
+        { path: 'knowledge', element: withSuspense(KnowledgePage) },
         { path: 'strategies', element: withSuspense(StrategiesPage) },
         { path: 'playbooks', element: withSuspense(PlaybooksPage) },
         { path: 'reports', element: withSuspense(ReportsPage) },

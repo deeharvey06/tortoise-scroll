@@ -1,3 +1,4 @@
+import knowledgeRoutes from './routes/knowledgeRoutes.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -225,6 +226,7 @@ export function createApp(options = {}) {
   app.use('/api/accounts', requireAuth, accountRoutes);
   app.use('/api/import', requireAuth, importRoutes);
   app.use('/api/journal', requireAuth, journalRoutes);
+  app.use('/api/knowledge', requireAuth, knowledgeRoutes);
   app.use('/api/tags', requireAuth, tagRoutes);
   app.use('/api/analytics', requireAuth, analyticsRoutes);
   app.use('/api/reports', requireAuth, reportsRoutes);
