@@ -4,7 +4,9 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsRoot = path.join(__dirname, '..', '..', 'uploads');
+const uploadsRoot =
+  process.env.UPLOADS_DIR || path.join(__dirname, '..', '..', 'uploads');
+
 const screenshotsDir = path.join(uploadsRoot, 'screenshots');
 const mediaDir = path.join(uploadsRoot, 'media');
 

@@ -1,3 +1,4 @@
+import logger from '../config/logger.js';
 import { Router } from 'express';
 import asyncHandler from '../middleware/asyncHandler.js';
 import User, { normalizeEmail, toSafeUser } from '../models/User.js';
@@ -92,6 +93,11 @@ router.post(
       password
     );
     if (!user || !passwordIsValid || isLocked) {
+      logger.warn({
+        event: 'LOGIN_REJECTED',
+        requestId: req.requestId,
+        outcome: 'rejected',
+      });
       if (user) {
         if (!isLocked) {
           user.failedLoginAttempts = Number(user.failedLoginAttempts || 0) + 1;
@@ -132,6 +138,11 @@ router.post(
     user.lockedUntil = null;
     await user.save();
     await loginAudit(req, user, 'LOGIN_SUCCEEDED', 'PASSWORD_AUTHENTICATION');
+    logger.info({
+      event: 'LOGIN_SUCCEEDED',
+      requestId: req.requestId,
+      outcome: 'success',
+    });
     res.json({ user: toSafeUser(user) });
   })
 );

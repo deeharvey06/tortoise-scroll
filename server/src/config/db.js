@@ -1,3 +1,4 @@
+import logger from './logger.js';
 import mongoose from 'mongoose';
 import { getConfig } from './index.js';
 
@@ -10,15 +11,23 @@ export async function connectDB() {
   const { mongoUri } = getConfig();
 
   mongoose.connection.on('connected', () => {
-    console.log(`[db] Connected to MongoDB at ${mongoUri}`);
+    logger.info({
+      event: 'DATABASE_CONNECTED',
+      component: 'database',
+      outcome: 'success',
+    });
   });
 
-  mongoose.connection.on('error', (err) => {
-    console.error('[db] MongoDB connection error:', err.message);
+  mongoose.connection.on('error', () => {
+    logger.error({
+      event: 'DATABASE_ERROR',
+      component: 'database',
+      outcome: 'failure',
+    });
   });
 
   mongoose.connection.on('disconnected', () => {
-    console.warn('[db] MongoDB disconnected');
+    logger.warn({ event: 'DATABASE_DISCONNECTED', component: 'database' });
   });
 
   await mongoose.connect(mongoUri, {

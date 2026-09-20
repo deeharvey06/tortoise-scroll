@@ -340,6 +340,8 @@ export async function importAll(req, res) {
   }
 
   const failed = report.filter((r) => r.error);
+  res.locals ||= {};
+  res.locals.backupFailed = failed.length > 0;
   res.json({
     success: failed.length === 0,
     report,

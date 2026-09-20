@@ -1,3 +1,4 @@
+import { operationsConfig } from './operations.js';
 const integer = (
   name,
   fallback,
@@ -9,8 +10,11 @@ const integer = (
   return value;
 };
 
-export function getConfig() {
+function buildConfig() {
   const nodeEnv = process.env.NODE_ENV || 'development';
+  if (!['development', 'test', 'production'].includes(nodeEnv))
+    throw Object.assign(new Error('Invalid NODE_ENV'), { code: 'NODE_ENV' });
+
   const allowedOrigins = String(
     process.env.ALLOWED_ORIGINS ||
       process.env.CLIENT_ORIGIN ||
@@ -22,7 +26,7 @@ export function getConfig() {
 
   const sessionSecret = process.env.SESSION_SECRET || '';
   const config = {
-    port: Number(process.env.PORT || 5050),
+    port: integer('PORT', 5050, { max: 65535 }),
     mongoUri:
       process.env.MONGO_URI || 'mongodb://localhost:27017/trading-journal',
     clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
@@ -66,41 +70,56 @@ export function getConfig() {
       nodeEnv !== 'production' &&
       process.env.PASSWORD_RESET_DEV_EXPOSE_TOKEN === 'true',
   };
+
   if (nodeEnv !== 'test') {
     if (
       sessionSecret.length < 32 ||
-      /replace-with|change-me|example/i.test(sessionSecret)
+      /replace-with|change-me|example|placeholder|test.only|dev.only|changeme|default.secret/i.test(
+        sessionSecret
+      ) ||
+      new Set(sessionSecret).size < 8
     )
       throw new Error(
         'SESSION_SECRET must be a non-placeholder value containing at least 32 characters'
       );
+
     if (!allowedOrigins.length)
       throw new Error(
         'ALLOWED_ORIGINS must contain at least one trusted frontend origin'
       );
+
     for (const origin of allowedOrigins) {
       let parsed;
       try {
         parsed = new URL(origin);
       } catch {
-        throw new Error(
-          `ALLOWED_ORIGINS contains an invalid origin: ${origin}`
-        );
+        throw new Error('ALLOWED_ORIGINS contains an invalid origin');
       }
       if (
         parsed.origin !== origin ||
         !['http:', 'https:'].includes(parsed.protocol)
       )
-        throw new Error(
-          `ALLOWED_ORIGINS must contain exact HTTP(S) origins: ${origin}`
-        );
+        throw new Error('ALLOWED_ORIGINS must contain exact HTTP(S) origins');
+
       if (nodeEnv === 'production' && parsed.protocol !== 'https:')
         throw new Error('Production ALLOWED_ORIGINS entries must use HTTPS');
     }
   }
   if (nodeEnv === 'production' && !config.csrfProtectionEnabled)
     throw new Error('CSRF protection cannot be disabled in production');
-  return config;
+
+  return { ...config, ...operationsConfig(config) };
+}
+
+export function getConfig() {
+  try {
+    return buildConfig();
+  } catch (error) {
+    error.code ||=
+      error.message.match(/\b[A-Z][A-Z_]{2,}\b/)?.[0] ||
+      'CONFIGURATION_INVALID';
+    throw error;
+  }
 }
 
 export default getConfig;

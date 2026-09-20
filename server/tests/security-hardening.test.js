@@ -1,13 +1,29 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
+import { MemoryStore as RateLimitMemoryStore } from 'express-rate-limit';
 import session from 'express-session';
 import request from 'supertest';
 
 process.env.NODE_ENV = 'production';
+delete process.env.DEBUG;
+delete process.env.NODE_DEBUG;
+delete process.env.NODE_DEBUG_NATIVE;
 process.env.SESSION_SECRET =
   'production-test-secret-that-is-at-least-32-characters';
 process.env.ALLOWED_ORIGINS = 'https://journal.example.test';
+process.env.CLIENT_ORIGIN = 'https://journal.example.test';
+process.env.MONGO_URI =
+  'mongodb://ops:strong-database-password@127.0.0.1/security-test?tls=true';
+process.env.PASSWORD_RESET_URL = 'https://journal.example.test/reset-password';
+process.env.EMAIL_PROVIDER = 'smtp';
+process.env.EMAIL_FROM = 'reset@journal.test';
+process.env.SMTP_HOST = 'smtp.journal.test';
+process.env.SMTP_USER = 'journal';
+process.env.SMTP_PASSWORD = 'strong-smtp-password-value';
+process.env.TRUST_PROXY = 'loopback';
+process.env.UPLOADS_DIR = '/tmp/tortoise-security-test-uploads';
+process.env.UPLOADS_STORAGE_MODE = 'local';
 process.env.AUTH_RATE_LIMIT_MAX = '2';
 process.env.PASSWORD_RESET_RATE_LIMIT_MAX = '2';
 
@@ -20,6 +36,7 @@ before(async () => {
   const { createApp } = await import('../src/app.js');
   app = createApp({
     sessionStore: new session.MemoryStore(),
+    rateLimitStoreFactory: () => new RateLimitMemoryStore(),
     enforceCsrf: true,
     enforceRateLimit: true,
   });

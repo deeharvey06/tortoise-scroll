@@ -1,40 +1,49 @@
+import logger from '../config/logger.js';
 import User, { normalizeEmail } from '../models/User.js';
 import { hashPassword } from './passwords.js';
 
 export async function provisionRootUser() {
   const emailNormalized = normalizeEmail(process.env.ROOT_USER_EMAIL);
   if (!emailNormalized) return null;
+
   const otherRoot = await User.findOne({
     role: 'ROOT',
     emailNormalized: { $ne: emailNormalized },
   });
+
   if (otherRoot)
     throw new Error('ROOT_USER_EMAIL conflicts with an existing ROOT account');
+
   let user = await User.findOne({ emailNormalized }).select('+passwordHash');
   if (user) {
     if (user.role !== 'ROOT')
       throw new Error(
         'ROOT_USER_EMAIL belongs to a non-ROOT account; refusing promotion'
       );
+
     if (user.status !== 'ACTIVE')
       throw new Error('Configured ROOT account must be ACTIVE');
+
     if (process.env.ROOT_USER_INITIAL_PASSWORD)
-      console.warn(
-        '[startup] ROOT_USER_INITIAL_PASSWORD is still configured; remove it after initial provisioning'
-      );
+      logger.warn({
+        event: 'ROOT_BOOTSTRAP_SECRET_STILL_CONFIGURED',
+        component: 'startup',
+      });
+
     return user;
   }
+
   const bootstrapPassword = process.env.ROOT_USER_INITIAL_PASSWORD;
   if (!bootstrapPassword) {
-    console.warn(
-      '[startup] ROOT user does not exist; set ROOT_USER_INITIAL_PASSWORD once to provision it'
-    );
+    logger.warn({ event: 'ROOT_BOOTSTRAP_REQUIRED', component: 'startup' });
     return null;
   }
+
   if (bootstrapPassword.length < 12)
     throw new Error(
       'ROOT_USER_INITIAL_PASSWORD must be at least 12 characters'
     );
+
   user = await User.create({
     email: emailNormalized,
     emailNormalized,
@@ -43,6 +52,8 @@ export async function provisionRootUser() {
     role: 'ROOT',
     status: 'ACTIVE',
   });
+
   return user;
 }
+
 export default provisionRootUser;

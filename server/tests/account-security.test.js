@@ -19,10 +19,12 @@ const sessions = new Map();
 const resets = new Map();
 const audits = [];
 const originals = [];
+
 const stub = (object, key, value) => {
   originals.push([object, key, object[key]]);
   object[key] = value;
 };
+
 const query = (value) => ({
   select() {
     return this;
@@ -44,6 +46,7 @@ const query = (value) => ({
         : value,
   then: (resolve, reject) => Promise.resolve(value).then(resolve, reject),
 });
+
 const same = (a, b) => String(a) === String(b);
 
 before(async () => {
@@ -57,6 +60,7 @@ before(async () => {
   stub(User, 'exists', async ({ emailNormalized }) =>
     users.has(emailNormalized)
   );
+
   stub(User, 'create', async (data) => {
     const user = {
       ...data,
@@ -71,9 +75,11 @@ before(async () => {
     users.set(user.emailNormalized, user);
     return user;
   });
+
   stub(User, 'findById', (id) =>
     query([...users.values()].find((user) => same(user._id, id)) || null)
   );
+
   stub(User, 'findOne', (filter) =>
     query(
       [...users.values()].find(
@@ -90,16 +96,19 @@ before(async () => {
     let record = [...sessions.values()].find(
       (item) => item.sessionId === filter.sessionId
     );
+
     if (!record)
       record = {
         _id: new mongoose.Types.ObjectId(),
         sessionId: filter.sessionId,
         ...update.$setOnInsert,
       };
+
     Object.assign(record, update.$set);
     sessions.set(record.sessionId, record);
     return record;
   });
+
   stub(SessionRecord, 'find', (filter) =>
     query(
       [...sessions.values()].filter(
@@ -110,6 +119,7 @@ before(async () => {
       )
     )
   );
+
   stub(SessionRecord, 'findOne', (filter) =>
     query(
       [...sessions.values()].find(
@@ -117,6 +127,7 @@ before(async () => {
       ) || null
     )
   );
+
   stub(SessionRecord, 'deleteOne', async (filter) => {
     const record = [...sessions.values()].find(
       (item) =>
@@ -128,6 +139,7 @@ before(async () => {
     if (record) sessions.delete(record.sessionId);
     return { deletedCount: record ? 1 : 0 };
   });
+
   stub(SessionRecord, 'deleteMany', async (filter) => {
     let count = 0;
     for (const record of [...sessions.values()])
@@ -146,11 +158,13 @@ before(async () => {
       if (same(token.userId, filter.userId) && token.usedAt == null)
         resets.delete(hash);
   });
+
   stub(PasswordResetToken, 'create', async (data) => {
     const token = { ...data, _id: new mongoose.Types.ObjectId(), usedAt: null };
     resets.set(data.tokenHash, token);
     return token;
   });
+
   stub(PasswordResetToken, 'findOneAndUpdate', async (filter, update) => {
     const token = resets.get(filter.tokenHash);
     if (!token || token.usedAt || token.expiresAt <= filter.expiresAt.$gt)
@@ -158,6 +172,7 @@ before(async () => {
     Object.assign(token, update.$set);
     return token;
   });
+
   stub(AuditLog, 'create', async (data) => {
     audits.push(data);
     return data;
@@ -167,8 +182,10 @@ before(async () => {
   const securityRoutes = (
     await import('../src/routes/accountSecurityRoutes.js')
   ).default;
+
   const { requireAuth } = await import('../src/middleware/auth.js');
   const { errorHandler } = await import('../src/middleware/errorHandler.js');
+
   app = express();
   app.use(express.json());
   app.use(
@@ -181,6 +198,7 @@ before(async () => {
       cookie: { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 1000 },
     })
   );
+
   app.locals.sessionCookieName = 'tortoise.sid';
   app.locals.sessionCookieOptions = {
     httpOnly: true,
@@ -188,6 +206,7 @@ before(async () => {
     maxAge: 60 * 60 * 1000,
     path: '/',
   };
+
   app.use('/api/auth', authRoutes);
   app.use('/api/account-security', requireAuth, securityRoutes);
   app.use(errorHandler);
@@ -199,6 +218,7 @@ before(async () => {
 after(() => {
   for (const [object, key, value] of originals.reverse()) object[key] = value;
 });
+
 beforeEach(() => {
   users.clear();
   sessions.clear();
@@ -222,27 +242,34 @@ test('individual session revocation and logout-others invalidate server sessions
   const first = request.agent(app);
   const second = request.agent(app);
   const third = request.agent(app);
+
   await registerAndLogin(first);
   await registerAndLogin(second);
   await registerAndLogin(third);
+
   const active = await first.get('/api/account-security/sessions');
+
   assert.equal(active.status, 200);
   assert.equal(active.body.sessions.length, 3);
+
   const secondRecord = active.body.sessions.find((item) => !item.current);
   assert.equal(
     (await first.delete(`/api/account-security/sessions/${secondRecord.id}`))
       .status,
     204
   );
+
   const statuses = [
     (await second.get('/api/auth/me')).status,
     (await third.get('/api/auth/me')).status,
   ];
+
   assert.ok(statuses.includes(401));
   assert.ok(statuses.includes(200));
   const logoutOthers = await first.post(
     '/api/account-security/sessions/logout-others'
   );
+
   assert.equal(logoutOthers.status, 200);
   assert.equal(logoutOthers.body.revoked, 1);
   assert.equal((await first.get('/api/auth/me')).status, 200);
@@ -365,4 +392,38 @@ test('password change rejects password reuse and records security audit events w
   const serialized = JSON.stringify(audits);
   assert.ok(audits.some((event) => event.action === 'OTHER_SESSIONS_REVOKED'));
   assert.equal(serialized.includes('original-password-123'), false);
+});
+
+test('reset delivery failures preserve non-enumerating responses and never expose the token', async () => {
+  const agent = request.agent(app);
+  await registerAndLogin(agent);
+  const original = process.env.PASSWORD_RESET_DEV_EXPOSE_TOKEN;
+  process.env.PASSWORD_RESET_DEV_EXPOSE_TOKEN = 'false';
+  let message;
+  app.locals.emailProvider = {
+    enabled: true,
+    async sendPasswordReset(value) {
+      message = value;
+      throw new Error('provider secret response');
+    },
+  };
+  try {
+    const known = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'trader@example.test' });
+    const unknown = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'missing@example.test' });
+    assert.equal(known.status, 200);
+    assert.deepEqual(known.body, unknown.body);
+    assert.equal(known.body.deliveryConfigured, true);
+    assert.equal(known.body.developmentResetToken, undefined);
+    assert.ok(new URL(message.url).searchParams.get('token'));
+    assert.ok(!JSON.stringify(known.body).includes('provider secret'));
+  } finally {
+    delete app.locals.emailProvider;
+    if (original === undefined)
+      delete process.env.PASSWORD_RESET_DEV_EXPOSE_TOKEN;
+    else process.env.PASSWORD_RESET_DEV_EXPOSE_TOKEN = original;
+  }
 });

@@ -1,9 +1,8 @@
-import knowledgeRoutes from './routes/knowledgeRoutes.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import morgan from 'morgan';
+import logger from './config/logger.js';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
 
@@ -31,20 +30,30 @@ import adminRoutes from './routes/adminRoutes.js';
 import accountSecurityRoutes from './routes/accountSecurityRoutes.js';
 import brokerConnectionRoutes from './routes/brokerConnectionRoutes.js';
 import instrumentSpecificationRoutes from './routes/instrumentSpecificationRoutes.js';
+import knowledgeRoutes from './routes/knowledgeRoutes.js';
+
 import { registerBrokerProvider } from './services/brokers/providerRegistry.js';
 import { thinkorswimProvider } from './services/brokers/thinkorswimProvider.js';
+
 import { jobQueue } from './queue/jobQueue.js';
 import * as jobHandlers from './queue/handlers.js';
+
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { uploadsRootPath } from './middleware/upload.js';
 import { requireAuth } from './middleware/auth.js';
 import requestLogger from './middleware/requestLogger.js';
 import csrfProtection from './middleware/csrfProtection.js';
 import inputSafety from './middleware/inputSafety.js';
+
 import { getConfig } from './config/index.js';
 import Trade from './models/Trade.js';
 import Strategy from './models/Strategy.js';
 import Playbook from './models/Playbook.js';
+
+import { EmailDelivery } from './services/email/delivery.js';
+import { createEmailProvider } from './services/email/index.js';
+import { createRateLimitStore } from './operations/rateLimitStore.js';
+import { createReadiness } from './operations/health.js';
 
 // Register job handlers
 jobQueue.register('import-trades', jobHandlers.handleTradeImport);
@@ -52,6 +61,7 @@ jobQueue.register(
   'performance-analysis',
   jobHandlers.handlePerformanceAnalysis
 );
+
 jobQueue.register('risk-assessment', jobHandlers.handleRiskAssessment);
 jobQueue.register('auto-tagger', jobHandlers.handleAutoTagger);
 
@@ -75,7 +85,15 @@ export function createApp(options = {}) {
     path: '/',
   };
 
-  if (config.nodeEnv === 'production') app.set('trust proxy', 1);
+  app.set('trust proxy', config.trustProxy);
+  app.locals.operationsState = options.operationsState || { draining: false };
+  app.locals.emailProvider =
+    options.emailProvider || createEmailProvider(config);
+
+  app.locals.emailDelivery = new EmailDelivery(app.locals.emailProvider);
+
+  const rateStore = (name) =>
+    options.rateLimitStoreFactory?.(name) || createRateLimitStore(config, name);
 
   app.use(requestLogger);
   app.use(
@@ -90,6 +108,7 @@ export function createApp(options = {}) {
       origin(origin, callback) {
         if (!origin || config.allowedOrigins.includes(origin))
           return callback(null, true);
+
         return callback(
           Object.assign(new Error('CORS origin denied'), {
             statusCode: 403,
@@ -103,6 +122,7 @@ export function createApp(options = {}) {
       allowedHeaders: ['Content-Type', 'X-CSRF-Protection', 'X-Request-Id'],
       exposedHeaders: [
         'X-Request-Id',
+        'X-Error-Id',
         'RateLimit',
         'RateLimit-Policy',
         'Retry-After',
@@ -111,11 +131,58 @@ export function createApp(options = {}) {
     })
   );
 
+  // Probes must work without a session or a rate-limit database round trip.
+  const readiness = createReadiness({
+    state: app.locals.operationsState,
+    storageRoot: uploadsRootPath,
+    email: app.locals.emailProvider,
+    ...options.healthChecks,
+  });
+
+  app.get('/api/health', (_req, res) =>
+    res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  );
+
+  app.get('/api/ready', async (_req, res, next) => {
+    try {
+      const result = await readiness();
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(result.status === 'ready' ? 200 : 503).json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.use((_req, res, next) => {
+    if (app.locals.operationsState.draining)
+      return res
+        .status(503)
+        .json({ error: { message: 'Server is shutting down' } });
+    return next();
+  });
+
   app.use(
     '/api',
     csrfProtection({
       allowedOrigins: config.allowedOrigins,
       enforce: options.enforceCsrf ?? config.csrfProtectionEnabled,
+    })
+  );
+
+  const sessionStore =
+    options.sessionStore ||
+    MongoStore.create({
+      mongoUrl: config.mongoUri,
+      ttl: Math.ceil(config.sessionTtlMs / 1000),
+      touchAfter: 300,
+    });
+
+  app.locals.sessionStore = sessionStore;
+  sessionStore.on?.('error', () =>
+    logger.error({
+      event: 'SESSION_STORE_FAILED',
+      component: 'database',
+      outcome: 'failure',
     })
   );
 
@@ -127,13 +194,7 @@ export function createApp(options = {}) {
       resave: false,
       saveUninitialized: false,
       rolling: true,
-      store:
-        options.sessionStore ||
-        MongoStore.create({
-          mongoUrl: config.mongoUri,
-          ttl: Math.ceil(config.sessionTtlMs / 1000),
-          touchAfter: 300,
-        }),
+      store: sessionStore,
       cookie: sessionCookieOptions,
     })
   );
@@ -142,6 +203,7 @@ export function createApp(options = {}) {
   app.locals.sessionCookieOptions = sessionCookieOptions;
 
   const loginLimiter = rateLimit({
+    store: rateStore('login'),
     windowMs: config.authRateLimitWindowMs,
     max: config.authRateLimitMax,
     standardHeaders: true,
@@ -161,6 +223,7 @@ export function createApp(options = {}) {
   });
 
   const resetLimiter = rateLimit({
+    store: rateStore('reset'),
     windowMs: config.authRateLimitWindowMs,
     max: config.passwordResetRateLimitMax,
     standardHeaders: true,
@@ -180,6 +243,7 @@ export function createApp(options = {}) {
   });
 
   const apiLimiter = rateLimit({
+    store: rateStore('api'),
     windowMs: 60 * 1000,
     max: 300,
     standardHeaders: true,
@@ -206,16 +270,8 @@ export function createApp(options = {}) {
 
   app.use('/api', inputSafety);
 
-  if (process.env.NODE_ENV !== 'test') {
-    app.use(morgan('dev'));
-  }
-
-  // Export the job queue for testing and direct access
+  // Export the job queue for testing and direct access.
   app.locals.jobQueue = jobQueue;
-
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
 
   app.use('/api/auth', authRoutes);
 
@@ -239,12 +295,14 @@ export function createApp(options = {}) {
     requireAuth,
     createReplayRunRouter(options.replayService)
   );
+
   app.use('/api/backtest', requireAuth, backtestRoutes);
   app.use(
     '/api/market-data',
     requireAuth,
     createMarketDataRouter(options.marketDataService)
   );
+
   app.use('/api/ai', requireAuth, aiRoutes);
   app.use('/api/agents', requireAuth, agentsRoutes);
   app.use('/api/backup', requireAuth, backupRoutes);
@@ -272,6 +330,7 @@ export function createApp(options = {}) {
           return res
             .status(404)
             .json({ error: { message: 'Screenshot not found' } });
+
         return res.sendFile(req.params.filename, {
           root: `${uploadsRootPath}/screenshots`,
         });
@@ -288,8 +347,10 @@ export function createApp(options = {}) {
         Strategy.exists({ userId: req.user.id, 'screenshots.url': url }),
         Playbook.exists({ userId: req.user.id, 'screenshots.url': url }),
       ]);
+
       if (!owned.some(Boolean))
         return res.status(404).json({ error: { message: 'Media not found' } });
+
       return res.sendFile(req.params.filename, {
         root: `${uploadsRootPath}/media`,
       });
