@@ -118,3 +118,11 @@ export default {
   bulkTagHandler,
   exportTradesCsv,
 };
+
+export async function bulkEditHandler(req, res) {
+  const result = await tradeService.bulkEditTrades(req.body, req.user.id);
+  res.json({
+    matchedCount: result.matchedCount,
+    modifiedCount: result.modifiedCount,
+  });
+}

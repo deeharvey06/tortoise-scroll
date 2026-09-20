@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 
 import Box from '@mui/material/Box';
@@ -123,6 +124,34 @@ export default function JournalPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const [searchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+  useEffect(() => {
+    if (!focusId) return;
+    let active = true;
+    journalApi
+      .fetchEntry(focusId)
+      .then((entry) => {
+        if (!active) return;
+        setEditingEntry(entry);
+        setForm({
+          type: entry.type,
+          title: entry.title || '',
+          date: format(new Date(entry.date), 'yyyy-MM-dd'),
+          content: entry.content || '',
+          preparation: entry.preparation,
+        });
+        setTemplateValues({});
+        setDialogOpen(true);
+      })
+      .catch(() => {
+        if (active) setError('Selected Scroll entry is unavailable.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [focusId]);
 
   const templateFieldsFor = (type) => {
     if (type === 'pre-market') return PRE_MARKET_FIELDS;

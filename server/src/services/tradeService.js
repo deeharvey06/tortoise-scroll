@@ -1,3 +1,5 @@
+import Trade from '../models/Trade.js';
+import { bulkEditSchema, parseInput } from '../schemas/workspace.schema.js';
 import { guardKnowledgeFields } from './knowledge/integration.js';
 import { computeTradeFinancials } from './calculationsService.js';
 import * as tradeRepository from '../repositories/tradeRepository.js';
@@ -29,8 +31,17 @@ export function buildTradeQuery({
   dateFrom,
   dateTo,
   search,
+  followedPlan,
+  outcome,
 }) {
   const query = userId ? { userId } : {};
+  if (followedPlan === 'true' || followedPlan === true)
+    query.followedPlan = true;
+  if (followedPlan === 'false' || followedPlan === false)
+    query.followedPlan = false;
+  if (outcome === 'win') query.netPnL = { $gt: 0 };
+  if (outcome === 'loss') query.netPnL = { $lt: 0 };
+  if (outcome === 'breakeven') query.netPnL = 0;
   if (accountId) query.accountId = accountId;
   if (symbol) query.symbol = symbol.toUpperCase();
   if (strategy) query.strategy = strategy;
@@ -70,6 +81,8 @@ export async function listTrades(
     dateFrom,
     dateTo,
     search,
+    followedPlan,
+    outcome,
     sortBy = 'entryTime',
     sortDir = 'desc',
   } = {}
@@ -88,6 +101,8 @@ export async function listTrades(
       dateFrom,
       dateTo,
       search,
+      followedPlan,
+      outcome,
     }),
   };
 
@@ -113,7 +128,29 @@ export async function listTrades(
 }
 
 export async function getTradeById(id, userId) {
-  return tradeRepository.findTradeById(id, userId);
+  const trade = await tradeRepository.findTradeById(id, userId);
+  if (!trade) return null;
+  const [account, strategy, playbook] = await Promise.all([
+    trade.accountId
+      ? Account.findOne({ _id: trade.accountId, userId }).select('name').lean()
+      : null,
+    trade.strategy
+      ? Strategy.findOne({ _id: trade.strategy, userId }).select('name').lean()
+      : null,
+    trade.playbook
+      ? Playbook.findOne({ _id: trade.playbook, userId })
+          .select('setupName')
+          .lean()
+      : null,
+  ]);
+  return {
+    ...trade,
+    labels: {
+      account: account?.name || null,
+      strategy: strategy?.name || null,
+      playbook: playbook?.setupName || null,
+    },
+  };
 }
 
 async function assertOwnedRelationships(
@@ -218,3 +255,22 @@ export default {
   bulkTagTrades,
   exportTrades,
 };
+
+export async function bulkEditTrades(input, userId) {
+  const { ids, changes } = parseInput(bulkEditSchema, input);
+  const unique = [...new Set(ids)];
+  await assertOwnedRelationships(userId, changes);
+  if (
+    (await Trade.countDocuments({ _id: { $in: unique }, userId })) !==
+    unique.length
+  )
+    throw Object.assign(new Error('One or more trades are unavailable'), {
+      statusCode: 404,
+    });
+  // Classification only: do not recompute or overwrite financial/execution fields.
+  return Trade.updateMany(
+    { _id: { $in: unique }, userId },
+    { $set: changes },
+    { runValidators: true }
+  );
+}

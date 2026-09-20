@@ -3,6 +3,8 @@ import { getScalableAnalytics } from '../services/analytics/scalable.js';
 
 function extractFilters(req) {
   const {
+    followedPlan,
+    outcome,
     accountId,
     symbol,
     strategy,
@@ -15,6 +17,8 @@ function extractFilters(req) {
   } = req.query;
   return {
     userId: req.user.id,
+    followedPlan,
+    outcome,
     accountId,
     symbol,
     strategy,

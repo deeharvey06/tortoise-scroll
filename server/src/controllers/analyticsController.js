@@ -8,6 +8,8 @@ import * as analyticsService from '../services/analyticsService.js';
  */
 function extractFilters(req) {
   const {
+    followedPlan,
+    outcome,
     accountId,
     symbol,
     strategy,
@@ -20,6 +22,8 @@ function extractFilters(req) {
   } = req.query;
   return {
     userId: req.user.id,
+    followedPlan,
+    outcome,
     accountId,
     symbol,
     strategy,

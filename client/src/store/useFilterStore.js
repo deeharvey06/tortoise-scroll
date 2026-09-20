@@ -56,6 +56,9 @@ export function resolveDateRange(preset, customFrom, customTo) {
 }
 
 export const useFilterStore = create((set) => ({
+  filtersTouched: false,
+  followedPlan: '',
+  outcome: '',
   datePreset: 'allTime',
   customFrom: null,
   customTo: null,
@@ -67,18 +70,21 @@ export const useFilterStore = create((set) => ({
   session: '',
   tags: [],
 
-  setDatePreset: (datePreset) => set({ datePreset }),
+  setDatePreset: (datePreset) => set({ datePreset, filtersTouched: true }),
   setCustomRange: (customFrom, customTo) =>
-    set({ customFrom, customTo, datePreset: 'custom' }),
-  setAccountId: (accountId) => set({ accountId }),
-  setSymbol: (symbol) => set({ symbol }),
-  setStrategy: (strategy) => set({ strategy }),
-  setSetup: (setup) => set({ setup }),
-  setDirection: (direction) => set({ direction }),
-  setSession: (session) => set({ session }),
-  setTags: (tags) => set({ tags }),
+    set({ customFrom, customTo, datePreset: 'custom', filtersTouched: true }),
+  setAccountId: (accountId) => set({ accountId, filtersTouched: true }),
+  setSymbol: (symbol) => set({ symbol, filtersTouched: true }),
+  setStrategy: (strategy) => set({ strategy, filtersTouched: true }),
+  setSetup: (setup) => set({ setup, filtersTouched: true }),
+  setDirection: (direction) => set({ direction, filtersTouched: true }),
+  setSession: (session) => set({ session, filtersTouched: true }),
+  setTags: (tags) => set({ tags, filtersTouched: true }),
   reset: () =>
     set({
+      filtersTouched: true,
+      followedPlan: '',
+      outcome: '',
       datePreset: 'allTime',
       customFrom: null,
       customTo: null,
@@ -101,6 +107,8 @@ export function useFilterParams() {
     state.customTo
   );
   const params = {};
+  if (state.followedPlan) params.followedPlan = state.followedPlan;
+  if (state.outcome) params.outcome = state.outcome;
   if (state.accountId) params.accountId = state.accountId;
   if (state.symbol) params.symbol = state.symbol;
   if (state.strategy) params.strategy = state.strategy;

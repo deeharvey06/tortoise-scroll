@@ -154,7 +154,8 @@ export default function TradeDetailPage() {
     setError(null);
 
     try {
-      setTrade(await tradeApi.updateTrade(id, journal));
+      const updated = await tradeApi.updateTrade(id, journal);
+      setTrade((previous) => ({ ...updated, labels: previous?.labels }));
       setToast('Journal saved');
     } catch (err) {
       setError(
@@ -168,7 +169,8 @@ export default function TradeDetailPage() {
   const upload = async (file) => {
     if (!file) return;
     try {
-      setTrade(await tradeApi.uploadScreenshot(id, file));
+      const updated = await tradeApi.uploadScreenshot(id, file);
+      setTrade((previous) => ({ ...updated, labels: previous?.labels }));
     } catch (err) {
       setError(
         err.response?.data?.error?.message ||
@@ -180,7 +182,8 @@ export default function TradeDetailPage() {
 
   const caption = async (shotId, value) => {
     try {
-      setTrade(await tradeApi.updateScreenshotCaption(id, shotId, value));
+      const updated = await tradeApi.updateScreenshotCaption(id, shotId, value);
+      setTrade((previous) => ({ ...updated, labels: previous?.labels }));
     } catch (err) {
       setError(
         err.response?.data?.error?.message ||
@@ -192,7 +195,8 @@ export default function TradeDetailPage() {
 
   const removeShot = async (shotId) => {
     try {
-      setTrade(await tradeApi.deleteScreenshot(id, shotId));
+      const updated = await tradeApi.deleteScreenshot(id, shotId);
+      setTrade((previous) => ({ ...updated, labels: previous?.labels }));
     } catch (err) {
       setError(
         err.response?.data?.error?.message ||
@@ -395,6 +399,18 @@ export default function TradeDetailPage() {
         <Grid item xs={12} lg={4}>
           <Panel sx={{ height: '100%' }}>
             <SectionHeader eyebrow='Context' title='Trade classification' />
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              {['account', 'strategy', 'playbook'].map((key) => (
+                <Grid item xs={12} key={key}>
+                  <DataPoint label={key[0].toUpperCase() + key.slice(1)}>
+                    {trade.labels?.[key] ||
+                      (trade[key === 'account' ? 'accountId' : key]
+                        ? 'Unavailable association'
+                        : 'Not assigned')}
+                  </DataPoint>
+                </Grid>
+              ))}
+            </Grid>
             <Grid container spacing={3}>
               <Grid item xs={6}>
                 <DataPoint label='Setup'>{trade.setup || '—'}</DataPoint>

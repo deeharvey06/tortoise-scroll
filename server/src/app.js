@@ -1,3 +1,5 @@
+import { searchWorkspace } from './controllers/workspaceController.js';
+import workflowAsyncHandler from './middleware/asyncHandler.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -278,6 +280,7 @@ export function createApp(options = {}) {
   // Protected routes are gated explicitly by middleware at the router boundary
   // instead of a global path whitelist. This is easier to reason about and easier
   // to extend as the app grows.
+  app.get('/api/search', requireAuth, workflowAsyncHandler(searchWorkspace));
   app.use('/api/trades', requireAuth, tradeRoutes);
   app.use('/api/accounts', requireAuth, accountRoutes);
   app.use('/api/import', requireAuth, importRoutes);

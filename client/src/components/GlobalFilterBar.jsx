@@ -12,6 +12,10 @@ import useFilterStore, { DATE_PRESETS } from '../store/useFilterStore';
 import * as tradeApi from '../services/tradeService';
 import Tag from './ui/Tag';
 
+import api from '../services/api';
+import Alert from '@mui/material/Alert';
+import SavedFilters from './SavedFilters';
+
 const PRESET_LABELS = {
   today: 'Today',
   yesterday: 'Yesterday',
@@ -38,6 +42,31 @@ export default function GlobalFilterBar({ compact = false }) {
   const filters = useFilterStore();
   const [anchorEl, setAnchorEl] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const [strategies, setStrategies] = useState([]);
+  const [optionsError, setOptionsError] = useState('');
+
+  useEffect(() => {
+    if (!anchorEl) return;
+    let active = true;
+    api
+      .get('/strategies')
+      .then(({ data }) => {
+        if (active) {
+          setStrategies(data);
+          setOptionsError('');
+        }
+      })
+      .catch(() => {
+        if (active)
+          setOptionsError(
+            'Strategies unavailable. Close and reopen filters to retry.'
+          );
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [anchorEl]);
 
   useEffect(() => {
     tradeApi
@@ -49,6 +78,8 @@ export default function GlobalFilterBar({ compact = false }) {
   const activeCount = [
     filters.accountId,
     filters.symbol,
+    filters.followedPlan,
+    filters.outcome,
     filters.strategy,
     filters.setup,
     filters.direction,
@@ -59,7 +90,15 @@ export default function GlobalFilterBar({ compact = false }) {
   const open = Boolean(anchorEl);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        minWidth: 0,
+        flexWrap: 'wrap',
+      }}
+    >
       <TextField
         select
         size='small'
@@ -122,6 +161,7 @@ export default function GlobalFilterBar({ compact = false }) {
         </Button>
       )}
 
+      <SavedFilters />
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -181,6 +221,67 @@ export default function GlobalFilterBar({ compact = false }) {
             placeholder='AAPL'
           />
 
+          {optionsError && <Alert severity='error'>{optionsError}</Alert>}
+          <TextField
+            select
+            label='Strategy'
+            size='small'
+            value={filters.strategy}
+            onChange={(e) => filters.setStrategy(e.target.value)}
+          >
+            <MenuItem value=''>All strategies</MenuItem>
+            {strategies.map((s) => (
+              <MenuItem key={s._id} value={s._id}>
+                {s.name}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label='Followed plan'
+            size='small'
+            value={filters.followedPlan}
+            onChange={(e) =>
+              useFilterStore.setState({
+                followedPlan: e.target.value,
+                filtersTouched: true,
+              })
+            }
+          >
+            <MenuItem value=''>Any</MenuItem>
+            <MenuItem value='true'>Yes</MenuItem>
+            <MenuItem value='false'>No — plan violations</MenuItem>
+          </TextField>
+          <TextField
+            select
+            label='Outcome'
+            size='small'
+            value={filters.outcome}
+            onChange={(e) =>
+              useFilterStore.setState({
+                outcome: e.target.value,
+                filtersTouched: true,
+              })
+            }
+          >
+            <MenuItem value=''>Any</MenuItem>
+            <MenuItem value='win'>Win</MenuItem>
+            <MenuItem value='loss'>Loss</MenuItem>
+            <MenuItem value='breakeven'>Breakeven</MenuItem>
+          </TextField>
+          <TextField
+            label='Tags (comma separated)'
+            size='small'
+            defaultValue={filters.tags.join(', ')}
+            onBlur={(e) =>
+              filters.setTags(
+                e.target.value
+                  .split(',')
+                  .map((v) => v.trim())
+                  .filter(Boolean)
+              )
+            }
+          />
           <TextField
             size='small'
             label='Setup'

@@ -4,6 +4,8 @@ export const api = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
+  // Express uses its simple query parser: arrays must use repeated keys.
+  paramsSerializer: { indexes: null },
 });
 
 api.interceptors.request.use((request) => {
