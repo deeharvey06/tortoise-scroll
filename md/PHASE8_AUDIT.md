@@ -1,0 +1,15 @@
+# Phase 8 audit
+
+The existing Express/Mongoose analytics endpoints load every matching projected Trade into Node, then repeatedly allocate closed/win/loss/group arrays. Dashboard includes per-trade equity and drawdown arrays. Calendar filters by entryTime for the requested UTC month (ending at 23:59:59.000), then groups by exit day. Preserve these existing semantics, including exits outside the entry month. Reports, Strategy/Playbook performance, Risk, and methodology analytics reuse these functions. No frontend or financial-model migration is needed.
+
+Priority: dashboard summary/distributions, calendar daily stats, equity/drawdown, and symbol/setup/session/direction/day/hour/strategy groups. Existing ownership comes from req.user; aggregate pipelines need explicit Mongoose casting because Mongo aggregates do not cast ObjectId strings automatically. Existing user/account/entryTime indexes cover single-account ranges; all-account date ranges lack a user/entryTime compound index. Measure explain before adding one.
+
+Compatibility risks: Decimal.js uses decimal string inputs, precision 20, and half-up rounding; Mongo Decimal128 and $round are not substitutes. Daily/group R sums and holding-time sums use ordered JS addition. Tie ordering inherits the database scan and stable JS sort. Strategy Map keys are ObjectId objects, so persisted equal IDs may form separate rows; correcting this is a separate behavior change. Drawdown starts at the first equity point, not initial capital. Preserve all of these until separately approved.
+
+Implementation plan: add parallel Mongo group/project/sort pipelines for compact candidates. Add a cursor-based compatibility reducer preserving the exact reference behavior without retaining full Trade arrays; retain reference functions unchanged for regression tests. Use only aggregate results equal to the compatibility result, otherwise return the exact reference-compatible value. This runtime parity guard also avoids combining inconsistent reads during concurrent writes. Equity/drawdown remain exact per-trade arrays required by the existing API, constructed from narrow cursor data. No silent downsampling. A summary-only path can avoid retaining chart payloads.
+
+Validate against real MongoDB on an isolated Phase 8 test database, including 100,000 generated records, owner/account/date filters, rounding boundaries, missing R, multiple strategies/sessions, and ties. Measure end-to-end computation/serialization time, process memory, payload bytes, compact aggregate bytes, and explain execution stats. Keep unrelated risk/behavior/methodology analytics on their existing implementations. No AI or Phase 9 work.
+
+## Completed rollout
+
+See `PHASE8_REPORT.md` and `PHASE8_BENCHMARK.json`. Exact parity is verified at 100,000 trades. Production uses guarded summary/distribution aggregation and exact streaming daily/group results; full grouped candidate scans are retained for experiments because they did not improve latency and can change legacy semantics. The candidate owner/date index was rejected after explain showed no meaningful benefit. No production index or financial data migration was performed.
