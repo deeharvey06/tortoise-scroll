@@ -21,7 +21,8 @@
     "test:analytics:integration": "node --test tests/integration/analyticsParity.test.js",
     "benchmark:analytics": "node --expose-gc scripts/benchmarkAnalytics.js",
     "test:operations:integration": "node --test tests/integration/operations.test.js",
-    "recovery": "node scripts/recovery.js"
+    "recovery": "node scripts/recovery.js",
+    "test:workspace:integration": "node --test tests/integration/workspace.test.js"
   },
   "husky": {
     "hooks": {

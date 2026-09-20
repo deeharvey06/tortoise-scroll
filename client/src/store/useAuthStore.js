@@ -1,3 +1,4 @@
+import useFilterStore from './useFilterStore';
 import { create } from 'zustand';
 import authService from '../services/authService';
 
@@ -25,3 +26,13 @@ export const useAuthStore = create((set) => ({
 }));
 
 export default useAuthStore;
+
+useAuthStore.subscribe((state, previous) => {
+  if (
+    state.user?._id !== previous.user?._id ||
+    state.user?.id !== previous.user?.id
+  ) {
+    useFilterStore.getState().reset();
+    useFilterStore.setState({ filtersTouched: false });
+  }
+});

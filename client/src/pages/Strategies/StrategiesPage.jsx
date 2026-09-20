@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { MethodologyLinks } from '../Knowledge/shared';
@@ -68,7 +69,12 @@ export default function StrategiesPage() {
   const [strategies, setStrategies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedId, setSelectedId] = useState(null);
+  const [searchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+  const [selectedId, setSelectedId] = useState(focusId);
+  useEffect(() => {
+    if (focusId) setSelectedId(focusId);
+  }, [focusId]);
 
   const [performance, setPerformance] = useState(null);
   const [perfLoading, setPerfLoading] = useState(false);

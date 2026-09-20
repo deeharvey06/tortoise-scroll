@@ -11,6 +11,10 @@ import useFilterStore from '../store/useFilterStore';
 
 const { fetchAccounts } = vi.hoisted(() => ({ fetchAccounts: vi.fn() }));
 
+vi.mock('../services/api', () => ({
+  default: { get: vi.fn().mockResolvedValue({ data: [] }) },
+}));
+
 vi.mock('../services/tradeService', () => ({
   fetchAccounts,
 }));

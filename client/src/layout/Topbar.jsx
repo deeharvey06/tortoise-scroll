@@ -12,6 +12,7 @@ import ThemeModeSelector from '../components/ThemeModeSelector';
 import StatusBadge from '../components/ui/StatusBadge';
 import { getRouteTitle } from './navigation';
 import CurrentUserMenu from '../components/auth/CurrentUserMenu';
+import GlobalSearch from '../components/GlobalSearch';
 
 export default function Topbar({ mobile = false, onOpenNavigation }) {
   const [status, setStatus] = useState('checking');
@@ -124,6 +125,7 @@ export default function Topbar({ mobile = false, onOpenNavigation }) {
               }}
             />
           </Tooltip>
+          <GlobalSearch />
           <ThemeModeSelector />
           {!mobile && (
             <Typography variant='caption' color='text.secondary'>

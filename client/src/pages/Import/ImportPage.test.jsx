@@ -4,6 +4,10 @@ import ImportPage from './ImportPage';
 import * as importApi from '../../services/importService';
 import * as tradeApi from '../../services/tradeService';
 
+vi.mock('../../services/api', () => ({
+  default: { get: vi.fn().mockResolvedValue({ data: [] }) },
+}));
+
 vi.mock('../../services/importService', () => ({
   fetchAdapters: vi.fn(),
   previewCsv: vi.fn(),

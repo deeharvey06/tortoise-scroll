@@ -21,6 +21,7 @@ import * as importApi from '../../services/importService';
 import * as tradeApi from '../../services/tradeService';
 import PageHeader from '../../components/PageHeader';
 import { Panel, SectionHeader, StatusBadge } from '../../components/ui';
+import ImportHistory from './ImportHistory';
 
 const TARGET_FIELDS = [
   { key: 'symbol', label: 'Symbol', required: true },
@@ -629,6 +630,12 @@ export default function ImportPage() {
           </Button>
         </Panel>
       )}
+      <Alert severity='info' sx={{ mt: 3 }}>
+        Duplicate handling: Skip existing records. Use Import history to review
+        duplicates and their linked trades. Existing journal edits are
+        preserved.
+      </Alert>
+      <ImportHistory refreshKey={job?._id} />
     </Box>
   );
 }

@@ -17,6 +17,7 @@ const appSettingsSchema = new Schema(
       unique: true,
       index: true,
     },
+    workspace: { type: Schema.Types.Mixed, default: undefined },
     timezone: { type: String, default: 'UTC' },
     currency: { type: String, default: 'USD' },
     defaultAccountId: {

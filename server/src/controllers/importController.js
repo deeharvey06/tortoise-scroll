@@ -93,8 +93,23 @@ export async function getImportJob(req, res) {
 export async function listImportJobs(req, res) {
   const jobs = await ImportJob.find(ownedFilter(req))
     .sort({ createdAt: -1 })
+    .skip(
+      Math.max(0, Math.min(100000, Number.parseInt(req.query.offset, 10) || 0))
+    )
     .limit(50)
+    .select(req.query.summary === 'true' ? '-rows -mapping' : '')
     .lean();
+  if (req.query.summary === 'true') {
+    const accounts = await Account.find(
+      ownedFilter(req, { _id: { $in: jobs.map((j) => j.accountId) } })
+    )
+      .select('name')
+      .lean();
+    for (const job of jobs)
+      job.accountName =
+        accounts.find((a) => String(a._id) === String(job.accountId))?.name ||
+        'Unavailable account';
+  }
   res.json(jobs);
 }
 
@@ -105,3 +120,46 @@ export default {
   getImportJob,
   listImportJobs,
 };
+
+export async function getImportResults(req, res) {
+  const page = Math.max(
+    1,
+    Math.min(100000, Number.parseInt(req.query.page, 10) || 1)
+  );
+  const job = await ImportJob.findOne(ownedFilter(req, { _id: req.params.id }))
+    .select({ rows: { $slice: [(page - 1) * 100, 100] } })
+    .lean();
+  if (!job)
+    throw Object.assign(new Error('Import job not found'), { statusCode: 404 });
+  const account = await Account.findOne(
+    ownedFilter(req, { _id: job.accountId })
+  )
+    .select('name')
+    .lean();
+  // Execution duplicates may refer to a ledger fill rather than a completed trade.
+  const { default: BrokerExecution } =
+    await import('../models/BrokerExecution.js');
+  const keys = job.rows
+    .filter((r) => r.executionKey && !r.tradeId)
+    .map((r) => r.executionKey);
+  if (keys.length) {
+    const fills = await BrokerExecution.find(
+      ownedFilter(req, {
+        accountId: job.accountId,
+        broker: job.broker,
+        executionKey: { $in: keys },
+      })
+    )
+      .select('executionKey tradeId')
+      .lean();
+    for (const row of job.rows)
+      row.tradeId ||=
+        fills.find((f) => f.executionKey === row.executionKey)?.tradeId || null;
+  }
+  res.json({
+    ...job,
+    accountName: account?.name || 'Unavailable account',
+    page,
+    hasMore: job.rows.length === 100,
+  });
+}
