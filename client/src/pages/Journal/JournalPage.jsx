@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -14,8 +15,13 @@ import Alert from '@mui/material/Alert';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
-import PageHeader from '../../components/PageHeader';
 import { format } from 'date-fns';
+
+import PageHeader from '../../components/PageHeader';
+
+import PreparationEditor, {
+  PreparationSummary,
+} from '../Knowledge/PreparationEditor';
 
 import * as journalApi from '../../services/journalService';
 import {
@@ -144,6 +150,7 @@ export default function JournalPage() {
       title: entry.title || '',
       date: format(new Date(entry.date), 'yyyy-MM-dd'),
       content: entry.content || '',
+      preparation: entry.preparation,
     });
     setTemplateValues({});
     setDialogOpen(true);
@@ -166,6 +173,9 @@ export default function JournalPage() {
       title: form.title,
       date: new Date(form.date).toISOString(),
       content,
+      ...(form.type === 'pre-market' && form.preparation
+        ? { preparation: form.preparation }
+        : {}),
     };
     try {
       if (editingEntry) {
@@ -455,6 +465,7 @@ export default function JournalPage() {
                   >
                     {entry.content || 'No content recorded.'}
                   </Typography>
+                  <PreparationSummary value={entry.preparation} />
                 </Panel>
               </Box>
             );
@@ -557,6 +568,14 @@ export default function JournalPage() {
               </Grid>
             )}
           </Grid>
+          {form.type === 'pre-market' && (
+            <PreparationEditor
+              value={form.preparation}
+              onChange={(preparation) =>
+                setForm((f) => ({ ...f, preparation }))
+              }
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>

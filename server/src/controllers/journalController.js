@@ -1,3 +1,4 @@
+import { prepareJournalContext } from '../services/knowledge/integration.js';
 import JournalEntry from '../models/JournalEntry.js';
 import {
   ownedFilter,
@@ -22,6 +23,7 @@ async function validateLinks(req, input) {
   )
     resNotFound();
 }
+
 function resNotFound() {
   const error = new Error('Related resource not found');
   error.statusCode = 404;
@@ -31,12 +33,16 @@ function resNotFound() {
 export async function listEntries(req, res) {
   const { type, dateFrom, dateTo } = req.query;
   const query = ownedFilter(req);
+
   if (type) query.type = type;
+
   if (dateFrom || dateTo) {
     query.date = {};
     if (dateFrom) query.date.$gte = new Date(dateFrom);
+
     if (dateTo) query.date.$lte = new Date(dateTo);
   }
+
   const entries = await JournalEntry.find(query).sort({ date: -1 }).lean();
   res.json(entries);
 }
@@ -45,26 +51,41 @@ export async function getEntry(req, res) {
   const entry = await JournalEntry.findOne(
     ownedFilter(req, { _id: req.params.id })
   ).lean();
+
   if (!entry) {
     res.status(404);
     throw new Error('Journal entry not found');
   }
+
   res.json(entry);
 }
 
 export async function createEntry(req, res) {
   await validateLinks(req, req.body);
+  if (req.body.preparation !== undefined)
+    req.body.preparation = await prepareJournalContext(
+      req.user.id,
+      req.body.preparation
+    );
+
   const entry = await JournalEntry.create(ownedPayload(req, req.body));
   res.status(201).json(entry);
 }
 
 export async function updateEntry(req, res) {
   await validateLinks(req, req.body);
+  if (req.body.preparation !== undefined)
+    req.body.preparation = await prepareJournalContext(
+      req.user.id,
+      req.body.preparation
+    );
+
   const entry = await JournalEntry.findOneAndUpdate(
     ownedFilter(req, { _id: req.params.id }),
     withoutOwnership(req.body),
     { new: true }
   );
+
   if (!entry) {
     res.status(404);
     throw new Error('Journal entry not found');

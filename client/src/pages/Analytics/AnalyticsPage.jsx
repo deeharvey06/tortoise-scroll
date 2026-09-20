@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Table from '@mui/material/Table';
@@ -19,6 +20,9 @@ import {
   RMultiple,
   SectionHeader,
 } from '../../components/ui';
+
+import ContextAnalytics from '../Knowledge/ContextAnalytics';
+
 import PageHeader from '../../components/PageHeader';
 import { ComparisonBarChart } from '../../components/charts';
 
@@ -154,6 +158,7 @@ export default function AnalyticsPage() {
           <BreakdownTable title='P&L by hour (entry, UTC)' rows={data.byHour} />
         </Grid>
       </Grid>
+      <ContextAnalytics filters={params} />
     </Box>
   );
 }

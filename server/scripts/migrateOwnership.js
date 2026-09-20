@@ -1,3 +1,6 @@
+import KnowledgeSource from '../src/models/KnowledgeSource.js';
+import KnowledgeItem from '../src/models/KnowledgeItem.js';
+import KnowledgeRelationship from '../src/models/KnowledgeRelationship.js';
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import { connectDB } from '../src/config/db.js';
@@ -20,6 +23,9 @@ import InstrumentSpecification from '../src/models/InstrumentSpecification.js';
 import ReplayRun from '../src/models/ReplayRun.js';
 
 export const OWNED_MODELS = {
+  KnowledgeSource,
+  KnowledgeItem,
+  KnowledgeRelationship,
   Account,
   Trade,
   JournalEntry,

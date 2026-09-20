@@ -37,6 +37,7 @@ const screenshotSchema = new Schema(
 const tradeSchema = new Schema(
   {
     // Identity / linkage
+    methodology: { type: mongoose.Schema.Types.Mixed, default: undefined },
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',

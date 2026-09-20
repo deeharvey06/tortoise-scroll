@@ -17,7 +17,8 @@ export async function createTrade(payload) {
 }
 
 export async function updateTrade(id, payload) {
-  const { data } = await api.put(`/trades/${id}`, payload);
+  const { methodology: _methodology, ...editable } = payload;
+  const { data } = await api.put(`/trades/${id}`, editable);
   return data;
 }
 

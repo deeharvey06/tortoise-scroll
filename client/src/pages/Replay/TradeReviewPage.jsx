@@ -1,3 +1,4 @@
+import TradeMethodology from '../Knowledge/TradeMethodology';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -217,6 +218,7 @@ export default function ReplayPage() {
             movement.
           </Alert>
 
+          <TradeMethodology key={current._id} tradeId={current._id} />
           <Panel sx={{ mb: 4 }}>
             <Box
               sx={{

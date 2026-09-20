@@ -30,10 +30,20 @@ const strategySchema = new Schema(
     notes: { type: String, default: '' },
     screenshots: { type: [imageSchema], default: [] },
     isActive: { type: Boolean, default: true },
+    knowledgeIds: [{ type: Schema.Types.ObjectId, ref: 'KnowledgeItem' }],
+    knowledgeDraftKey: String,
   },
   { timestamps: true }
 );
 
 strategySchema.index({ userId: 1, isActive: 1, name: 1 });
+
+strategySchema.index(
+  { userId: 1, knowledgeDraftKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { knowledgeDraftKey: { $type: 'string' } },
+  }
+);
 
 export default mongoose.model('Strategy', strategySchema);
