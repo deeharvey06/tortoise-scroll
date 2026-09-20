@@ -12,12 +12,7 @@ export async function getPerformanceFor(field, id, userId) {
     userId,
     ...(field === 'strategy' ? { strategy: id } : { playbook: id }),
   };
-  const trades = await analyticsService.getFilteredTrades(filters);
-  const closed = analyticsService.closedOnly(trades);
-  const summary = analyticsService.computeSummary(trades);
-  const equityCurve = analyticsService.buildEquityCurve(closed);
-  const { maxDrawdown } = analyticsService.buildDrawdownCurve(equityCurve);
-  summary.maxDrawdown = closed.length ? maxDrawdown : null;
+  const { summary } = await analyticsService.getPerformanceAnalytics(filters);
   return summary;
 }
 

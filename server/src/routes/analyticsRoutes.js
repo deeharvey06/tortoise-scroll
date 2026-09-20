@@ -3,10 +3,12 @@ import asyncHandler from '../middleware/asyncHandler.js';
 import {
   getDashboard,
   getCalendar,
+  getSummary,
 } from '../controllers/analyticsController.js';
 
 const router = Router();
 
+router.get('/summary', asyncHandler(getSummary));
 router.get('/dashboard', asyncHandler(getDashboard));
 router.get('/calendar', asyncHandler(getCalendar));
 

@@ -17,7 +17,9 @@
     "migrate:ownership": "node scripts/migrateOwnership.js",
     "smoke": "node scripts/apiSmokeTest.js",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=75 --test-coverage-functions=70 --test-coverage-branches=85 tests/*.test.js",
-    "reset:test-db": "node scripts/resetTestDatabase.js"
+    "reset:test-db": "node scripts/resetTestDatabase.js",
+    "test:analytics:integration": "node --test tests/integration/analyticsParity.test.js",
+    "benchmark:analytics": "node --expose-gc scripts/benchmarkAnalytics.js"
   },
   "husky": {
     "hooks": {

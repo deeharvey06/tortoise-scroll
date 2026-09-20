@@ -1,4 +1,5 @@
 import * as analyticsService from '../services/analyticsService.js';
+import { getScalableAnalytics } from '../services/analytics/scalable.js';
 
 function extractFilters(req) {
   const {
@@ -35,22 +36,16 @@ function extractFilters(req) {
 export async function getReport(req, res) {
   const { category } = req.params;
   const filters = extractFilters(req);
-  const trades = await analyticsService.getFilteredTrades(filters);
-  const closed = analyticsService.closedOnly(trades);
-
   if (category === 'performance') {
-    const equityCurve = analyticsService.buildEquityCurve(closed);
-    const { maxDrawdown } = analyticsService.buildDrawdownCurve(equityCurve);
-    const summary = analyticsService.computeSummary(trades);
-    summary.maxDrawdown = closed.length ? maxDrawdown : null;
-    res.json({
-      summary,
-      winLossDistribution: analyticsService.buildWinLossDistribution(closed),
-      rMultipleDistribution:
-        analyticsService.buildRMultipleDistribution(closed),
-    });
+    res.json(await analyticsService.getPerformanceAnalytics(filters));
     return;
   }
+  if (category === 'market') {
+    res.json(await getScalableAnalytics(filters, 0, { mode: 'market' }));
+    return;
+  }
+  const trades = await analyticsService.getFilteredTrades(filters);
+  const closed = analyticsService.closedOnly(trades);
 
   if (category === 'execution') {
     const holdingTimes = closed
@@ -90,20 +85,6 @@ export async function getReport(req, res) {
       note:
         'Figures below are frequencies and associated average P&L for tags you applied yourself — they describe what happened, ' +
         'not why. Treat any pattern with a small sample size (shown per row) with proportional skepticism.',
-    });
-    return;
-  }
-
-  if (category === 'market') {
-    res.json({
-      sampleSize: closed.length,
-      bySymbol: analyticsService.buildBySymbol(closed),
-      bySession: analyticsService.buildBySession(closed),
-      byHour: analyticsService.buildByHour(closed),
-      byDayOfWeek: analyticsService.buildByDayOfWeek(closed),
-      byDirection: analyticsService.buildByDirection(closed),
-      byStrategy: analyticsService.buildByStrategy(closed),
-      bySetup: analyticsService.buildBySetup(closed),
     });
     return;
   }

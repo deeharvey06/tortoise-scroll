@@ -67,3 +67,8 @@ export async function getCalendar(req, res) {
 }
 
 export default { getDashboard, getCalendar };
+
+/** Compact, backward-compatible endpoint for consumers that only need KPIs. */
+export async function getSummary(req, res) {
+  res.json(await analyticsService.getPerformanceAnalytics(extractFilters(req)));
+}

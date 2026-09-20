@@ -1,6 +1,7 @@
 import Decimal from 'decimal.js';
 import Trade from '../models/Trade.js';
 import { buildTradeQuery } from './tradeService.js';
+import { getScalableAnalytics } from './analytics/scalable.js';
 
 const D = (v) => new Decimal(v ?? 0);
 
@@ -18,8 +19,9 @@ const PROJECTION =
  * JS (via decimal.js) rather than a Mongo aggregation pipeline, so P&L math
  * stays exactly as precise as the per-trade calculationsService. This is
  * fine at personal-journal scale (thousands–tens of thousands of trades);
- * Phase 8 (Performance) is where this gets replaced with aggregation
- * pipelines + indexes for 100k+ trade datasets, per the project plan.
+ * Phase 8 dashboard/calendar/performance paths use the parity-gated scalable
+ * service instead. This reference loader remains for behavior/risk/methodology
+ * consumers not migrated in this phase.
  */
 export async function getFilteredTrades(filters = {}) {
   const query = buildTradeQuery(filters);
@@ -377,7 +379,10 @@ export function buildByDirection(closedTrades) {
  * Full dashboard payload in one call — one round trip for the page that
  * needs the most data at once.
  */
-export async function getDashboardAnalytics(filters, startingBalance = 0) {
+export async function getLegacyDashboardAnalytics(
+  filters,
+  startingBalance = 0
+) {
   const trades = await getFilteredTrades(filters);
   const closed = closedOnly(trades);
 
@@ -403,18 +408,29 @@ export async function getDashboardAnalytics(filters, startingBalance = 0) {
   };
 }
 
+/** Phase 8 parity-gated cursor/aggregation implementation; legacy remains an oracle. */
+export async function getDashboardAnalytics(filters, startingBalance = 0) {
+  return getScalableAnalytics(filters, startingBalance);
+}
+
+export async function getPerformanceAnalytics(filters, startingBalance = 0) {
+  return getScalableAnalytics(filters, startingBalance, { mode: 'summary' });
+}
+
 /** Calendar month view: one entry per day that had at least one closed trade. */
 export async function getCalendarMonth(filters, year, month) {
   // month is 1-indexed from the client for readability
   const from = new Date(Date.UTC(year, month - 1, 1));
   const to = new Date(Date.UTC(year, month, 0, 23, 59, 59));
-  const trades = await getFilteredTrades({
-    ...filters,
-    dateFrom: from.toISOString(),
-    dateTo: to.toISOString(),
-  });
-  const closed = closedOnly(trades);
-  return buildDailyStats(closed);
+  return getScalableAnalytics(
+    {
+      ...filters,
+      dateFrom: from.toISOString(),
+      dateTo: to.toISOString(),
+    },
+    0,
+    { mode: 'calendar' }
+  );
 }
 
 /** Longest and current consecutive-loss streaks, plus what happens after them (with sample sizes). */
