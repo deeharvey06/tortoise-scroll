@@ -1,0 +1,2062 @@
+{
+  "generatedAt": "2026-09-20T18:05:15.572Z",
+  "node": "v22.23.2",
+  "mongo": "8.3.7",
+  "platform": "darwin/arm64",
+  "count": 100000,
+  "foreignCount": 1000,
+  "before": {
+    "returned": 7672,
+    "documentsExamined": 7672,
+    "keysExamined": 7677,
+    "executionMs": 26,
+    "plan": {
+      "isCached": false,
+      "stage": "PROJECTION_SIMPLE",
+      "transformBy": {
+        "_id": 1,
+        "netPnL": 1,
+        "entryTime": 1,
+        "exitTime": 1
+      },
+      "inputStage": {
+        "stage": "FETCH",
+        "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+        "inputStage": {
+          "stage": "IXSCAN",
+          "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+          "keyPattern": {
+            "userId": 1,
+            "accountId": 1,
+            "entryTime": -1
+          },
+          "indexName": "userId_1_accountId_1_entryTime_-1",
+          "isMultiKey": false,
+          "multiKeyPaths": {
+            "userId": [],
+            "accountId": [],
+            "entryTime": []
+          },
+          "isUnique": false,
+          "isSparse": false,
+          "isPartial": false,
+          "indexVersion": 2,
+          "direction": "forward",
+          "indexBounds": {
+            "userId": [
+              "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+            ],
+            "accountId": [
+              "[MinKey, MaxKey]"
+            ],
+            "entryTime": [
+              "[new Date(1740787199000), new Date(1738368000000)]"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "after": {
+    "returned": 7672,
+    "documentsExamined": 7672,
+    "keysExamined": 7672,
+    "executionMs": 9,
+    "plan": {
+      "isCached": false,
+      "stage": "PROJECTION_SIMPLE",
+      "transformBy": {
+        "_id": 1,
+        "netPnL": 1,
+        "entryTime": 1,
+        "exitTime": 1
+      },
+      "inputStage": {
+        "stage": "FETCH",
+        "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+        "inputStage": {
+          "stage": "IXSCAN",
+          "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+          "keyPattern": {
+            "userId": 1,
+            "entryTime": -1
+          },
+          "indexName": "analytics_owner_entry_time",
+          "isMultiKey": false,
+          "multiKeyPaths": {
+            "userId": [],
+            "entryTime": []
+          },
+          "isUnique": false,
+          "isSparse": false,
+          "isPartial": false,
+          "indexVersion": 2,
+          "direction": "forward",
+          "indexBounds": {
+            "userId": [
+              "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+            ],
+            "entryTime": [
+              "[new Date(1740787199000), new Date(1738368000000)]"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "accountRange": {
+    "returned": 3836,
+    "documentsExamined": 3836,
+    "keysExamined": 3836,
+    "executionMs": 4,
+    "plan": {
+      "isCached": false,
+      "stage": "PROJECTION_SIMPLE",
+      "transformBy": {
+        "_id": 1,
+        "netPnL": 1,
+        "entryTime": 1,
+        "exitTime": 1
+      },
+      "inputStage": {
+        "stage": "FETCH",
+        "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+        "inputStage": {
+          "stage": "IXSCAN",
+          "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+          "keyPattern": {
+            "userId": 1,
+            "accountId": 1,
+            "entryTime": -1
+          },
+          "indexName": "userId_1_accountId_1_entryTime_-1",
+          "isMultiKey": false,
+          "multiKeyPaths": {
+            "userId": [],
+            "accountId": [],
+            "entryTime": []
+          },
+          "isUnique": false,
+          "isSparse": false,
+          "isPartial": false,
+          "indexVersion": 2,
+          "direction": "forward",
+          "indexBounds": {
+            "userId": [
+              "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+            ],
+            "accountId": [
+              "[ObjectId('200000000000000000000001'), ObjectId('200000000000000000000001')]"
+            ],
+            "entryTime": [
+              "[new Date(1740787199000), new Date(1738368000000)]"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "aggregateExplain": {
+    "explainVersion": "1",
+    "stages": [
+      {
+        "$cursor": {
+          "queryPlanner": {
+            "namespace": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+            "parsedQuery": {
+              "$and": [
+                {
+                  "userId": {
+                    "$eq": "100000000000000000000001"
+                  }
+                },
+                {
+                  "entryTime": {
+                    "$lte": "2025-02-28T23:59:59.000Z"
+                  }
+                },
+                {
+                  "entryTime": {
+                    "$gte": "2025-02-01T00:00:00.000Z"
+                  }
+                }
+              ]
+            },
+            "indexFilterSet": false,
+            "queryHash": "30008D2F",
+            "planCacheShapeHash": "30008D2F",
+            "planCacheKey": "8DCA448F",
+            "optimizationTimeMillis": 1,
+            "cursorType": "regular",
+            "maxIndexedOrSolutionsReached": false,
+            "maxIndexedAndSolutionsReached": false,
+            "maxScansToExplodeReached": false,
+            "prunedSimilarIndexes": false,
+            "winningPlan": {
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "exitTime": 1,
+                "grossPnL": 1,
+                "holdingTimeSeconds": 1,
+                "netPnL": 1,
+                "rMultiple": 1,
+                "_id": 0
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "keyPattern": {
+                    "userId": 1,
+                    "entryTime": -1
+                  },
+                  "indexName": "analytics_owner_entry_time",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "userId": [],
+                    "entryTime": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "userId": [
+                      "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+                    ],
+                    "entryTime": [
+                      "[new Date(1740787199000), new Date(1738368000000)]"
+                    ]
+                  }
+                }
+              }
+            },
+            "rejectedPlans": [
+              {
+                "isCached": false,
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "exitTime": 1,
+                  "grossPnL": 1,
+                  "holdingTimeSeconds": 1,
+                  "netPnL": 1,
+                  "rMultiple": 1,
+                  "_id": 0
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "userId": {
+                      "$eq": "100000000000000000000001"
+                    }
+                  },
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                    "keyPattern": {
+                      "entryTime": 1
+                    },
+                    "indexName": "entryTime_1",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "entryTime": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "entryTime": [
+                        "[new Date(1738368000000), new Date(1740787199000)]"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "isCached": false,
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "exitTime": 1,
+                  "grossPnL": 1,
+                  "holdingTimeSeconds": 1,
+                  "netPnL": 1,
+                  "rMultiple": 1,
+                  "_id": 0
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                    "keyPattern": {
+                      "userId": 1,
+                      "accountId": 1,
+                      "entryTime": -1
+                    },
+                    "indexName": "userId_1_accountId_1_entryTime_-1",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "userId": [],
+                      "accountId": [],
+                      "entryTime": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "userId": [
+                        "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+                      ],
+                      "accountId": [
+                        "[MinKey, MaxKey]"
+                      ],
+                      "entryTime": [
+                        "[new Date(1740787199000), new Date(1738368000000)]"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "isCached": false,
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "exitTime": 1,
+                  "grossPnL": 1,
+                  "holdingTimeSeconds": 1,
+                  "netPnL": 1,
+                  "rMultiple": 1,
+                  "_id": 0
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                    "keyPattern": {
+                      "userId": 1,
+                      "accountId": 1,
+                      "symbol": 1,
+                      "entryTime": -1
+                    },
+                    "indexName": "userId_1_accountId_1_symbol_1_entryTime_-1",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "userId": [],
+                      "accountId": [],
+                      "symbol": [],
+                      "entryTime": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "userId": [
+                        "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+                      ],
+                      "accountId": [
+                        "[MinKey, MaxKey]"
+                      ],
+                      "symbol": [
+                        "[MinKey, MaxKey]"
+                      ],
+                      "entryTime": [
+                        "[new Date(1740787199000), new Date(1738368000000)]"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "isCached": false,
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "exitTime": 1,
+                  "grossPnL": 1,
+                  "holdingTimeSeconds": 1,
+                  "netPnL": 1,
+                  "rMultiple": 1,
+                  "_id": 0
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "$and": [
+                      {
+                        "entryTime": {
+                          "$lte": "2025-02-28T23:59:59.000Z"
+                        }
+                      },
+                      {
+                        "entryTime": {
+                          "$gte": "2025-02-01T00:00:00.000Z"
+                        }
+                      }
+                    ]
+                  },
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                    "keyPattern": {
+                      "userId": 1,
+                      "strategy": 1
+                    },
+                    "indexName": "userId_1_strategy_1",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "userId": [],
+                      "strategy": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "userId": [
+                        "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+                      ],
+                      "strategy": [
+                        "[MinKey, MaxKey]"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "isCached": false,
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "exitTime": 1,
+                  "grossPnL": 1,
+                  "holdingTimeSeconds": 1,
+                  "netPnL": 1,
+                  "rMultiple": 1,
+                  "_id": 0
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "$and": [
+                      {
+                        "entryTime": {
+                          "$lte": "2025-02-28T23:59:59.000Z"
+                        }
+                      },
+                      {
+                        "entryTime": {
+                          "$gte": "2025-02-01T00:00:00.000Z"
+                        }
+                      }
+                    ]
+                  },
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                    "keyPattern": {
+                      "userId": 1,
+                      "tags": 1
+                    },
+                    "indexName": "userId_1_tags_1",
+                    "isMultiKey": true,
+                    "multiKeyPaths": {
+                      "userId": [],
+                      "tags": [
+                        "tags"
+                      ]
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "userId": [
+                        "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+                      ],
+                      "tags": [
+                        "[MinKey, MaxKey]"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "isCached": false,
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "exitTime": 1,
+                  "grossPnL": 1,
+                  "holdingTimeSeconds": 1,
+                  "netPnL": 1,
+                  "rMultiple": 1,
+                  "_id": 0
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "$and": [
+                      {
+                        "entryTime": {
+                          "$lte": "2025-02-28T23:59:59.000Z"
+                        }
+                      },
+                      {
+                        "entryTime": {
+                          "$gte": "2025-02-01T00:00:00.000Z"
+                        }
+                      }
+                    ]
+                  },
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                    "keyPattern": {
+                      "userId": 1
+                    },
+                    "indexName": "userId_1",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "userId": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "userId": [
+                        "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "executionStats": {
+            "executionSuccess": true,
+            "nReturned": 7672,
+            "executionTimeMillis": 34,
+            "totalKeysExamined": 7672,
+            "totalDocsExamined": 7672,
+            "executionStages": {
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "nReturned": 7672,
+              "executionTimeMillisEstimate": 1,
+              "works": 7673,
+              "advanced": 7672,
+              "needTime": 0,
+              "needYield": 0,
+              "saveState": 10,
+              "restoreState": 9,
+              "isEOF": 1,
+              "transformBy": {
+                "exitTime": 1,
+                "grossPnL": 1,
+                "holdingTimeSeconds": 1,
+                "netPnL": 1,
+                "rMultiple": 1,
+                "_id": 0
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nReturned": 7672,
+                "executionTimeMillisEstimate": 1,
+                "works": 7673,
+                "advanced": 7672,
+                "needTime": 0,
+                "needYield": 0,
+                "saveState": 10,
+                "restoreState": 9,
+                "isEOF": 1,
+                "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                "docsExamined": 7672,
+                "alreadyHasObj": 0,
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nReturned": 7672,
+                  "executionTimeMillisEstimate": 1,
+                  "works": 7673,
+                  "advanced": 7672,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "saveState": 10,
+                  "restoreState": 9,
+                  "isEOF": 1,
+                  "nss": "tortoise-analytics-test-benchmark-94014-1789927473315.trades",
+                  "keyPattern": {
+                    "userId": 1,
+                    "entryTime": -1
+                  },
+                  "indexName": "analytics_owner_entry_time",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "userId": [],
+                    "entryTime": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "userId": [
+                      "[ObjectId('100000000000000000000001'), ObjectId('100000000000000000000001')]"
+                    ],
+                    "entryTime": [
+                      "[new Date(1740787199000), new Date(1738368000000)]"
+                    ]
+                  },
+                  "keysExamined": 7672,
+                  "seeks": 1,
+                  "dupsTested": 0,
+                  "dupsDropped": 0,
+                  "peakTrackedMemBytes": 0
+                }
+              }
+            }
+          }
+        },
+        "nReturned": 7672,
+        "executionTimeMillisEstimate": 5
+      },
+      {
+        "$facet": {
+          "total": [
+            {
+              "$internalFacetTeeConsumer": {},
+              "nReturned": 7672,
+              "executionTimeMillisEstimate": 5
+            },
+            {
+              "$group": {
+                "_id": {
+                  "$const": null
+                },
+                "count": {
+                  "$sum": {
+                    "$const": 1
+                  }
+                },
+                "$willBeMerged": false
+              },
+              "nReturned": 1,
+              "executionTimeMillisEstimate": 5,
+              "maxAccumulatorMemoryUsageBytes": {
+                "count": 200
+              },
+              "totalOutputDataSizeBytes": 237,
+              "usedDisk": false,
+              "spills": 0,
+              "spilledDataStorageSize": 0,
+              "spilledBytes": 0,
+              "spilledRecords": 0,
+              "peakTrackedMemBytes": 216
+            },
+            {
+              "$project": {
+                "count": true,
+                "_id": false
+              },
+              "nReturned": 1,
+              "executionTimeMillisEstimate": 5
+            }
+          ],
+          "summary": [
+            {
+              "$internalFacetTeeConsumer": {},
+              "nReturned": 7672,
+              "executionTimeMillisEstimate": 0
+            },
+            {
+              "$match": {
+                "$and": [
+                  {
+                    "netPnL": {
+                      "$not": {
+                        "$eq": null
+                      }
+                    }
+                  },
+                  {
+                    "exitTime": {
+                      "$not": {
+                        "$eq": null
+                      }
+                    }
+                  }
+                ]
+              },
+              "nReturned": 7268,
+              "executionTimeMillisEstimate": 0
+            },
+            {
+              "$group": {
+                "_id": {
+                  "$const": null
+                },
+                "count": {
+                  "$sum": {
+                    "$const": 1
+                  }
+                },
+                "wins": {
+                  "$sum": {
+                    "$cond": [
+                      {
+                        "$gt": [
+                          "$netPnL",
+                          {
+                            "$const": 0
+                          }
+                        ]
+                      },
+                      {
+                        "$const": 1
+                      },
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "losses": {
+                  "$sum": {
+                    "$cond": [
+                      {
+                        "$lt": [
+                          "$netPnL",
+                          {
+                            "$const": 0
+                          }
+                        ]
+                      },
+                      {
+                        "$const": 1
+                      },
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "net": {
+                  "$sum": {
+                    "$convert": {
+                      "input": {
+                        "$convert": {
+                          "input": {
+                            "$ifNull": [
+                              "$netPnL",
+                              {
+                                "$const": 0
+                              }
+                            ]
+                          },
+                          "to": {
+                            "$const": "string"
+                          },
+                          "format": {
+                            "$const": "auto"
+                          }
+                        }
+                      },
+                      "to": {
+                        "$const": "decimal"
+                      }
+                    }
+                  }
+                },
+                "gross": {
+                  "$sum": {
+                    "$convert": {
+                      "input": {
+                        "$convert": {
+                          "input": {
+                            "$ifNull": [
+                              "$grossPnL",
+                              {
+                                "$const": 0
+                              }
+                            ]
+                          },
+                          "to": {
+                            "$const": "string"
+                          },
+                          "format": {
+                            "$const": "auto"
+                          }
+                        }
+                      },
+                      "to": {
+                        "$const": "decimal"
+                      }
+                    }
+                  }
+                },
+                "winSum": {
+                  "$sum": {
+                    "$cond": [
+                      {
+                        "$gt": [
+                          "$netPnL",
+                          {
+                            "$const": 0
+                          }
+                        ]
+                      },
+                      {
+                        "$convert": {
+                          "input": {
+                            "$convert": {
+                              "input": {
+                                "$ifNull": [
+                                  "$netPnL",
+                                  {
+                                    "$const": 0
+                                  }
+                                ]
+                              },
+                              "to": {
+                                "$const": "string"
+                              },
+                              "format": {
+                                "$const": "auto"
+                              }
+                            }
+                          },
+                          "to": {
+                            "$const": "decimal"
+                          }
+                        }
+                      },
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "lossSum": {
+                  "$sum": {
+                    "$cond": [
+                      {
+                        "$lt": [
+                          "$netPnL",
+                          {
+                            "$const": 0
+                          }
+                        ]
+                      },
+                      {
+                        "$convert": {
+                          "input": {
+                            "$convert": {
+                              "input": {
+                                "$ifNull": [
+                                  "$netPnL",
+                                  {
+                                    "$const": 0
+                                  }
+                                ]
+                              },
+                              "to": {
+                                "$const": "string"
+                              },
+                              "format": {
+                                "$const": "auto"
+                              }
+                            }
+                          },
+                          "to": {
+                            "$const": "decimal"
+                          }
+                        }
+                      },
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "rSum": {
+                  "$sum": {
+                    "$convert": {
+                      "input": {
+                        "$convert": {
+                          "input": {
+                            "$ifNull": [
+                              "$rMultiple",
+                              {
+                                "$const": 0
+                              }
+                            ]
+                          },
+                          "to": {
+                            "$const": "string"
+                          },
+                          "format": {
+                            "$const": "auto"
+                          }
+                        }
+                      },
+                      "to": {
+                        "$const": "decimal"
+                      }
+                    }
+                  }
+                },
+                "rFloat": {
+                  "$sum": {
+                    "$ifNull": [
+                      "$rMultiple",
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "rCount": {
+                  "$sum": {
+                    "$cond": [
+                      {
+                        "$ne": [
+                          {
+                            "$ifNull": [
+                              "$rMultiple",
+                              {
+                                "$const": null
+                              }
+                            ]
+                          },
+                          {
+                            "$const": null
+                          }
+                        ]
+                      },
+                      {
+                        "$const": 1
+                      },
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "holdSum": {
+                  "$sum": {
+                    "$ifNull": [
+                      "$holdingTimeSeconds",
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "holdCount": {
+                  "$sum": {
+                    "$cond": [
+                      {
+                        "$ne": [
+                          {
+                            "$ifNull": [
+                              "$holdingTimeSeconds",
+                              {
+                                "$const": null
+                              }
+                            ]
+                          },
+                          {
+                            "$const": null
+                          }
+                        ]
+                      },
+                      {
+                        "$const": 1
+                      },
+                      {
+                        "$const": 0
+                      }
+                    ]
+                  }
+                },
+                "largestWinner": {
+                  "$max": {
+                    "$cond": [
+                      {
+                        "$gt": [
+                          "$netPnL",
+                          {
+                            "$const": 0
+                          }
+                        ]
+                      },
+                      "$netPnL",
+                      {
+                        "$const": null
+                      }
+                    ]
+                  }
+                },
+                "largestLoser": {
+                  "$min": {
+                    "$cond": [
+                      {
+                        "$lt": [
+                          "$netPnL",
+                          {
+                            "$const": 0
+                          }
+                        ]
+                      },
+                      "$netPnL",
+                      {
+                        "$const": null
+                      }
+                    ]
+                  }
+                },
+                "$willBeMerged": false
+              },
+              "nReturned": 1,
+              "executionTimeMillisEstimate": 0,
+              "maxAccumulatorMemoryUsageBytes": {
+                "count": 200,
+                "wins": 200,
+                "losses": 200,
+                "net": 200,
+                "gross": 200,
+                "winSum": 200,
+                "lossSum": 200,
+                "rSum": 200,
+                "rFloat": 200,
+                "rCount": 200,
+                "holdSum": 200,
+                "holdCount": 200,
+                "largestWinner": 136,
+                "largestLoser": 136
+              },
+              "totalOutputDataSizeBytes": 1293,
+              "usedDisk": false,
+              "spills": 0,
+              "spilledDataStorageSize": 0,
+              "spilledBytes": 0,
+              "spilledRecords": 0,
+              "peakTrackedMemBytes": 2688
+            }
+          ],
+          "money": [
+            {
+              "$internalFacetTeeConsumer": {},
+              "nReturned": 7672,
+              "executionTimeMillisEstimate": 0
+            },
+            {
+              "$match": {
+                "$and": [
+                  {
+                    "netPnL": {
+                      "$not": {
+                        "$eq": null
+                      }
+                    }
+                  },
+                  {
+                    "exitTime": {
+                      "$not": {
+                        "$eq": null
+                      }
+                    }
+                  }
+                ]
+              },
+              "nReturned": 7268,
+              "executionTimeMillisEstimate": 0
+            },
+            {
+              "$group": {
+                "_id": {
+                  "$switch": {
+                    "branches": [
+                      {
+                        "case": {
+                          "$lt": [
+                            "$netPnL",
+                            {
+                              "$const": -500
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 0
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$netPnL",
+                            {
+                              "$const": -200
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 1
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$netPnL",
+                            {
+                              "$const": -50
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 2
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$netPnL",
+                            {
+                              "$const": 0
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 3
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$netPnL",
+                            {
+                              "$const": 50
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 4
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$netPnL",
+                            {
+                              "$const": 200
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 5
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$netPnL",
+                            {
+                              "$const": 500
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 6
+                        }
+                      }
+                    ],
+                    "default": {
+                      "$const": 7
+                    }
+                  }
+                },
+                "count": {
+                  "$sum": {
+                    "$const": 1
+                  }
+                },
+                "$willBeMerged": false
+              },
+              "nReturned": 7,
+              "executionTimeMillisEstimate": 0,
+              "maxAccumulatorMemoryUsageBytes": {
+                "count": 1400
+              },
+              "totalOutputDataSizeBytes": 1659,
+              "usedDisk": false,
+              "spills": 0,
+              "spilledDataStorageSize": 0,
+              "spilledBytes": 0,
+              "spilledRecords": 0,
+              "peakTrackedMemBytes": 1512
+            },
+            {
+              "$project": {
+                "count": true,
+                "bucket": "$_id",
+                "_id": false
+              },
+              "nReturned": 7,
+              "executionTimeMillisEstimate": 0
+            },
+            {
+              "$sort": {
+                "sortKey": {
+                  "bucket": 1
+                }
+              },
+              "totalDataSizeSortedBytesEstimate": 1715,
+              "usedDisk": false,
+              "spills": 0,
+              "spilledBytes": 0,
+              "spilledRecords": 0,
+              "spilledDataStorageSize": 0,
+              "nReturned": 7,
+              "executionTimeMillisEstimate": 0,
+              "peakTrackedMemBytes": 1715
+            }
+          ],
+          "r": [
+            {
+              "$internalFacetTeeConsumer": {},
+              "nReturned": 7672,
+              "executionTimeMillisEstimate": 0
+            },
+            {
+              "$match": {
+                "$and": [
+                  {
+                    "netPnL": {
+                      "$not": {
+                        "$eq": null
+                      }
+                    }
+                  },
+                  {
+                    "exitTime": {
+                      "$not": {
+                        "$eq": null
+                      }
+                    }
+                  },
+                  {
+                    "rMultiple": {
+                      "$not": {
+                        "$eq": null
+                      }
+                    }
+                  }
+                ]
+              },
+              "nReturned": 6230,
+              "executionTimeMillisEstimate": 27
+            },
+            {
+              "$group": {
+                "_id": {
+                  "$switch": {
+                    "branches": [
+                      {
+                        "case": {
+                          "$lt": [
+                            "$rMultiple",
+                            {
+                              "$const": -2
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 0
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$rMultiple",
+                            {
+                              "$const": -1
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 1
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$rMultiple",
+                            {
+                              "$const": 0
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 2
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$rMultiple",
+                            {
+                              "$const": 1
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 3
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$rMultiple",
+                            {
+                              "$const": 2
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 4
+                        }
+                      },
+                      {
+                        "case": {
+                          "$lt": [
+                            "$rMultiple",
+                            {
+                              "$const": 3
+                            }
+                          ]
+                        },
+                        "then": {
+                          "$const": 5
+                        }
+                      }
+                    ],
+                    "default": {
+                      "$const": 6
+                    }
+                  }
+                },
+                "count": {
+                  "$sum": {
+                    "$const": 1
+                  }
+                },
+                "$willBeMerged": false
+              },
+              "nReturned": 7,
+              "executionTimeMillisEstimate": 27,
+              "maxAccumulatorMemoryUsageBytes": {
+                "count": 1400
+              },
+              "totalOutputDataSizeBytes": 1659,
+              "usedDisk": false,
+              "spills": 0,
+              "spilledDataStorageSize": 0,
+              "spilledBytes": 0,
+              "spilledRecords": 0,
+              "peakTrackedMemBytes": 1512
+            },
+            {
+              "$project": {
+                "count": true,
+                "bucket": "$_id",
+                "_id": false
+              },
+              "nReturned": 7,
+              "executionTimeMillisEstimate": 27
+            },
+            {
+              "$sort": {
+                "sortKey": {
+                  "bucket": 1
+                }
+              },
+              "totalDataSizeSortedBytesEstimate": 1715,
+              "usedDisk": false,
+              "spills": 0,
+              "spilledBytes": 0,
+              "spilledRecords": 0,
+              "spilledDataStorageSize": 0,
+              "nReturned": 7,
+              "executionTimeMillisEstimate": 27,
+              "peakTrackedMemBytes": 1715
+            }
+          ]
+        },
+        "nReturned": 1,
+        "executionTimeMillisEstimate": 32
+      }
+    ],
+    "queryShapeHash": "0EBF9FEC2E3891FACE3BAD93EFCEDF5633F4808019582D073C307151E0A41099",
+    "peakTrackedMemBytes": 934,
+    "serverInfo": {
+      "host": "Cliffords-MacBook-Pro.local",
+      "port": 27017,
+      "version": "8.3.7",
+      "gitVersion": "34eee04f34989abb7a3d91447976f033f4f74af2"
+    },
+    "serverParameters": {
+      "internalQueryFacetBufferSizeBytes": 104857600,
+      "internalDocumentSourceGroupMaxMemoryBytes": 104857600,
+      "internalQueryMaxBlockingSortMemoryUsageBytes": 104857600,
+      "internalDocumentSourceSetWindowFieldsMaxMemoryBytes": 104857600,
+      "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+      "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+      "internalQueryProhibitBlockingMergeOnMongoS": 0,
+      "internalQueryMaxAddToSetBytes": 104857600,
+      "internalQueryFrameworkControl": "trySbeRestricted",
+      "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+    },
+    "command": {
+      "aggregate": "trades",
+      "pipeline": [
+        {
+          "$match": {
+            "userId": "100000000000000000000001",
+            "entryTime": {
+              "$gte": "2025-02-01T00:00:00.000Z",
+              "$lte": "2025-02-28T23:59:59.000Z"
+            }
+          }
+        },
+        {
+          "$facet": {
+            "total": [
+              {
+                "$count": "count"
+              }
+            ],
+            "summary": [
+              {
+                "$match": {
+                  "netPnL": {
+                    "$ne": null
+                  },
+                  "exitTime": {
+                    "$ne": null
+                  }
+                }
+              },
+              {
+                "$group": {
+                  "_id": null,
+                  "count": {
+                    "$sum": 1
+                  },
+                  "wins": {
+                    "$sum": {
+                      "$cond": [
+                        {
+                          "$gt": [
+                            "$netPnL",
+                            0
+                          ]
+                        },
+                        1,
+                        0
+                      ]
+                    }
+                  },
+                  "losses": {
+                    "$sum": {
+                      "$cond": [
+                        {
+                          "$lt": [
+                            "$netPnL",
+                            0
+                          ]
+                        },
+                        1,
+                        0
+                      ]
+                    }
+                  },
+                  "net": {
+                    "$sum": {
+                      "$toDecimal": {
+                        "$toString": {
+                          "$ifNull": [
+                            "$netPnL",
+                            0
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "gross": {
+                    "$sum": {
+                      "$toDecimal": {
+                        "$toString": {
+                          "$ifNull": [
+                            "$grossPnL",
+                            0
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "winSum": {
+                    "$sum": {
+                      "$cond": [
+                        {
+                          "$gt": [
+                            "$netPnL",
+                            0
+                          ]
+                        },
+                        {
+                          "$toDecimal": {
+                            "$toString": {
+                              "$ifNull": [
+                                "$netPnL",
+                                0
+                              ]
+                            }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  "lossSum": {
+                    "$sum": {
+                      "$cond": [
+                        {
+                          "$lt": [
+                            "$netPnL",
+                            0
+                          ]
+                        },
+                        {
+                          "$toDecimal": {
+                            "$toString": {
+                              "$ifNull": [
+                                "$netPnL",
+                                0
+                              ]
+                            }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  "rSum": {
+                    "$sum": {
+                      "$toDecimal": {
+                        "$toString": {
+                          "$ifNull": [
+                            "$rMultiple",
+                            0
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "rFloat": {
+                    "$sum": {
+                      "$ifNull": [
+                        "$rMultiple",
+                        0
+                      ]
+                    }
+                  },
+                  "rCount": {
+                    "$sum": {
+                      "$cond": [
+                        {
+                          "$ne": [
+                            {
+                              "$ifNull": [
+                                "$rMultiple",
+                                null
+                              ]
+                            },
+                            null
+                          ]
+                        },
+                        1,
+                        0
+                      ]
+                    }
+                  },
+                  "holdSum": {
+                    "$sum": {
+                      "$ifNull": [
+                        "$holdingTimeSeconds",
+                        0
+                      ]
+                    }
+                  },
+                  "holdCount": {
+                    "$sum": {
+                      "$cond": [
+                        {
+                          "$ne": [
+                            {
+                              "$ifNull": [
+                                "$holdingTimeSeconds",
+                                null
+                              ]
+                            },
+                            null
+                          ]
+                        },
+                        1,
+                        0
+                      ]
+                    }
+                  },
+                  "largestWinner": {
+                    "$max": {
+                      "$cond": [
+                        {
+                          "$gt": [
+                            "$netPnL",
+                            0
+                          ]
+                        },
+                        "$netPnL",
+                        null
+                      ]
+                    }
+                  },
+                  "largestLoser": {
+                    "$min": {
+                      "$cond": [
+                        {
+                          "$lt": [
+                            "$netPnL",
+                            0
+                          ]
+                        },
+                        "$netPnL",
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "money": [
+              {
+                "$match": {
+                  "netPnL": {
+                    "$ne": null
+                  },
+                  "exitTime": {
+                    "$ne": null
+                  }
+                }
+              },
+              {
+                "$group": {
+                  "_id": {
+                    "$switch": {
+                      "branches": [
+                        {
+                          "case": {
+                            "$lt": [
+                              "$netPnL",
+                              -500
+                            ]
+                          },
+                          "then": 0
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$netPnL",
+                              -200
+                            ]
+                          },
+                          "then": 1
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$netPnL",
+                              -50
+                            ]
+                          },
+                          "then": 2
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$netPnL",
+                              0
+                            ]
+                          },
+                          "then": 3
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$netPnL",
+                              50
+                            ]
+                          },
+                          "then": 4
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$netPnL",
+                              200
+                            ]
+                          },
+                          "then": 5
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$netPnL",
+                              500
+                            ]
+                          },
+                          "then": 6
+                        }
+                      ],
+                      "default": 7
+                    }
+                  },
+                  "count": {
+                    "$sum": 1
+                  }
+                }
+              },
+              {
+                "$project": {
+                  "_id": 0,
+                  "bucket": "$_id",
+                  "count": 1
+                }
+              },
+              {
+                "$sort": {
+                  "bucket": 1
+                }
+              }
+            ],
+            "r": [
+              {
+                "$match": {
+                  "netPnL": {
+                    "$ne": null
+                  },
+                  "exitTime": {
+                    "$ne": null
+                  },
+                  "rMultiple": {
+                    "$ne": null
+                  }
+                }
+              },
+              {
+                "$group": {
+                  "_id": {
+                    "$switch": {
+                      "branches": [
+                        {
+                          "case": {
+                            "$lt": [
+                              "$rMultiple",
+                              -2
+                            ]
+                          },
+                          "then": 0
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$rMultiple",
+                              -1
+                            ]
+                          },
+                          "then": 1
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$rMultiple",
+                              0
+                            ]
+                          },
+                          "then": 2
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$rMultiple",
+                              1
+                            ]
+                          },
+                          "then": 3
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$rMultiple",
+                              2
+                            ]
+                          },
+                          "then": 4
+                        },
+                        {
+                          "case": {
+                            "$lt": [
+                              "$rMultiple",
+                              3
+                            ]
+                          },
+                          "then": 5
+                        }
+                      ],
+                      "default": 6
+                    }
+                  },
+                  "count": {
+                    "$sum": 1
+                  }
+                }
+              },
+              {
+                "$project": {
+                  "_id": 0,
+                  "bucket": "$_id",
+                  "count": 1
+                }
+              },
+              {
+                "$sort": {
+                  "bucket": 1
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "cursor": {},
+      "$db": "tortoise-analytics-test-benchmark-94014-1789927473315"
+    },
+    "ok": 1
+  },
+  "results": [
+    {
+      "run": 1,
+      "mode": "legacy-dashboard",
+      "computeMs": 2409,
+      "responseMs": 2687,
+      "heapDeltaMiB": 154.99,
+      "peakRssMiB": 410.72,
+      "payloadBytes": 22063555
+    },
+    {
+      "run": 2,
+      "mode": "legacy-dashboard",
+      "computeMs": 2446,
+      "responseMs": 2704,
+      "heapDeltaMiB": 154.9,
+      "peakRssMiB": 411.08,
+      "payloadBytes": 22063555
+    },
+    {
+      "run": 3,
+      "mode": "legacy-dashboard",
+      "computeMs": 2367,
+      "responseMs": 2640,
+      "heapDeltaMiB": 154.91,
+      "peakRssMiB": 412.33,
+      "payloadBytes": 22063555
+    },
+    {
+      "run": 1,
+      "mode": "scalable-dashboard",
+      "computeMs": 2574,
+      "responseMs": 2841,
+      "heapDeltaMiB": 139.76,
+      "peakRssMiB": 415.19,
+      "payloadBytes": 22063555
+    },
+    {
+      "run": 2,
+      "mode": "scalable-dashboard",
+      "computeMs": 2560,
+      "responseMs": 2840,
+      "heapDeltaMiB": 149.88,
+      "peakRssMiB": 423.69,
+      "payloadBytes": 22063555
+    },
+    {
+      "run": 3,
+      "mode": "scalable-dashboard",
+      "computeMs": 2506,
+      "responseMs": 2761,
+      "heapDeltaMiB": 141.16,
+      "peakRssMiB": 410.66,
+      "payloadBytes": 22063555
+    },
+    {
+      "run": 1,
+      "mode": "legacy-calendar",
+      "computeMs": 133,
+      "responseMs": 133,
+      "heapDeltaMiB": 14.17,
+      "peakRssMiB": 129.63,
+      "payloadBytes": 5363
+    },
+    {
+      "run": 2,
+      "mode": "legacy-calendar",
+      "computeMs": 129,
+      "responseMs": 129,
+      "heapDeltaMiB": 14.24,
+      "peakRssMiB": 125.59,
+      "payloadBytes": 5363
+    },
+    {
+      "run": 3,
+      "mode": "legacy-calendar",
+      "computeMs": 122,
+      "responseMs": 122,
+      "heapDeltaMiB": 26.77,
+      "peakRssMiB": 131.58,
+      "payloadBytes": 5363
+    },
+    {
+      "run": 1,
+      "mode": "scalable-calendar",
+      "computeMs": 133,
+      "responseMs": 133,
+      "heapDeltaMiB": 20.39,
+      "peakRssMiB": 123.27,
+      "payloadBytes": 5363
+    },
+    {
+      "run": 2,
+      "mode": "scalable-calendar",
+      "computeMs": 135,
+      "responseMs": 135,
+      "heapDeltaMiB": 20.37,
+      "peakRssMiB": 123.02,
+      "payloadBytes": 5363
+    },
+    {
+      "run": 3,
+      "mode": "scalable-calendar",
+      "computeMs": 122,
+      "responseMs": 122,
+      "heapDeltaMiB": 20.42,
+      "peakRssMiB": 127.53,
+      "payloadBytes": 5363
+    },
+    {
+      "run": 1,
+      "mode": "legacy-summary",
+      "computeMs": 1662,
+      "responseMs": 1662,
+      "heapDeltaMiB": 216.93,
+      "peakRssMiB": 348.44,
+      "payloadBytes": 922
+    },
+    {
+      "run": 2,
+      "mode": "legacy-summary",
+      "computeMs": 1574,
+      "responseMs": 1575,
+      "heapDeltaMiB": 142.79,
+      "peakRssMiB": 259.77,
+      "payloadBytes": 922
+    },
+    {
+      "run": 3,
+      "mode": "legacy-summary",
+      "computeMs": 1631,
+      "responseMs": 1631,
+      "heapDeltaMiB": 221.18,
+      "peakRssMiB": 363.34,
+      "payloadBytes": 922
+    },
+    {
+      "run": 1,
+      "mode": "scalable-summary",
+      "computeMs": 1808,
+      "responseMs": 1808,
+      "heapDeltaMiB": 78.77,
+      "peakRssMiB": 243.56,
+      "payloadBytes": 922
+    },
+    {
+      "run": 2,
+      "mode": "scalable-summary",
+      "computeMs": 1803,
+      "responseMs": 1803,
+      "heapDeltaMiB": 69.56,
+      "peakRssMiB": 243.42,
+      "payloadBytes": 922
+    },
+    {
+      "run": 3,
+      "mode": "scalable-summary",
+      "computeMs": 1807,
+      "responseMs": 1808,
+      "heapDeltaMiB": 88.19,
+      "peakRssMiB": 220.55,
+      "payloadBytes": 922
+    },
+    {
+      "run": 1,
+      "mode": "candidate",
+      "computeMs": 2427,
+      "responseMs": 2428,
+      "heapDeltaMiB": 12.92,
+      "peakRssMiB": 105.7,
+      "payloadBytes": 73610
+    },
+    {
+      "run": 2,
+      "mode": "candidate",
+      "computeMs": 2427,
+      "responseMs": 2427,
+      "heapDeltaMiB": 12.69,
+      "peakRssMiB": 105.7,
+      "payloadBytes": 73610
+    },
+    {
+      "run": 3,
+      "mode": "candidate",
+      "computeMs": 2391,
+      "responseMs": 2391,
+      "heapDeltaMiB": 12.92,
+      "peakRssMiB": 105.2,
+      "payloadBytes": 73610
+    }
+  ]
+}

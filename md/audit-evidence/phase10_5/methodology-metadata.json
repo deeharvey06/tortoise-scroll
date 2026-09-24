@@ -1,0 +1,484 @@
+{
+  "capturedAt": "2026-09-20T16:56:29.855Z",
+  "readOnly": true,
+  "scope": "configured ROOT methodology, aggregate metadata only",
+  "configuration": {
+    "keys": [
+      "AI_PROVIDER",
+      "ALLOWED_ORIGINS",
+      "AUTH_RATE_LIMIT_MAX",
+      "AUTH_RATE_LIMIT_WINDOW_MS",
+      "BROKER_OAUTH_CALLBACK_URL",
+      "BROKER_SYNC_INTERVAL_MS",
+      "BROKER_SYNC_SCHEDULER_ENABLED",
+      "BROKER_SYNC_SCHEDULER_TICK_MS",
+      "BROKER_TOKEN_ACTIVE_KEY_ID",
+      "BROKER_TOKEN_ENCRYPTION_KEYS",
+      "CLIENT_ORIGIN",
+      "CSRF_PROTECTION_ENABLED",
+      "DEMO_USER_EMAIL",
+      "DEMO_USER_PASSWORD",
+      "LOGIN_FAILURE_LIMIT",
+      "LOGIN_LOCK_MS",
+      "MARKET_DATA_PROVIDER",
+      "MONGO_URI",
+      "NODE_ENV",
+      "OLLAMA_BASE_URL",
+      "OLLAMA_MODEL",
+      "OPENAI_API_KEY",
+      "OPENAI_MODEL",
+      "PASSWORD_RESET_DEV_EXPOSE_TOKEN",
+      "PASSWORD_RESET_RATE_LIMIT_MAX",
+      "PASSWORD_RESET_TTL",
+      "PORT",
+      "ROOT_USER_EMAIL",
+      "SESSION_SECRET",
+      "SESSION_TTL",
+      "THINKORSWIM_API_BASE_URL",
+      "THINKORSWIM_AUTHORIZE_URL",
+      "THINKORSWIM_CLIENT_ID",
+      "THINKORSWIM_CLIENT_SECRET",
+      "THINKORSWIM_INITIAL_SYNC_DAYS",
+      "THINKORSWIM_TOKEN_URL"
+    ],
+    "nodeEnv": "development",
+    "marketProvider": "none",
+    "marketLocalRootConfigured": false,
+    "emailProvider": "disabled",
+    "brokerCredentialsConfigured": false,
+    "brokerEncryptionKeyConfigured": false,
+    "aiProvider": "disabled",
+    "uploadsRootConfigured": false
+  },
+  "mongoVersion": "8.3.7",
+  "configuredRootFound": true,
+  "collectionMetadata": [
+    {
+      "name": "trades",
+      "count": 2000,
+      "unowned": 0,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "accountId_1",
+          "key": {
+            "accountId": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "strategy_1",
+          "key": {
+            "strategy": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "playbook_1",
+          "key": {
+            "playbook": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "symbol_1",
+          "key": {
+            "symbol": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "direction_1",
+          "key": {
+            "direction": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "entryTime_1",
+          "key": {
+            "entryTime": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "setup_1",
+          "key": {
+            "setup": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "tags_1",
+          "key": {
+            "tags": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "sourceRowHash_1",
+          "key": {
+            "sourceRowHash": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1",
+          "key": {
+            "userId": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_accountId_1_entryTime_-1",
+          "key": {
+            "userId": 1,
+            "accountId": 1,
+            "entryTime": -1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_accountId_1_symbol_1_entryTime_-1",
+          "key": {
+            "userId": 1,
+            "accountId": 1,
+            "symbol": 1,
+            "entryTime": -1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_strategy_1",
+          "key": {
+            "userId": 1,
+            "strategy": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_tags_1",
+          "key": {
+            "userId": 1,
+            "tags": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "sourcePositionKey_1",
+          "key": {
+            "sourcePositionKey": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_accountId_1_sourcePositionKey_1",
+          "key": {
+            "userId": 1,
+            "accountId": 1,
+            "sourcePositionKey": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "accounts",
+      "count": 6,
+      "unowned": 0,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1",
+          "key": {
+            "userId": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_isActive_1",
+          "key": {
+            "userId": 1,
+            "isActive": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_name_1",
+          "key": {
+            "userId": 1,
+            "name": 1
+          },
+          "unique": false
+        }
+      ]
+    },
+    {
+      "name": "knowledgesources",
+      "count": 56,
+      "unowned": 0,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1",
+          "key": {
+            "userId": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_checksum_1_sourceType_1_location_1",
+          "key": {
+            "userId": 1,
+            "checksum": 1,
+            "sourceType": 1,
+            "location": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "knowledgeitems",
+      "count": 143,
+      "unowned": 0,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1",
+          "key": {
+            "userId": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "status_1",
+          "key": {
+            "status": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_extractionKey_1",
+          "key": {
+            "userId": 1,
+            "extractionKey": 1
+          },
+          "unique": true
+        },
+        {
+          "name": "userId_1_status_1_kind_1_dimension_1",
+          "key": {
+            "userId": 1,
+            "status": 1,
+            "kind": 1,
+            "dimension": 1
+          },
+          "unique": false
+        }
+      ]
+    },
+    {
+      "name": "knowledgerelationships",
+      "count": 6,
+      "unowned": 0,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1",
+          "key": {
+            "userId": 1
+          },
+          "unique": false
+        },
+        {
+          "name": "userId_1_from_1_to_1_type_1",
+          "key": {
+            "userId": 1,
+            "from": 1,
+            "to": 1,
+            "type": 1
+          },
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "brokerconnections",
+      "count": 0,
+      "unowned": 0,
+      "indexes": []
+    },
+    {
+      "name": "brokersyncruns",
+      "count": 0,
+      "unowned": 0,
+      "indexes": []
+    },
+    {
+      "name": "brokerexecutions",
+      "count": 0,
+      "unowned": 0,
+      "indexes": []
+    },
+    {
+      "name": "replayruns",
+      "count": 0,
+      "unowned": 0,
+      "indexes": []
+    }
+  ],
+  "methodology": {
+    "truncated": false,
+    "counts": {
+      "sources": 56,
+      "items": 143,
+      "relationships": 6,
+      "statuses": {
+        "needs_review": 143
+      },
+      "kinds": {
+        "concept": 23,
+        "pattern": 11,
+        "trade_entry": 10,
+        "probability": 5,
+        "star_point": 91,
+        "premarket_principle": 1,
+        "warning": 2
+      },
+      "dimensions": {
+        "market_structure": 6,
+        "always_in": 2,
+        "signal": 6,
+        "pattern": 5,
+        "gap_characteristic": 2,
+        "signal_quality": 1,
+        "follow_through": 1,
+        "trade_intent": 2,
+        "entry_mechanism": 3,
+        "trade_entry": 10,
+        "opening_pattern": 6,
+        "missing": 98,
+        "preparation": 1
+      },
+      "relationshipStatuses": {
+        "needs_review": 6
+      },
+      "relationshipTypes": {
+        "entry_for": 6
+      },
+      "itemsWithoutReferences": 0,
+      "itemsWithoutStatus": 0,
+      "approvedWithoutVerification": 0,
+      "orphanItems": 135,
+      "starPointsWithoutRelationships": 91,
+      "probabilitiesWithoutConditions": 0,
+      "invalidSourceReferences": 0,
+      "invalidRelationshipEndpoints": 0,
+      "unapprovedTradeEntries": 10,
+      "duplicateNameGroups": 2,
+      "explicitConflicts": 0,
+      "tradeEntriesWithoutContextLinks": 10,
+      "strategies": 10,
+      "strategiesWithoutTradeEntries": 10,
+      "playbooks": 0,
+      "playbooksWithoutContextLinks": 0
+    },
+    "sourceTypes": {
+      "PRICE_ACTION_FUNDAMENTALS": {
+        "sources": 30,
+        "sections": 101,
+        "incomplete": 0,
+        "needsReview": 30,
+        "items": 26,
+        "approved": 0
+      },
+      "HOW_TO_TRADE_PRICE_ACTION": {
+        "sources": 18,
+        "sections": 135,
+        "incomplete": 0,
+        "needsReview": 18,
+        "items": 2,
+        "approved": 0
+      },
+      "PRICE_ACTION_BONUS": {
+        "sources": 4,
+        "sections": 17,
+        "incomplete": 4,
+        "needsReview": 4,
+        "items": 11,
+        "approved": 0
+      },
+      "PERCENTAGE_PROBABILITY": {
+        "sources": 1,
+        "sections": 22,
+        "incomplete": 0,
+        "needsReview": 1,
+        "items": 5,
+        "approved": 0
+      },
+      "PREMARKET_ANALYSIS": {
+        "sources": 1,
+        "sections": 1,
+        "incomplete": 0,
+        "needsReview": 1,
+        "items": 1,
+        "approved": 0
+      },
+      "STAR_POINTS": {
+        "sources": 1,
+        "sections": 9,
+        "incomplete": 0,
+        "needsReview": 1,
+        "items": 91,
+        "approved": 0
+      },
+      "TRADE_ENTRIES": {
+        "sources": 1,
+        "sections": 11,
+        "incomplete": 0,
+        "needsReview": 1,
+        "items": 12,
+        "approved": 0
+      }
+    },
+    "originalsChecked": 56,
+    "originalsMissing": 0,
+    "checksumMismatch": 0,
+    "sourceTextDuplicateGroups": 3,
+    "manuallyClassifiedTrades": 0,
+    "structuredPreparationEntries": 0
+  },
+  "brokerRuns": [],
+  "brokerConnections": []
+}
