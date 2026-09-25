@@ -1,9 +1,9 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act } from '@/test/render';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import useFilterStore, {
   resolveDateRange,
   useFilterParams,
-} from './useFilterStore';
+} from '@/store/useFilterStore';
 
 describe('resolveDateRange', () => {
   afterEach(() => vi.useRealTimers());

@@ -1,3 +1,5 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
 import { useCallback, useEffect, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -15,15 +17,16 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '@/components/PageHeader';
 import {
   ConfirmationDialog,
   EmptyState,
   LoadingState,
   Panel,
-} from '../../components/ui';
-import useAuthStore from '../../store/useAuthStore';
-import * as adminApi from '../../services/adminService';
+} from '@/components/ui';
+
+import useAuthStore from '@/store/useAuthStore';
+import * as adminApi from '@/services/adminService';
 
 const formatDate = (value) =>
   value
@@ -32,6 +35,7 @@ const formatDate = (value) =>
         timeStyle: 'short',
       }).format(new Date(value))
     : 'Never';
+
 const errorMessage = (error) =>
   error.response?.data?.error?.message || error.message || 'Request failed';
 
@@ -40,6 +44,7 @@ function UsersTab({ isRoot }) {
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -48,12 +53,14 @@ function UsersTab({ isRoot }) {
     async (page = 1) => {
       setLoading(true);
       setError('');
+
       try {
         const data = await adminApi.fetchUsers({
           page,
           limit: 25,
           search: search || undefined,
         });
+
         setUsers(data.users);
         setPagination(data.pagination);
       } catch (err) {
@@ -64,6 +71,7 @@ function UsersTab({ isRoot }) {
     },
     [search]
   );
+
   useEffect(() => {
     load(1);
   }, [load]);
@@ -71,6 +79,7 @@ function UsersTab({ isRoot }) {
   const apply = async () => {
     setSaving(true);
     setError('');
+
     try {
       if (pending.kind === 'role')
         await adminApi.changeUserRole(pending.user.id, pending.value);
@@ -120,7 +129,8 @@ function UsersTab({ isRoot }) {
             {error}
           </Alert>
         )}
-        {loading ? (
+        <RefreshStatus refreshing={loading && !initialLoading} />
+        {initialLoading ? (
           <LoadingState label='Loading users' />
         ) : users.length === 0 ? (
           <EmptyState
@@ -271,6 +281,7 @@ function AuditLogTab() {
   const [events, setEvents] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState('');
   const load = useCallback(async (page = 1) => {
     setLoading(true);
@@ -295,7 +306,8 @@ function AuditLogTab() {
           {error}
         </Alert>
       )}
-      {loading ? (
+      <RefreshStatus refreshing={loading && !initialLoading} />
+      {initialLoading ? (
         <LoadingState label='Loading audit log' />
       ) : events.length === 0 ? (
         <EmptyState

@@ -1,5 +1,5 @@
-import api from './api';
-import * as accountService from './accountService';
+import api from '@/services/api';
+import * as accountService from '@/services/accountService';
 
 export async function fetchTrades(params = {}) {
   const { data } = await api.get('/trades', { params });
@@ -26,8 +26,8 @@ export async function deleteTrade(id) {
   await api.delete(`/trades/${id}`);
 }
 
-export async function fetchAccounts() {
-  return accountService.fetchAccounts({ activeOnly: true });
+export async function fetchAccounts(signal) {
+  return accountService.fetchAccounts({ activeOnly: true, signal });
 }
 
 export async function createAccount(payload) {

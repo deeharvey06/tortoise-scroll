@@ -1,5 +1,5 @@
 import { Button, Stack, TextField, Typography } from '@mui/material';
-import { KnowledgePicker } from './shared';
+import { KnowledgePicker } from '@/pages/Knowledge/shared';
 
 const empty = {
   knowledgeIds: [],

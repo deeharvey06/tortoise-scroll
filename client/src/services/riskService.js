@@ -1,9 +1,10 @@
-import api from './api';
+import api from '@/services/api';
 
 export async function fetchRiskSettings(accountId) {
   const { data } = await api.get('/risk/settings', {
     params: accountId ? { accountId } : {},
   });
+
   return data;
 }
 
@@ -16,6 +17,7 @@ export async function fetchRiskDashboard(accountId) {
   const { data } = await api.get('/risk/dashboard', {
     params: accountId ? { accountId } : {},
   });
+
   return data;
 }
 

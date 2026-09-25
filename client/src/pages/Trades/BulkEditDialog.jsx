@@ -11,8 +11,8 @@ import {
   TextField,
 } from '@mui/material';
 
-import api from '../../services/api';
-import { ConfirmationDialog, LoadingState } from '../../components/ui';
+import api from '@/services/api';
+import { ConfirmationDialog, LoadingState } from '@/components/ui';
 
 const fields = {
   strategy: 'Strategy',

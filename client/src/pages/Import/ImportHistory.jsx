@@ -1,3 +1,6 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { tradePath } from '@/config/routes';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -17,18 +20,19 @@ import {
   Typography,
 } from '@mui/material';
 
-import api from '../../services/api';
+import api from '@/services/api';
 import {
   LoadingState,
   EmptyState,
   Panel,
   SectionHeader,
-} from '../../components/ui';
+} from '@/components/ui';
 
 export default function ImportHistory({ refreshKey }) {
   const [jobs, setJobs] = useState([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState('');
 
   const [selected, setSelected] = useState(null);
@@ -97,7 +101,8 @@ export default function ImportHistory({ refreshKey }) {
         }
       />
       {error && <Alert severity='error'>{error}</Alert>}
-      {loading ? (
+      <RefreshStatus refreshing={loading && !initialLoading} />
+      {initialLoading ? (
         <LoadingState label='Loading import history…' />
       ) : !jobs.length ? (
         <EmptyState
@@ -243,10 +248,7 @@ export default function ImportHistory({ refreshKey }) {
                         </TableCell>
                         <TableCell>
                           {r.tradeId ? (
-                            <Button
-                              component={Link}
-                              to={`/trades/${r.tradeId}`}
-                            >
+                            <Button component={Link} to={tradePath(r.tradeId)}>
                               Review trade
                             </Button>
                           ) : r.outcome === 'duplicate' ? (

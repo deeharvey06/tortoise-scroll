@@ -1,3 +1,5 @@
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { knowledgePath, routes } from '@/config/routes';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
@@ -12,10 +14,10 @@ import {
   Typography,
 } from '@mui/material';
 
-import api from '../../services/api';
-import PageHeader from '../../components/PageHeader';
-import { Panel } from '../../components/ui';
-import { KnowledgeCards, message } from './shared';
+import api from '@/services/api';
+import PageHeader from '@/components/PageHeader';
+import { Panel } from '@/components/ui';
+import { KnowledgeCards, message } from '@/pages/Knowledge/shared';
 
 const detailFields = [
   'definition',
@@ -249,7 +251,7 @@ export default function KnowledgePage() {
           {notice}
         </Alert>
       )}
-      {loading && <Typography role='status'>Loading knowledge…</Typography>}
+      <RefreshStatus refreshing={loading} />
       <Stack spacing={3}>
         <Panel>
           <Typography variant='h6'>Add source notes</Typography>
@@ -742,7 +744,9 @@ export default function KnowledgePage() {
                     <Button
                       component={Link}
                       to={
-                        targetType === 'strategy' ? '/strategies' : '/playbooks'
+                        targetType === 'strategy'
+                          ? routes.strategies
+                          : routes.playbooks
                       }
                     >
                       Open {targetType}s
@@ -801,7 +805,9 @@ export default function KnowledgePage() {
                     ))}
                     <Button
                       component={Link}
-                      to={`/knowledge?item=${r.from === item._id ? r.to : r.from}`}
+                      to={knowledgePath({
+                        item: r.from === item._id ? r.to : r.from,
+                      })}
                     >
                       Related knowledge
                     </Button>

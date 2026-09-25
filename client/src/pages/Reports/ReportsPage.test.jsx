@@ -1,17 +1,17 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ReportsPage from './ReportsPage';
-import * as reportsApi from '../../services/reportsService';
+import ReportsPage from '@/pages/Reports/ReportsPage';
+import * as reportsApi from '@/services/reportsService';
 
-vi.mock('../../services/reportsService', () => ({
+vi.mock('@/services/reportsService', () => ({
   fetchReport: vi.fn(),
 }));
 
-vi.mock('../../services/strategyService', () => ({
+vi.mock('@/services/strategyService', () => ({
   fetchStrategies: vi.fn().mockResolvedValue([]),
 }));
 
-vi.mock('../../store/useFilterStore', () => ({
+vi.mock('@/store/useFilterStore', () => ({
   useFilterParams: () => ({}),
 }));
 

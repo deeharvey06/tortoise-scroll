@@ -74,14 +74,12 @@ test(
       const sourceDb = client.db(stem),
         owner = new mongoose.Types.ObjectId(),
         account = new mongoose.Types.ObjectId();
-      await sourceDb
-        .collection('users')
-        .insertOne({
-          _id: owner,
-          role: 'ROOT',
-          passwordHash: 'synthetic-hash',
-          sessionVersion: 4,
-        });
+      await sourceDb.collection('users').insertOne({
+        _id: owner,
+        role: 'ROOT',
+        passwordHash: 'synthetic-hash',
+        sessionVersion: 4,
+      });
       await sourceDb
         .collection('accounts')
         .insertOne({ _id: account, userId: owner, currency: 'USD' });

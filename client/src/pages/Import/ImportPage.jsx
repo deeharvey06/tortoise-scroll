@@ -17,11 +17,11 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 
-import * as importApi from '../../services/importService';
-import * as tradeApi from '../../services/tradeService';
-import PageHeader from '../../components/PageHeader';
-import { Panel, SectionHeader, StatusBadge } from '../../components/ui';
-import ImportHistory from './ImportHistory';
+import * as importApi from '@/services/importService';
+import * as tradeApi from '@/services/tradeService';
+import PageHeader from '@/components/PageHeader';
+import { Panel, SectionHeader, StatusBadge } from '@/components/ui';
+import ImportHistory from '@/pages/Import/ImportHistory';
 
 const TARGET_FIELDS = [
   { key: 'symbol', label: 'Symbol', required: true },

@@ -1,4 +1,4 @@
-import api from './api';
+import api from '@/services/api';
 
 export async function fetchPlaybooks() {
   const { data } = await api.get('/playbooks');

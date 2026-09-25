@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import useUIStore, {
   SIDEBAR_STORAGE_KEY,
   THEME_STORAGE_KEY,
-} from './useUIStore';
+} from '@/store/useUIStore';
 
 describe('theme preference', () => {
   afterEach(() => {

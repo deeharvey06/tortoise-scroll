@@ -1,12 +1,12 @@
 import { StrictMode } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { ThemeProvider } from '@mui/material/styles';
 import { beforeEach, expect, test, vi } from 'vitest';
-import { createTortoiseTheme } from '../../theme/theme';
-import ReplayWorkspace from './ReplayWorkspace';
-import CandlestickChart from './components/CandlestickChart';
-import * as api from '../../services/replayService';
-vi.mock('../../services/replayService', () => ({
+import { createTortoiseTheme } from '@/theme/theme';
+import ReplayWorkspace from '@/pages/Replay/ReplayWorkspace';
+import CandlestickChart from '@/pages/Replay/components/CandlestickChart';
+import * as api from '@/services/replayService';
+vi.mock('@/services/replayService', () => ({
   fetchReplayDatasets: vi.fn(),
   listReplayRuns: vi.fn(),
   createReplayRun: vi.fn(),

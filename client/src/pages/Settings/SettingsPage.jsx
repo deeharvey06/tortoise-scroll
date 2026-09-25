@@ -1,3 +1,6 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { routes } from '@/config/routes';
 import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
@@ -14,22 +17,22 @@ import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { Link as RouterLink } from 'react-router-dom';
-import BrokerConnectionsTab from './components/BrokerConnectionsTab';
+import BrokerConnectionsTab from '@/pages/Settings/components/BrokerConnectionsTab';
 
-import * as settingsApi from '../../services/settingsService';
-import * as tagApi from '../../services/tagService';
-import * as tradeApi from '../../services/tradeService';
-import * as strategyApi from '../../services/strategyService';
-import * as backupApi from '../../services/backupService';
-import PageHeader from '../../components/PageHeader';
-import ThemeModeSelector from '../../components/ThemeModeSelector';
+import * as settingsApi from '@/services/settingsService';
+import * as tagApi from '@/services/tagService';
+import * as tradeApi from '@/services/tradeService';
+import * as strategyApi from '@/services/strategyService';
+import * as backupApi from '@/services/backupService';
+import PageHeader from '@/components/PageHeader';
+import ThemeModeSelector from '@/components/ThemeModeSelector';
 import {
   ConfirmationDialog,
   EmptyState,
   LoadingState,
   Panel,
   SectionHeader,
-} from '../../components/ui';
+} from '@/components/ui';
 
 const CATEGORIES = ['setup', 'mistake', 'emotion', 'custom'];
 
@@ -216,6 +219,7 @@ function TradingTab({ settings, onSave, saving, strategies }) {
 function TagsTab() {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState('custom');
@@ -292,7 +296,8 @@ function TagsTab() {
           Add
         </Button>
       </Box>
-      {loading ? (
+      <RefreshStatus refreshing={loading && !initialLoading} />
+      {initialLoading ? (
         <CircularProgress size={18} />
       ) : (
         CATEGORIES.map((cat) => {
@@ -322,7 +327,7 @@ function TagsTab() {
           );
         })
       )}
-      {!loading && tags.length === 0 && (
+      {!initialLoading && tags.length === 0 && (
         <EmptyState
           title='No tags yet'
           description='Add a tag to begin building your trading vocabulary.'
@@ -638,7 +643,7 @@ export default function SettingsPage() {
           </Typography>
           <Button
             component={RouterLink}
-            to='/ai-partner'
+            to={routes.aiPartner}
             variant='outlined'
             size='small'
             endIcon={<OpenInNewIcon fontSize='small' />}

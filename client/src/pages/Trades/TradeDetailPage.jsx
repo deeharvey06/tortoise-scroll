@@ -1,4 +1,7 @@
-import TradeMethodology from '../Knowledge/TradeMethodology';
+import { RootOnly } from '@/components/auth/RouteGuards';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { routes } from '@/config/routes';
+import TradeMethodology from '@/pages/Knowledge/TradeMethodology';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -26,7 +29,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '@/components/PageHeader';
 import {
   EmptyState,
   ErrorState,
@@ -38,10 +41,10 @@ import {
   StatusBadge,
   Tag,
   TradeDirection,
-} from '../../components/ui';
+} from '@/components/ui';
 
-import * as tagApi from '../../services/tagService';
-import * as tradeApi from '../../services/tradeService';
+import * as tagApi from '@/services/tagService';
+import * as tradeApi from '@/services/tradeService';
 
 const MISTAKES = [
   'Early Entry',
@@ -84,6 +87,10 @@ function DataPoint({ label, children }) {
 
 export default function TradeDetailPage() {
   const { id } = useParams();
+  return <TradeDetail key={id} id={id} />;
+}
+
+function TradeDetail({ id }) {
   const navigate = useNavigate();
 
   const [trade, setTrade] = useState(null);
@@ -206,12 +213,13 @@ export default function TradeDetailPage() {
     }
   };
 
-  if (loading) return <LoadingState label='Loading trade record…' />;
+  if (loading && !trade) return <LoadingState label='Loading trade record…' />;
   if (error && !trade) return <ErrorState message={error} onRetry={load} />;
   if (!trade) return null;
 
   return (
     <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
+      <RefreshStatus refreshing={loading} />
       <PageHeader
         eyebrow='Trade record'
         title={trade.symbol}
@@ -223,7 +231,7 @@ export default function TradeDetailPage() {
               variant='outlined'
               size='small'
               startIcon={<ArrowBackIcon />}
-              onClick={() => navigate('/trades')}
+              onClick={() => navigate(routes.trades)}
             >
               All trades
             </Button>
@@ -291,7 +299,9 @@ export default function TradeDetailPage() {
 
       <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid item xs={12} lg={8}>
-          <TradeMethodology tradeId={trade._id} />
+          <RootOnly>
+            <TradeMethodology tradeId={trade._id} />
+          </RootOnly>
           <Panel>
             <SectionHeader eyebrow='Execution' title='Order and fill record' />
             <Grid container spacing={3}>

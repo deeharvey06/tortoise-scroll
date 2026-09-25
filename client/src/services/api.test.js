@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { api } from './api';
+import { api } from '@/services/api';
 
 const capture = async (method) => {
   let captured;

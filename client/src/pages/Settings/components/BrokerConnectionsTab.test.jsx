@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test/render';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
-import BrokerConnectionsTab from './BrokerConnectionsTab';
-import * as brokerApi from '../../../services/brokerConnectionService';
+import BrokerConnectionsTab from '@/pages/Settings/components/BrokerConnectionsTab';
+import * as brokerApi from '@/services/brokerConnectionService';
 
-vi.mock('../../../services/brokerConnectionService', () => ({
+vi.mock('@/services/brokerConnectionService', () => ({
   fetchProviders: vi.fn(),
   fetchConnections: vi.fn(),
   beginConnection: vi.fn(),

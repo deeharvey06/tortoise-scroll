@@ -1,24 +1,24 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import authService from '../../services/authService';
-import useAuthStore from '../../store/useAuthStore';
-import { createTortoiseTheme } from '../../theme/theme';
-import LoginPage from '../../pages/Login/LoginPage';
-import RegisterPage from '../../pages/Auth/RegisterPage';
-import AccessDeniedPage from '../../pages/Auth/AccessDeniedPage';
-import SessionExpiredPage from '../../pages/Auth/SessionExpiredPage';
-import AccountSuspendedPage from '../../pages/Auth/AccountSuspendedPage';
-import CurrentUserMenu from './CurrentUserMenu';
+import authService from '@/services/authService';
+import useAuthStore from '@/store/useAuthStore';
+import { createTortoiseTheme } from '@/theme/theme';
+import LoginPage from '@/pages/Login/LoginPage';
+import RegisterPage from '@/pages/Auth/RegisterPage';
+import AccessDeniedPage from '@/pages/Auth/AccessDeniedPage';
+import SessionExpiredPage from '@/pages/Auth/SessionExpiredPage';
+import AccountSuspendedPage from '@/pages/Auth/AccountSuspendedPage';
+import CurrentUserMenu from '@/components/auth/CurrentUserMenu';
 import {
   AdminRoute,
   AuthLoadingState,
   ProtectedRoute,
   RootRoute,
-} from './RouteGuards';
+} from '@/components/auth/RouteGuards';
 
-vi.mock('../../services/authService', () => ({
+vi.mock('@/services/authService', () => ({
   default: {
     login: vi.fn(),
     register: vi.fn(),

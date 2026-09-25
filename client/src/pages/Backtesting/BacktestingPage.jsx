@@ -1,5 +1,7 @@
-import StrategyEditor from './StrategyEditor';
-import ResultDetails from './ResultDetails';
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import StrategyEditor from '@/pages/Backtesting/StrategyEditor';
+import ResultDetails from '@/pages/Backtesting/ResultDetails';
 import { Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
@@ -36,12 +38,12 @@ import {
   Tooltip as ChartTooltip,
 } from 'recharts';
 
-import * as backtestApi from '../../services/backtestService';
-import { palette } from '../../theme/theme';
-import KpiCard from '../../components/KpiCard';
-import { ConfirmationDialog } from '../../components/ui';
-import PageHeader from '../../components/PageHeader';
-import { EmptyState, LoadingState, Panel } from '../../components/ui';
+import * as backtestApi from '@/services/backtestService';
+import { palette } from '@/theme/theme';
+import KpiCard from '@/components/KpiCard';
+import { ConfirmationDialog } from '@/components/ui';
+import PageHeader from '@/components/PageHeader';
+import { EmptyState, LoadingState, Panel } from '@/components/ui';
 
 const emptyForm = {
   name: '',
@@ -71,6 +73,7 @@ export default function BacktestingPage() {
   const [status, setStatus] = useState(null);
   const [configs, setConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -189,12 +192,13 @@ export default function BacktestingPage() {
     }
   };
 
-  if (loading) {
+  if (initialLoading) {
     return <LoadingState label='Loading backtests' />;
   }
 
   return (
     <Box>
+      <RefreshStatus refreshing={loading && !initialLoading} />
       <PageHeader
         eyebrow='Tools'
         title='Backtesting'

@@ -1,16 +1,16 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { ThemeProvider } from '@mui/material/styles';
 import { beforeEach, expect, test, vi } from 'vitest';
-import { createTortoiseTheme } from '../../theme/theme';
+import { createTortoiseTheme } from '@/theme/theme';
 import StrategyEditor, {
   initialStrategy,
   initialExecution,
-} from './StrategyEditor';
-import ResultDetails from './ResultDetails';
-import api from '../../services/api';
-import * as backtestApi from '../../services/backtestService';
-vi.mock('../../services/api', () => ({ default: { get: vi.fn() } }));
-vi.mock('../../services/backtestService', () => ({
+} from '@/pages/Backtesting/StrategyEditor';
+import ResultDetails from '@/pages/Backtesting/ResultDetails';
+import api from '@/services/api';
+import * as backtestApi from '@/services/backtestService';
+vi.mock('@/services/api', () => ({ default: { get: vi.fn() } }));
+vi.mock('@/services/backtestService', () => ({
   createConfig: vi.fn(),
   updateConfig: vi.fn(),
 }));

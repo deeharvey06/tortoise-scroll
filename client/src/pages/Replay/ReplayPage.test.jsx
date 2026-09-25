@@ -1,17 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@/test/render';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { ThemeProvider } from '@mui/material/styles';
-import { createTortoiseTheme } from '../../theme/theme';
-import ReplayPage from './TradeReviewPage';
-import * as replayApi from '../../services/replayService';
+import { createTortoiseTheme } from '@/theme/theme';
+import ReplayPage from '@/pages/Replay/TradeReviewPage';
+import * as replayApi from '@/services/replayService';
 
-vi.mock('../../services/replayService', () => ({
+vi.mock('@/services/replayService', () => ({
   fetchReplaySession: vi.fn(),
 }));
-vi.mock('../../services/tagService', () => ({
+vi.mock('@/services/tagService', () => ({
   fetchTags: vi.fn().mockResolvedValue([]),
 }));
-vi.mock('../../services/tradeService', () => ({ updateTrade: vi.fn() }));
+vi.mock('@/services/tradeService', () => ({ updateTrade: vi.fn() }));
 // Chart measurements are browser responsibilities, covered by Playwright.
 vi.mock('recharts', async (original) => ({
   ...(await original()),

@@ -1,4 +1,21 @@
 import { test, expect } from "@playwright/test";
+test('regular users cannot navigate to Methodology or call its API', async ({ page }) => {
+  const credentials = {
+    email: `methodology-denied-${Date.now()}@example.test`,
+    password: 'methodology-denied-password-123',
+  };
+  expect((await page.request.post('/api/auth/register', {
+    data: { ...credentials, displayName: 'Regular user' },
+  })).status()).toBe(201);
+  expect((await page.request.post('/api/auth/login', { data: credentials })).ok()).toBeTruthy();
+  await page.goto('/trades');
+  await expect(page.getByRole('heading', { name: 'Trades', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Methodology', exact: true })).toHaveCount(0);
+  await page.goto('/knowledge');
+  await expect(page).toHaveURL(/\/403$/);
+  expect((await page.request.get('/api/knowledge/metadata')).status()).toBe(403);
+});
+
 async function select(page, label, value) {
   await page.getByRole("combobox", { name: new RegExp(`^${label}`) }).click();
   await page.getByRole("option", { name: value, exact: true }).click();
@@ -7,23 +24,9 @@ test("private source → reviewed entry → playbook → classified trade → pe
   page,
   request,
 }) => {
-  const credentials = {
-    email: `knowledge-${Date.now()}@example.test`,
-    password: "knowledge-password-123",
-    displayName: "Knowledge owner",
-  };
-  expect(
-    (
-      await page.request.post("/api/auth/register", { data: credentials })
-    ).status(),
-  ).toBe(201);
-  expect(
-    (
-      await page.request.post("/api/auth/login", {
-        data: { email: credentials.email, password: credentials.password },
-      })
-    ).ok(),
-  ).toBeTruthy();
+  expect((await page.request.post('/api/auth/login', {
+    data: { email: 'e2e-root@tortoise-scroll.test', password: 'e2e-root-password-strong-123' },
+  })).ok()).toBeTruthy();
   expect((await request.get("/api/knowledge/sources")).status()).toBe(401);
   await page.goto("/knowledge");
   await page
@@ -157,14 +160,14 @@ test("private source → reviewed entry → playbook → classified trade → pe
     `items/${item._id}`,
     `trades/${trade._id}`,
   ])
-    expect((await request.get(`/api/knowledge/${path}`)).status()).toBe(404);
+    expect((await request.get(`/api/knowledge/${path}`)).status()).toBe(403);
   expect(
     (
       await request.post(`/api/knowledge/items/${item._id}/review`, {
         data: { revision: item.revision, status: "rejected" },
       })
     ).status(),
-  ).toBe(404);
+  ).toBe(403);
   expect(
     (
       await request.post("/api/knowledge/attach", {
@@ -175,7 +178,7 @@ test("private source → reviewed entry → playbook → classified trade → pe
         },
       })
     ).status(),
-  ).toBe(422);
+  ).toBe(403);
   expect(
     (
       await page.request.put(`/api/playbooks/${playbook._id}`, {
@@ -204,17 +207,9 @@ test("review transitions, scenarios, snapshots, currency isolation and inactive 
   page,
 }) => {
   const api = page.request;
-  const credentials = {
-    email: `knowledge-lifecycle-${Date.now()}@example.test`,
-    password: "knowledge-lifecycle-123",
-    displayName: "Lifecycle owner",
-  };
-  expect(
-    (await api.post("/api/auth/register", { data: credentials })).status(),
-  ).toBe(201);
-  await api.post("/api/auth/login", {
-    data: { email: credentials.email, password: credentials.password },
-  });
+  expect((await api.post('/api/auth/login', {
+    data: { email: 'e2e-root@tortoise-scroll.test', password: 'e2e-root-password-strong-123' },
+  })).ok()).toBeTruthy();
   const sourceInput = {
     sourceType: "PRICE_ACTION_BONUS",
     title: "Incomplete synthetic source",

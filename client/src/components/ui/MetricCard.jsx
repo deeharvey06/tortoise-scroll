@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import Typography from '@mui/material/Typography';
-import Panel from './Panel';
+import Panel from '@/components/ui/Panel';
 
 function numericSign(value) {
   if (typeof value === 'number') return Math.sign(value);

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import authService from '../services/authService';
-import useAuthStore from './useAuthStore';
+import authService from '@/services/authService';
+import useAuthStore from '@/store/useAuthStore';
 
-vi.mock('../services/authService', () => ({
+vi.mock('@/services/authService', () => ({
   default: { me: vi.fn(), logout: vi.fn() },
 }));
 

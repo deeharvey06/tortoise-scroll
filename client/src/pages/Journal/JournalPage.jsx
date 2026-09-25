@@ -1,3 +1,6 @@
+import { RootOnly } from '@/components/auth/RouteGuards';
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
 import { useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -18,13 +21,13 @@ import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import { format } from 'date-fns';
 
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '@/components/PageHeader';
 
 import PreparationEditor, {
   PreparationSummary,
-} from '../Knowledge/PreparationEditor';
+} from '@/pages/Knowledge/PreparationEditor';
 
-import * as journalApi from '../../services/journalService';
+import * as journalApi from '@/services/journalService';
 import {
   ConfirmationDialog,
   EmptyState,
@@ -32,7 +35,7 @@ import {
   LoadingState,
   Panel,
   StatusBadge,
-} from '../../components/ui';
+} from '@/components/ui';
 
 const TYPES = [
   { value: 'pre-market', label: 'Pre-Market Plan' },
@@ -86,6 +89,7 @@ function emptyTemplateValues(fields) {
 export default function JournalPage() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [typeFilter, setTypeFilter] = useState('');
@@ -335,7 +339,8 @@ export default function JournalPage() {
         </Box>
       </Panel>
 
-      {loading ? (
+      <RefreshStatus refreshing={loading && !initialLoading} />
+      {initialLoading ? (
         <LoadingState label='Opening The Scroll…' skeletonRows={4} />
       ) : entries.length === 0 ? (
         <EmptyState
@@ -598,12 +603,14 @@ export default function JournalPage() {
             )}
           </Grid>
           {form.type === 'pre-market' && (
-            <PreparationEditor
-              value={form.preparation}
-              onChange={(preparation) =>
-                setForm((f) => ({ ...f, preparation }))
-              }
-            />
+            <RootOnly>
+              <PreparationEditor
+                value={form.preparation}
+                onChange={(preparation) =>
+                  setForm((f) => ({ ...f, preparation }))
+                }
+              />
+            </RootOnly>
           )}
         </DialogContent>
         <DialogActions>

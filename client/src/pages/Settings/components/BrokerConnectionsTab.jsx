@@ -14,8 +14,8 @@ import {
   EmptyState,
   Panel,
   SectionHeader,
-} from '../../../components/ui';
-import * as brokerApi from '../../../services/brokerConnectionService';
+} from '@/components/ui';
+import * as brokerApi from '@/services/brokerConnectionService';
 
 const labelForStatus = (value) =>
   ({

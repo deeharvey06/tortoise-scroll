@@ -23,7 +23,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '@/components/PageHeader';
 import {
   EmptyState,
   ErrorState,
@@ -34,11 +34,11 @@ import {
   TradeDirection,
   ProfitLossValue,
   RMultiple,
-} from '../../components/ui';
+} from '@/components/ui';
 
-import * as aiApi from '../../services/aiService';
-import { useFilterParams } from '../../store/useFilterStore';
-import AgentsPanel from './AgentsPanel';
+import * as aiApi from '@/services/aiService';
+import { useFilterParams } from '@/store/useFilterStore';
+import AgentsPanel from '@/pages/AiPartner/AgentsPanel';
 
 const SUGGESTIONS = [
   'What is my best setup?',

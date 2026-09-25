@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAVIGATION_GROUPS, getRouteTitle } from './navigation';
+import { NAVIGATION_GROUPS, getRouteTitle } from '@/layout/navigation';
 
 describe('application navigation', () => {
   it('contains only the existing grouped routes', () => {
@@ -33,6 +33,13 @@ describe('application navigation', () => {
       '/security',
       '/administration',
     ]);
+  });
+
+  it('restricts Methodology navigation to ROOT', () => {
+    const item = NAVIGATION_GROUPS.flatMap((group) => group.items).find(
+      (item) => item.to === '/knowledge'
+    );
+    expect(item.roles).toEqual(['ROOT']);
   });
 
   it('provides workspace titles for index and detail routes', () => {

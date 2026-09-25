@@ -1,4 +1,4 @@
-import api from './api';
+import api from '@/services/api';
 
 export async function fetchAppSettings() {
   const { data } = await api.get('/settings');

@@ -1,6 +1,6 @@
-import useFilterStore from './useFilterStore';
+import useFilterStore from '@/store/useFilterStore';
 import { create } from 'zustand';
-import authService from '../services/authService';
+import authService from '@/services/authService';
 
 export const useAuthStore = create((set) => ({
   status: 'INITIALIZING',

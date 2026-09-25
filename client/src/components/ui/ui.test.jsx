@@ -1,11 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test/render';
 import { describe, expect, it, vi } from 'vitest';
 import { ThemeProvider } from '@mui/material/styles';
-import { createTortoiseTheme } from '../../theme/theme';
-import ConfirmationDialog from './ConfirmationDialog';
-import ProfitLossValue from './ProfitLossValue';
-import RMultiple from './RMultiple';
-import TradeDirection from './TradeDirection';
+import { createTortoiseTheme } from '@/theme/theme';
+import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
+import ProfitLossValue from '@/components/ui/ProfitLossValue';
+import RMultiple from '@/components/ui/RMultiple';
+import TradeDirection from '@/components/ui/TradeDirection';
 
 function renderWithTheme(node, mode = 'dark') {
   return render(

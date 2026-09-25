@@ -1,14 +1,16 @@
+import { Outlet } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { Outlet } from 'react-router-dom';
+
 import Sidebar, {
   SIDEBAR_COLLAPSED_WIDTH,
   SIDEBAR_EXPANDED_WIDTH,
-} from './Sidebar';
-import Topbar from './Topbar';
-import useUIStore from '../store/useUIStore';
+} from '@/layout/Sidebar';
+
+import Topbar from '@/layout/Topbar';
+import useUIStore from '@/store/useUIStore';
 
 export default function AppShell() {
   const theme = useTheme();
@@ -18,12 +20,15 @@ export default function AppShell() {
   const mobileNavigationOpen = useUIStore(
     (state) => state.mobileNavigationOpen
   );
+
   const openMobileNavigation = useUIStore(
     (state) => state.openMobileNavigation
   );
+
   const closeMobileNavigation = useUIStore(
     (state) => state.closeMobileNavigation
   );
+
   const sidebarWidth = sidebarCollapsed
     ? SIDEBAR_COLLAPSED_WIDTH
     : SIDEBAR_EXPANDED_WIDTH;

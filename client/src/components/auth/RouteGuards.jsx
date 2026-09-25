@@ -1,8 +1,9 @@
+import { routes } from '@/config/routes';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
-import useAuthStore from '../../store/useAuthStore';
+import useAuthStore from '@/store/useAuthStore';
 
 export function AuthLoadingState() {
   return (
@@ -31,14 +32,15 @@ function StateBoundary({ children }) {
   const location = useLocation();
   if (status === 'INITIALIZING') return <AuthLoadingState />;
   if (status === 'NETWORK_ERROR')
-    return <Navigate to='/network-error' replace />;
+    return <Navigate to={routes.networkError} replace />;
   if (status === 'ACCOUNT_SUSPENDED')
-    return <Navigate to='/account-suspended' replace />;
+    return <Navigate to={routes.accountSuspended} replace />;
   if (status === 'SESSION_EXPIRED')
-    return <Navigate to='/session-expired' replace />;
-  if (status === 'FORBIDDEN') return <Navigate to='/403' replace />;
+    return <Navigate to={routes.sessionExpired} replace />;
+  if (status === 'FORBIDDEN')
+    return <Navigate to={routes.accessDenied} replace />;
   if (status !== 'AUTHENTICATED')
-    return <Navigate to='/login' state={{ from: location }} replace />;
+    return <Navigate to={routes.login} state={{ from: location }} replace />;
   return children;
 }
 
@@ -53,7 +55,7 @@ function RoleRoute({ roles, children }) {
       {roles.includes(user?.role) ? (
         children || <Outlet />
       ) : (
-        <Navigate to='/403' replace />
+        <Navigate to={routes.accessDenied} replace />
       )}
     </StateBoundary>
   );
@@ -67,3 +69,9 @@ export function RootRoute({ children }) {
 }
 
 export default ProtectedRoute;
+
+// Hide restricted embedded tools without redirecting their containing page.
+export function RootOnly({ children }) {
+  const role = useAuthStore((state) => state.user?.role);
+  return role === 'ROOT' ? children : null;
+}

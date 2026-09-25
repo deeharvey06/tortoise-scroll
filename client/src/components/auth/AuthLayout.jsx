@@ -1,10 +1,11 @@
+import { routes } from '@/config/routes';
 import { Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import ThemeModeSelector from '../../components/ThemeModeSelector';
-import { Panel } from '../ui';
+import ThemeModeSelector from '@/components/ThemeModeSelector';
+import { Panel } from '@/components/ui';
 
 export default function AuthLayout({ title, subtitle, children, footer }) {
   return (
@@ -28,7 +29,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
           <Box>
             <Link
               component={RouterLink}
-              to='/login'
+              to={routes.login}
               underline='none'
               color='inherit'
             >

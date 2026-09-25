@@ -1,3 +1,4 @@
+import { knowledgePath, routes } from '@/config/routes';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -11,8 +12,8 @@ import {
   Typography,
 } from '@mui/material';
 
-import api from '../../services/api';
-import { Panel } from '../../components/ui';
+import api from '@/services/api';
+import { Panel } from '@/components/ui';
 
 export const message = (error) =>
   error.response?.data?.error?.message || error.message;
@@ -93,7 +94,7 @@ export function KnowledgeCards({ items = [] }) {
         <Panel key={item._id}>
           <Typography
             component={Link}
-            to={`/knowledge?item=${item._id}`}
+            to={knowledgePath({ item: item._id })}
             variant='h6'
           >
             {item.name}
@@ -135,7 +136,10 @@ export function KnowledgeCards({ items = [] }) {
             <Button
               key={index}
               component={Link}
-              to={`/knowledge?source=${ref.sourceId}&section=${ref.sectionId}`}
+              to={knowledgePath({
+                source: ref.sourceId,
+                section: ref.sectionId,
+              })}
               size='small'
               sx={{ mt: 1, textAlign: 'left', overflowWrap: 'anywhere' }}
             >
@@ -188,7 +192,7 @@ export function MethodologyLinks({ type, targetId }) {
         </Typography>
       )}
       <KnowledgeCards items={data?.items} />
-      <Button component={Link} to='/knowledge'>
+      <Button component={Link} to={routes.knowledge}>
         Browse and link knowledge
       </Button>
     </Box>

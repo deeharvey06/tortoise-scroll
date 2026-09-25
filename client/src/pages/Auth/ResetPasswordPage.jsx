@@ -1,3 +1,4 @@
+import { routes } from '@/config/routes';
 import { useState } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
@@ -5,8 +6,8 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import AuthLayout from '../../components/auth/AuthLayout';
-import authService from '../../services/authService';
+import AuthLayout from '@/components/auth/AuthLayout';
+import authService from '@/services/authService';
 
 export default function ResetPasswordPage() {
   const [params] = useSearchParams();
@@ -38,7 +39,7 @@ export default function ResetPasswordPage() {
       title='Reset password'
       subtitle='This link is single-use and expires.'
       footer={
-        <Link component={RouterLink} to='/login'>
+        <Link component={RouterLink} to={routes.login}>
           Return to sign in
         </Link>
       }
@@ -53,7 +54,7 @@ export default function ResetPasswordPage() {
           <Alert severity='success'>
             Password reset. All existing sessions were signed out.
           </Alert>
-          <Button component={RouterLink} to='/login' variant='contained'>
+          <Button component={RouterLink} to={routes.login} variant='contained'>
             Sign in
           </Button>
         </>

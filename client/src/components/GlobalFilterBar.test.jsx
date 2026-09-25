@@ -1,21 +1,15 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@/test/render';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import GlobalFilterBar from './GlobalFilterBar';
-import useFilterStore from '../store/useFilterStore';
+import GlobalFilterBar from '@/components/GlobalFilterBar';
+import useFilterStore from '@/store/useFilterStore';
 
 const { fetchAccounts } = vi.hoisted(() => ({ fetchAccounts: vi.fn() }));
 
-vi.mock('../services/api', () => ({
+vi.mock('@/services/api', () => ({
   default: { get: vi.fn().mockResolvedValue({ data: [] }) },
 }));
 
-vi.mock('../services/tradeService', () => ({
+vi.mock('@/services/tradeService', () => ({
   fetchAccounts,
 }));
 

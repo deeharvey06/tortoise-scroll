@@ -9,7 +9,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import ComputerIcon from '@mui/icons-material/ComputerOutlined';
 import LightModeIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeIcon from '@mui/icons-material/DarkModeOutlined';
-import useUIStore, { THEME_MODES } from '../store/useUIStore';
+import useUIStore, { THEME_MODES } from '@/store/useUIStore';
 
 const OPTIONS = {
   system: { label: 'System theme', icon: ComputerIcon },
