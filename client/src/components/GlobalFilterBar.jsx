@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -8,13 +8,12 @@ import Stack from '@mui/material/Stack';
 import FilterListIcon from '@mui/icons-material/FilterListOutlined';
 import CloseIcon from '@mui/icons-material/CloseOutlined';
 
-import useFilterStore, { DATE_PRESETS } from '../store/useFilterStore';
-import * as tradeApi from '../services/tradeService';
-import Tag from './ui/Tag';
+import useFilterStore, { DATE_PRESETS } from '@/store/useFilterStore';
+import Tag from '@/components/ui/Tag';
 
-import api from '../services/api';
+import useFilterOptions from '@/hooks/useFilterOptions';
 import Alert from '@mui/material/Alert';
-import SavedFilters from './SavedFilters';
+import SavedFilters from '@/components/SavedFilters';
 
 const PRESET_LABELS = {
   today: 'Today',
@@ -41,39 +40,9 @@ const SESSIONS = [
 export default function GlobalFilterBar({ compact = false }) {
   const filters = useFilterStore();
   const [anchorEl, setAnchorEl] = useState(null);
-  const [accounts, setAccounts] = useState([]);
-  const [strategies, setStrategies] = useState([]);
-  const [optionsError, setOptionsError] = useState('');
-
-  useEffect(() => {
-    if (!anchorEl) return;
-    let active = true;
-    api
-      .get('/strategies')
-      .then(({ data }) => {
-        if (active) {
-          setStrategies(data);
-          setOptionsError('');
-        }
-      })
-      .catch(() => {
-        if (active)
-          setOptionsError(
-            'Strategies unavailable. Close and reopen filters to retry.'
-          );
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [anchorEl]);
-
-  useEffect(() => {
-    tradeApi
-      .fetchAccounts()
-      .then(setAccounts)
-      .catch(() => {});
-  }, []);
+  const { accounts, strategies, optionsError } = useFilterOptions(
+    Boolean(anchorEl)
+  );
 
   const activeCount = [
     filters.accountId,

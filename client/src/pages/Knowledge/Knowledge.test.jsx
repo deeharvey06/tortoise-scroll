@@ -1,14 +1,18 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import { createTortoiseTheme } from '../../theme/theme';
-import api from '../../services/api';
-import { KnowledgeCards, KnowledgePicker, allApproved } from './shared';
-import ContextAnalytics from './ContextAnalytics';
-import PreparationEditor from './PreparationEditor';
+import { createTortoiseTheme } from '@/theme/theme';
+import api from '@/services/api';
+import {
+  KnowledgeCards,
+  KnowledgePicker,
+  allApproved,
+} from '@/pages/Knowledge/shared';
+import ContextAnalytics from '@/pages/Knowledge/ContextAnalytics';
+import PreparationEditor from '@/pages/Knowledge/PreparationEditor';
 
-vi.mock('../../services/api', () => ({
+vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), post: vi.fn() },
 }));
 

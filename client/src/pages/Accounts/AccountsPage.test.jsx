@@ -1,13 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/test/render';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { ThemeProvider } from '@mui/material/styles';
-import { createTortoiseTheme } from '../../theme/theme';
-import AccountsPage from './AccountsPage';
-import * as accountApi from '../../services/accountService';
-import * as instrumentApi from '../../services/instrumentSpecificationService';
+import { createTortoiseTheme } from '@/theme/theme';
+import AccountsPage from '@/pages/Accounts/AccountsPage';
+import * as accountApi from '@/services/accountService';
+import * as instrumentApi from '@/services/instrumentSpecificationService';
 
-vi.mock('../../services/accountService', () => ({
+vi.mock('@/services/accountService', () => ({
   fetchAccounts: vi.fn(),
   fetchAccountPerformance: vi.fn(),
   fetchAccountImportHistory: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('../../services/accountService', () => ({
   restoreAccount: vi.fn(),
   setDefaultAccount: vi.fn(),
 }));
-vi.mock('../../services/instrumentSpecificationService', () => ({
+vi.mock('@/services/instrumentSpecificationService', () => ({
   fetchInstrumentSpecifications: vi.fn(),
   createInstrumentSpecification: vi.fn(),
   updateInstrumentSpecification: vi.fn(),

@@ -1,40 +1,22 @@
-import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import MenuIcon from '@mui/icons-material/Menu';
-import { checkHealth } from '../services/api';
-import useAuthStore from '../store/useAuthStore';
-import GlobalFilterBar from '../components/GlobalFilterBar';
-import ThemeModeSelector from '../components/ThemeModeSelector';
-import StatusBadge from '../components/ui/StatusBadge';
-import { getRouteTitle } from './navigation';
-import CurrentUserMenu from '../components/auth/CurrentUserMenu';
-import GlobalSearch from '../components/GlobalSearch';
+import useApiHealth from '@/hooks/useApiHealth';
+import useAuthStore from '@/store/useAuthStore';
+import GlobalFilterBar from '@/components/GlobalFilterBar';
+import ThemeModeSelector from '@/components/ThemeModeSelector';
+import StatusBadge from '@/components/ui/StatusBadge';
+import { getRouteTitle } from '@/layout/navigation';
+import CurrentUserMenu from '@/components/auth/CurrentUserMenu';
+import GlobalSearch from '@/components/GlobalSearch';
 
 export default function Topbar({ mobile = false, onOpenNavigation }) {
-  const [status, setStatus] = useState('checking');
+  const { status, label: statusLabel } = useApiHealth();
   const user = useAuthStore((state) => state.user);
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    let cancelled = false;
-    checkHealth()
-      .then(() => !cancelled && setStatus('online'))
-      .catch(() => !cancelled && setStatus('offline'));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const statusLabel =
-    status === 'online'
-      ? 'API connected'
-      : status === 'offline'
-        ? 'API unreachable'
-        : 'Checking API';
 
   return (
     <Box

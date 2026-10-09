@@ -1,3 +1,4 @@
+import { requireRoot } from '../middleware/auth.js';
 import { buildTradeQuery } from '../services/tradeService.js';
 import { Router } from 'express';
 import multer from 'multer';
@@ -47,6 +48,7 @@ import {
 } from '../services/knowledge/processAnalytics.js';
 
 const router = Router();
+router.use(requireRoot);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 30 * 1024 * 1024, files: 1, fields: 5, fieldSize: 20000 },

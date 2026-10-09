@@ -751,3 +751,5 @@ This is entirely local. Nothing leaves your machine unless you explicitly
 configure an AI provider in a later phase. Backup is just your MongoDB data
 directory (or `mongodump`) — no cloud account required, ever.
 # tortoise-scroll
+
+Frontend code conventions and migration examples: [client style guide](client/STYLE_GUIDE.md).

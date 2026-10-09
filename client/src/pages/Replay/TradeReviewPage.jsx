@@ -1,4 +1,4 @@
-import TradeMethodology from '../Knowledge/TradeMethodology';
+import TradeMethodology from '@/pages/Knowledge/TradeMethodology';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -27,11 +27,11 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-import * as replayApi from '../../services/replayService';
-import * as tradeApi from '../../services/tradeService';
-import * as tagApi from '../../services/tagService';
-import { palette } from '../../theme/theme';
-import PageHeader from '../../components/PageHeader';
+import * as replayApi from '@/services/replayService';
+import * as tradeApi from '@/services/tradeService';
+import * as tagApi from '@/services/tagService';
+import { palette } from '@/theme/theme';
+import PageHeader from '@/components/PageHeader';
 import {
   EmptyState,
   Panel,
@@ -39,7 +39,7 @@ import {
   RMultiple,
   SectionHeader,
   TradeDirection,
-} from '../../components/ui';
+} from '@/components/ui';
 
 const SPEED_OPTIONS = [
   { value: 3000, label: '0.5x' },

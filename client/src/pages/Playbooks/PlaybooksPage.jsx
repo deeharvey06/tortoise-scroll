@@ -1,3 +1,7 @@
+import { RootOnly } from '@/components/auth/RouteGuards';
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { tradePath } from '@/config/routes';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
@@ -26,11 +30,11 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { MethodologyLinks } from '../Knowledge/shared';
-import * as playbookApi from '../../services/playbookService';
-import * as tradeApi from '../../services/tradeService';
-import KpiCard from '../../components/KpiCard';
-import PageHeader from '../../components/PageHeader';
+import { MethodologyLinks } from '@/pages/Knowledge/shared';
+import * as playbookApi from '@/services/playbookService';
+import * as tradeApi from '@/services/tradeService';
+import KpiCard from '@/components/KpiCard';
+import PageHeader from '@/components/PageHeader';
 
 import {
   ConfirmationDialog,
@@ -43,7 +47,7 @@ import {
   SectionHeader,
   StatusBadge,
   TradeDirection,
-} from '../../components/ui';
+} from '@/components/ui';
 
 const FIELDS = [
   ['setupName', 'Setup name', false],
@@ -69,6 +73,7 @@ export default function PlaybooksPage() {
   const navigate = useNavigate();
   const [playbooks, setPlaybooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
   const [searchParams] = useSearchParams();
   const focusId = searchParams.get('focus');
@@ -242,7 +247,8 @@ export default function PlaybooksPage() {
         />
       )}
 
-      {loading ? (
+      <RefreshStatus refreshing={loading && !initialLoading} />
+      {initialLoading ? (
         <LoadingState label='Loading playbooks…' skeletonRows={5} />
       ) : playbooks.length === 0 ? (
         <EmptyState
@@ -329,7 +335,9 @@ export default function PlaybooksPage() {
                   </Box>
                 </Box>
 
-                <MethodologyLinks type='playbook' targetId={selected._id} />
+                <RootOnly>
+                  <MethodologyLinks type='playbook' targetId={selected._id} />
+                </RootOnly>
 
                 <SectionHeader
                   eyebrow='Performance'
@@ -635,7 +643,7 @@ export default function PlaybooksPage() {
                             <TableRow
                               key={trade._id}
                               hover
-                              onClick={() => navigate(`/trades/${trade._id}`)}
+                              onClick={() => navigate(tradePath(trade._id))}
                               sx={{ cursor: 'pointer' }}
                             >
                               <TableCell className='mono-data'>

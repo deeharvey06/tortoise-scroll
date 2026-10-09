@@ -1,20 +1,14 @@
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  cleanup,
-} from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@/test/render';
 import { MemoryRouter } from 'react-router-dom';
-import api from '../services/api';
-import SavedFilters from './SavedFilters';
-import GlobalSearch from './GlobalSearch';
-import ImportHistory from '../pages/Import/ImportHistory';
-import BulkEditDialog from '../pages/Trades/BulkEditDialog';
-import TableLayoutDialog from '../pages/Trades/TableLayoutDialog';
-import useFilterStore from '../store/useFilterStore';
-vi.mock('../services/api', () => ({
+import api from '@/services/api';
+import SavedFilters from '@/components/SavedFilters';
+import GlobalSearch from '@/components/GlobalSearch';
+import ImportHistory from '@/pages/Import/ImportHistory';
+import BulkEditDialog from '@/pages/Trades/BulkEditDialog';
+import TableLayoutDialog from '@/pages/Trades/TableLayoutDialog';
+import useFilterStore from '@/store/useFilterStore';
+vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), put: vi.fn(), post: vi.fn() },
 }));
 beforeEach(() => {

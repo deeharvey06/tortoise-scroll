@@ -1,12 +1,12 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeProvider } from '@mui/material/styles';
-import { createTortoiseTheme } from '../../theme/theme';
-import useAuthStore from '../../store/useAuthStore';
-import * as adminApi from '../../services/adminService';
-import AdministrationPage from './AdministrationPage';
+import { createTortoiseTheme } from '@/theme/theme';
+import useAuthStore from '@/store/useAuthStore';
+import * as adminApi from '@/services/adminService';
+import AdministrationPage from '@/pages/Administration/AdministrationPage';
 
-vi.mock('../../services/adminService', () => ({
+vi.mock('@/services/adminService', () => ({
   fetchUsers: vi.fn(),
   fetchAuditLog: vi.fn(),
   changeUserRole: vi.fn(),

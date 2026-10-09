@@ -219,12 +219,14 @@ export const darkTokens = Object.freeze({
   colors: darkColors,
   shadows: shadows.dark,
 });
+
 export const lightTokens = Object.freeze({
   ...shared,
   mode: 'light',
   colors: lightColors,
   shadows: shadows.light,
 });
+
 export function getDesignTokens(mode) {
   return mode === 'light' ? lightTokens : darkTokens;
 }

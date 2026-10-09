@@ -1,3 +1,5 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
 import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -8,10 +10,10 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
 
-import * as riskApi from '../../services/riskService';
-import { useFilterStore } from '../../store/useFilterStore';
-import KpiCard from '../../components/KpiCard';
-import PageHeader from '../../components/PageHeader';
+import * as riskApi from '@/services/riskService';
+import { useFilterStore } from '@/store/useFilterStore';
+import KpiCard from '@/components/KpiCard';
+import PageHeader from '@/components/PageHeader';
 import {
   EmptyState,
   ErrorState,
@@ -19,7 +21,7 @@ import {
   Panel,
   SectionHeader,
   StatusBadge,
-} from '../../components/ui';
+} from '@/components/ui';
 
 const LIMIT_FIELDS = [
   ['maxDailyLoss', 'Max daily loss ($)'],
@@ -75,8 +77,13 @@ function LimitBar({
 
 export default function RiskPage() {
   const { accountId } = useFilterStore();
+  return <RiskDashboard key={accountId || 'all'} accountId={accountId} />;
+}
+
+function RiskDashboard({ accountId }) {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({});
@@ -126,7 +133,7 @@ export default function RiskPage() {
     }
   };
 
-  if (loading) {
+  if (initialLoading) {
     return <LoadingState label='Loading risk controls…' skeletonRows={5} />;
   }
   if (error && !dashboard) return <ErrorState message={error} onRetry={load} />;
@@ -142,6 +149,7 @@ export default function RiskPage() {
 
   return (
     <Box>
+      <RefreshStatus refreshing={loading && !initialLoading} />
       <PageHeader
         eyebrow='Capital protection'
         title='Risk'

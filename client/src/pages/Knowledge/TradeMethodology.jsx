@@ -1,3 +1,4 @@
+import { routes } from '@/config/routes';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -9,16 +10,16 @@ import {
   Typography,
 } from '@mui/material';
 
-import api from '../../services/api';
-import { Panel } from '../../components/ui';
+import api from '@/services/api';
+import { Panel } from '@/components/ui';
 import {
   KnowledgeCards,
   KnowledgePicker,
   message,
   allApproved,
-} from './shared';
+} from '@/pages/Knowledge/shared';
 
-import ContextAnalytics from './ContextAnalytics';
+import ContextAnalytics from '@/pages/Knowledge/ContextAnalytics';
 
 const questions = {
   contextCorrect: 'Was the context classified correctly?',
@@ -226,7 +227,7 @@ export default function TradeMethodology({ tradeId }) {
                       {k}: {v}
                     </Typography>
                   ))}
-              <Button component={Link} to='/journal'>
+              <Button component={Link} to={routes.journal}>
                 Open The Scroll
               </Button>
             </Alert>

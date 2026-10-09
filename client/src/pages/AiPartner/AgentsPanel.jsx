@@ -1,3 +1,5 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
 import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -24,15 +26,10 @@ import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import { format, subDays } from 'date-fns';
 
-import * as agentsApi from '../../services/agentsService';
-import * as tradeApi from '../../services/tradeService';
-import { useFilterParams } from '../../store/useFilterStore';
-import {
-  EmptyState,
-  Panel,
-  SectionHeader,
-  StatusBadge,
-} from '../../components/ui';
+import * as agentsApi from '@/services/agentsService';
+import * as tradeApi from '@/services/tradeService';
+import { useFilterParams } from '@/store/useFilterStore';
+import { EmptyState, Panel, SectionHeader, StatusBadge } from '@/components/ui';
 
 const CONDITION_FIELDS = [
   'setup',
@@ -45,6 +42,7 @@ const CONDITION_FIELDS = [
   'netPnL',
   'holdingTimeSeconds',
 ];
+
 const OPERATORS = ['equals', 'contains', 'gt', 'gte', 'lt', 'lte'];
 
 function FindingsList({ findings }) {
@@ -56,6 +54,7 @@ function FindingsList({ findings }) {
         description='The current data and filters produced no deterministic findings.'
       />
     );
+
   return (
     <Box component='ul' sx={{ pl: 2, m: 0 }}>
       {findings.map((f, i) => (
@@ -101,6 +100,7 @@ function NarrativeOrList({ result }) {
 function AutoTaggerAgent() {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
@@ -225,7 +225,8 @@ function AutoTaggerAgent() {
           New rule
         </Button>
       </Box>
-      {loading ? (
+      <RefreshStatus refreshing={loading && !initialLoading} />
+      {initialLoading ? (
         <CircularProgress size={18} />
       ) : rules.length === 0 ? (
         <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>

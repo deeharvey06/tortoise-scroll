@@ -1,3 +1,5 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
 import { useCallback, useEffect, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -7,16 +9,16 @@ import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '@/components/PageHeader';
 import {
   ConfirmationDialog,
   EmptyState,
   LoadingState,
   Panel,
   SectionHeader,
-} from '../../components/ui';
-import useAuthStore from '../../store/useAuthStore';
-import * as securityApi from '../../services/accountSecurityService';
+} from '@/components/ui';
+import useAuthStore from '@/store/useAuthStore';
+import * as securityApi from '@/services/accountSecurityService';
 
 const message = (error) =>
   error.response?.data?.error?.message || error.message || 'Request failed';
@@ -35,6 +37,7 @@ export default function AccountSecurityPage() {
   );
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -223,7 +226,8 @@ export default function AccountSecurityPage() {
               </Button>
             }
           />
-          {loading ? (
+          <RefreshStatus refreshing={loading && !initialLoading} />
+          {initialLoading ? (
             <LoadingState compact label='Loading active sessions' />
           ) : sessions.length === 0 ? (
             <EmptyState

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
-import TradeReviewPage from './TradeReviewPage';
-import ReplayWorkspace from './ReplayWorkspace';
+import TradeReviewPage from '@/pages/Replay/TradeReviewPage';
+import ReplayWorkspace from '@/pages/Replay/ReplayWorkspace';
 
 export default function ReplayPage() {
   const [tab, setTab] = useState('market');

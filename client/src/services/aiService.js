@@ -1,4 +1,4 @@
-import api from './api';
+import api from '@/services/api';
 
 export async function fetchAIStatus() {
   const { data } = await api.get('/ai/status');
@@ -21,6 +21,7 @@ export async function sendChatMessage({ conversationId, message, filters }) {
     message,
     filters,
   });
+
   return data;
 }
 

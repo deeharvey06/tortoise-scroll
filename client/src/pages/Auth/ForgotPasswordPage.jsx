@@ -1,3 +1,4 @@
+import { resetPasswordPath, routes } from '@/config/routes';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
@@ -5,8 +6,8 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import AuthLayout from '../../components/auth/AuthLayout';
-import authService from '../../services/authService';
+import AuthLayout from '@/components/auth/AuthLayout';
+import authService from '@/services/authService';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -32,7 +33,7 @@ export default function ForgotPasswordPage() {
       title='Password recovery'
       subtitle='Create a secure, expiring password-reset request.'
       footer={
-        <Link component={RouterLink} to='/login'>
+        <Link component={RouterLink} to={routes.login}>
           Return to sign in
         </Link>
       }
@@ -54,7 +55,7 @@ export default function ForgotPasswordPage() {
           {result.developmentResetToken && (
             <Button
               component={RouterLink}
-              to={`/reset-password?token=${encodeURIComponent(result.developmentResetToken)}`}
+              to={resetPasswordPath(result.developmentResetToken)}
               variant='contained'
             >
               Open development reset link

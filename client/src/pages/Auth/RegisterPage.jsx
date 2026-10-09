@@ -1,3 +1,4 @@
+import { routes } from '@/config/routes';
 import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
@@ -5,8 +6,8 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import AuthLayout from '../../components/auth/AuthLayout';
-import authService from '../../services/authService';
+import AuthLayout from '@/components/auth/AuthLayout';
+import authService from '@/services/authService';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function RegisterPage() {
         email: form.email.trim(),
         password: form.password,
       });
-      navigate('/login', {
+      navigate(routes.login, {
         replace: true,
         state: { registrationComplete: true },
       });
@@ -64,7 +65,7 @@ export default function RegisterPage() {
       footer={
         <>
           Already registered?{' '}
-          <Link component={RouterLink} to='/login'>
+          <Link component={RouterLink} to={routes.login}>
             Sign in
           </Link>
         </>

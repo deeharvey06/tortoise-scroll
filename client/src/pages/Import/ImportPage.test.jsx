@@ -1,19 +1,19 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ImportPage from './ImportPage';
-import * as importApi from '../../services/importService';
-import * as tradeApi from '../../services/tradeService';
+import ImportPage from '@/pages/Import/ImportPage';
+import * as importApi from '@/services/importService';
+import * as tradeApi from '@/services/tradeService';
 
-vi.mock('../../services/api', () => ({
+vi.mock('@/services/api', () => ({
   default: { get: vi.fn().mockResolvedValue({ data: [] }) },
 }));
 
-vi.mock('../../services/importService', () => ({
+vi.mock('@/services/importService', () => ({
   fetchAdapters: vi.fn(),
   previewCsv: vi.fn(),
   commitCsv: vi.fn(),
 }));
-vi.mock('../../services/tradeService', () => ({ fetchAccounts: vi.fn() }));
+vi.mock('@/services/tradeService', () => ({ fetchAccounts: vi.fn() }));
 
 describe('ImportPage execution workflow', () => {
   beforeEach(() => {

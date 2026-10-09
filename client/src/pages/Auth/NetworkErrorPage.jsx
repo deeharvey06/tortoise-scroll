@@ -1,5 +1,5 @@
 import Button from '@mui/material/Button';
-import AuthLayout from '../../components/auth/AuthLayout';
+import AuthLayout from '@/components/auth/AuthLayout';
 
 export default function NetworkErrorPage() {
   return (

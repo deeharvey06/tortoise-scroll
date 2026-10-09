@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import useContextAnalytics from '@/pages/Knowledge/hooks/useContextAnalytics';
 
 import {
   Alert,
@@ -9,48 +9,26 @@ import {
   Typography,
 } from '@mui/material';
 
-import api from '../../services/api';
-import { Panel } from '../../components/ui';
-import { KnowledgePicker, message } from './shared';
+import { Panel } from '@/components/ui';
+import { KnowledgePicker } from '@/pages/Knowledge/shared';
 
 export default function ContextAnalytics({ initialIds = [], filters = {} }) {
-  const filterKey = JSON.stringify(filters);
-  useEffect(() => {
-    setData(null);
-  }, [filterKey]);
-
-  const [review, setReview] = useState({});
-  const [knowledgeIds, setIds] = useState(initialIds);
-  const [followedPlan, setPlan] = useState('');
-  const [scenarioMatched, setScenario] = useState('');
-  const [process, setProcess] = useState('');
-  const [data, setData] = useState(null);
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const load = async () => {
-    setBusy(true);
-    setError('');
-    try {
-      setData(
-        (
-          await api.post('/knowledge/analytics', {
-            ...filters,
-            review,
-            knowledgeIds,
-            followedPlan: followedPlan === '' ? null : followedPlan === 'true',
-            scenarioMatched:
-              scenarioMatched === '' ? null : scenarioMatched === 'true',
-            process: process || undefined,
-          })
-        ).data
-      );
-    } catch (e) {
-      setError(message(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const {
+    review,
+    setReview,
+    knowledgeIds,
+    setIds,
+    followedPlan,
+    setPlan,
+    scenarioMatched,
+    setScenario,
+    process,
+    setProcess,
+    data,
+    error,
+    busy,
+    load,
+  } = useContextAnalytics(initialIds, filters);
 
   return (
     <Panel sx={{ my: 3 }}>

@@ -1,3 +1,4 @@
+import { routes } from '@/config/routes';
 import { NavLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
@@ -11,8 +12,8 @@ import Tooltip from '@mui/material/Tooltip';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
-import { NAVIGATION_GROUPS } from './navigation';
-import useAuthStore from '../store/useAuthStore';
+import { NAVIGATION_GROUPS } from '@/layout/navigation';
+import useAuthStore from '@/store/useAuthStore';
 
 export const SIDEBAR_EXPANDED_WIDTH = 228;
 export const SIDEBAR_COLLAPSED_WIDTH = 72;
@@ -86,7 +87,7 @@ function NavigationItem({ item, collapsed, onNavigate }) {
     <ListItemButton
       component={NavLink}
       to={item.to}
-      end={item.to === '/'}
+      end={item.to === routes.dashboard}
       onClick={onNavigate}
       aria-label={collapsed ? item.label : undefined}
       sx={{

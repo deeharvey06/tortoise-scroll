@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Alert,
@@ -16,56 +16,13 @@ import {
 } from '@mui/material';
 
 import SearchIcon from '@mui/icons-material/Search';
-import api from '../services/api';
-import { LoadingState, EmptyState } from './ui';
+import useWorkspaceSearch from '@/hooks/useWorkspaceSearch';
+import { LoadingState, EmptyState } from '@/components/ui';
 
 export default function GlobalSearch() {
   const inputRef = useRef(null);
-  const [open, setOpen] = useState(false),
-    [query, setQuery] = useState(''),
-    [groups, setGroups] = useState([]),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState(''),
-    [retry, setRetry] = useState(0);
-
-  useEffect(() => {
-    if (!open || query.trim().length < 2) {
-      setGroups([]);
-      setBusy(false);
-      setError('');
-      return;
-    }
-
-    const controller = new AbortController();
-    setBusy(true);
-    setGroups([]);
-    setError('');
-
-    const timer = setTimeout(
-      () =>
-        api
-          .get('/search', {
-            params: { q: query.trim() },
-            signal: controller.signal,
-          })
-          .then(({ data }) => {
-            if (!controller.signal.aborted) setGroups(data.groups);
-          })
-          .catch(() => {
-            if (!controller.signal.aborted)
-              setError('Search unavailable. Please retry.');
-          })
-          .finally(() => {
-            if (!controller.signal.aborted) setBusy(false);
-          }),
-      300
-    );
-
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [open, query, retry]);
+  const { open, setOpen, query, setQuery, groups, busy, error, retry } =
+    useWorkspaceSearch();
 
   return (
     <>
@@ -95,9 +52,7 @@ export default function GlobalSearch() {
             <Alert
               sx={{ mt: 2 }}
               severity='error'
-              action={
-                <Button onClick={() => setRetry((v) => v + 1)}>Retry</Button>
-              }
+              action={<Button onClick={retry}>Retry</Button>}
             >
               {error}
             </Alert>

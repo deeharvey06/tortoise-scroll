@@ -15,8 +15,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import api from '../../services/api';
-import * as backtestApi from '../../services/backtestService';
+import api from '@/services/api';
+import * as backtestApi from '@/services/backtestService';
 
 export const initialStrategy = {
   version: 1,

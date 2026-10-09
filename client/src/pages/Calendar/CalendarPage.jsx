@@ -1,3 +1,6 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { tradePath } from '@/config/routes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
@@ -28,11 +31,11 @@ import {
   subMonths,
 } from 'date-fns';
 
-import * as analyticsApi from '../../services/analyticsService';
-import * as tradeApi from '../../services/tradeService';
-import * as journalApi from '../../services/journalService';
-import { useFilterParams } from '../../store/useFilterStore';
-import PageHeader from '../../components/PageHeader';
+import * as analyticsApi from '@/services/analyticsService';
+import * as tradeApi from '@/services/tradeService';
+import * as journalApi from '@/services/journalService';
+import { useFilterParams } from '@/store/useFilterStore';
+import PageHeader from '@/components/PageHeader';
 import {
   EmptyState,
   ErrorState,
@@ -43,7 +46,7 @@ import {
   RMultiple,
   StatusBadge,
   TradeDirection,
-} from '../../components/ui';
+} from '@/components/ui';
 
 function intensity(netPnL, maxAbs) {
   if (!maxAbs) return 10;
@@ -55,7 +58,9 @@ export default function CalendarPage() {
   const params = useFilterParams();
   const [month, setMonth] = useState(new Date());
   const [days, setDays] = useState([]);
+  const [displayedMonth, setDisplayedMonth] = useState(month);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
 
   const [dayDialog, setDayDialog] = useState(null); // { date, trades, loading }
@@ -66,7 +71,11 @@ export default function CalendarPage() {
     setError(null);
     analyticsApi
       .fetchCalendarMonth(month.getFullYear(), month.getMonth() + 1, params)
-      .then((d) => !cancelled && setDays(d.days))
+      .then((d) => {
+        if (cancelled) return;
+        setDays(d.days);
+        setDisplayedMonth(month);
+      })
       .catch(
         (err) =>
           !cancelled &&
@@ -80,8 +89,8 @@ export default function CalendarPage() {
   }, [month, JSON.stringify(params)]);
 
   const dayMap = new Map(days.map((d) => [d.date, d]));
-  const gridStart = startOfWeek(startOfMonth(month));
-  const gridEnd = endOfWeek(endOfMonth(month));
+  const gridStart = startOfWeek(startOfMonth(displayedMonth));
+  const gridEnd = endOfWeek(endOfMonth(displayedMonth));
   const gridDays = eachDayOfInterval({ start: gridStart, end: gridEnd });
 
   const maxAbs = Math.max(0, ...days.map((d) => Math.abs(d.netPnL)));
@@ -126,6 +135,7 @@ export default function CalendarPage() {
 
   return (
     <Box>
+      <RefreshStatus refreshing={loading && !initialLoading} />
       <PageHeader
         eyebrow='Trading history'
         title='Trading Calendar'
@@ -144,7 +154,7 @@ export default function CalendarPage() {
               className='mono-data'
               sx={{ minWidth: 160, textAlign: 'center' }}
             >
-              {format(month, 'MMMM yyyy')}
+              {format(displayedMonth, 'MMMM yyyy')}
             </Typography>
             <IconButton
               size='small'
@@ -159,7 +169,7 @@ export default function CalendarPage() {
 
       {error && <ErrorState compact message={error} sx={{ mb: 4 }} />}
 
-      {!loading && days.length > 0 && (
+      {!initialLoading && days.length > 0 && (
         <Grid container spacing={2} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={4}>
             <MetricCard
@@ -190,7 +200,7 @@ export default function CalendarPage() {
         </Grid>
       )}
 
-      {loading ? (
+      {initialLoading ? (
         <LoadingState label='Loading calendar…' skeletonRows={5} />
       ) : (
         <Panel padding={2}>
@@ -209,7 +219,7 @@ export default function CalendarPage() {
             {gridDays.map((date) => {
               const key = format(date, 'yyyy-MM-dd');
               const stats = dayMap.get(key);
-              const inMonth = isSameMonth(date, month);
+              const inMonth = isSameMonth(date, displayedMonth);
               const strength = intensity(stats?.netPnL || 0, maxAbs);
               const bg = stats
                 ? `color-mix(in srgb, var(--ts-financial-${stats.netPnL >= 0 ? 'positive' : 'negative'}) ${strength}%, transparent)`
@@ -369,7 +379,7 @@ export default function CalendarPage() {
                       <TableRow
                         key={t._id}
                         hover
-                        onClick={() => navigate(`/trades/${t._id}`)}
+                        onClick={() => navigate(tradePath(t._id))}
                         sx={{ cursor: 'pointer' }}
                       >
                         <TableCell sx={{ fontWeight: 700 }}>

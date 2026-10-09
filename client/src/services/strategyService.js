@@ -1,7 +1,7 @@
-import api from './api';
+import api from '@/services/api';
 
-export async function fetchStrategies() {
-  const { data } = await api.get('/strategies');
+export async function fetchStrategies(signal) {
+  const { data } = await api.get('/strategies', { signal });
   return data;
 }
 

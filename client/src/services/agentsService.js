@@ -1,25 +1,30 @@
-import api from './api';
+import api from '@/services/api';
 
 // Agent 1 — Auto Trade Tagger
 export async function fetchTaggingRules() {
   const { data } = await api.get('/agents/tagging-rules');
   return data;
 }
+
 export async function createTaggingRule(payload) {
   const { data } = await api.post('/agents/tagging-rules', payload);
   return data;
 }
+
 export async function updateTaggingRule(id, payload) {
   const { data } = await api.put(`/agents/tagging-rules/${id}`, payload);
   return data;
 }
+
 export async function deleteTaggingRule(id) {
   await api.delete(`/agents/tagging-rules/${id}`);
 }
+
 export async function runAutoTagger(tradeIds) {
   const { data } = await api.post('/agents/auto-tagger/run', { tradeIds });
   return data;
 }
+
 export async function approveTagSuggestion(tradeId, tags) {
   const { data } = await api.post('/agents/auto-tagger/approve', {
     tradeId,

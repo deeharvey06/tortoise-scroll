@@ -1,3 +1,4 @@
+import { routes } from '@/config/routes';
 import { useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import Button from '@mui/material/Button';
@@ -6,9 +7,9 @@ import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Link from '@mui/material/Link';
 
-import authService from '../../services/authService';
-import useAuthStore from '../../store/useAuthStore';
-import AuthLayout from '../../components/auth/AuthLayout';
+import authService from '@/services/authService';
+import useAuthStore from '@/store/useAuthStore';
+import AuthLayout from '@/components/auth/AuthLayout';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -29,7 +30,9 @@ export default function LoginPage() {
     try {
       const data = await authService.login(email, password);
       setAuthenticatedUser(data.user);
-      navigate(location.state?.from?.pathname || '/', { replace: true });
+      navigate(location.state?.from?.pathname || routes.dashboard, {
+        replace: true,
+      });
     } catch (err) {
       setError(
         err?.response?.data?.error?.message ||
@@ -47,7 +50,7 @@ export default function LoginPage() {
       footer={
         <>
           New to Tortoise Scroll?{' '}
-          <Link component={RouterLink} to='/register'>
+          <Link component={RouterLink} to={routes.register}>
             Create an account
           </Link>
         </>
@@ -84,7 +87,7 @@ export default function LoginPage() {
           />
           <Link
             component={RouterLink}
-            to='/forgot-password'
+            to={routes.forgotPassword}
             alignSelf='flex-end'
             variant='body2'
           >

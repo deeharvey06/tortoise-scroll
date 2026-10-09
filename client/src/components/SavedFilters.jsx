@@ -11,9 +11,9 @@ import {
   Typography,
 } from '@mui/material';
 
-import api from '../services/api';
-import useFilterStore from '../store/useFilterStore';
-import { ConfirmationDialog, LoadingState, EmptyState } from './ui';
+import api from '@/services/api';
+import useFilterStore from '@/store/useFilterStore';
+import { ConfirmationDialog, LoadingState, EmptyState } from '@/components/ui';
 
 export const FILTER_KEYS = [
   'followedPlan',

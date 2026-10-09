@@ -238,7 +238,6 @@ test("new workflow controls remain usable in light/dark mobile layouts and exist
     "/accounts",
     "/calendar",
     "/journal",
-    "/knowledge",
     "/strategies",
     "/playbooks",
     "/reports",

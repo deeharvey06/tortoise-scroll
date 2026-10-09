@@ -1,0 +1,33 @@
+.error-boundary {
+  margin: 24px auto;
+  padding: 24px;
+  max-width: 640px;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.error-boundary h1 {
+  font-size: 1.5rem;
+}
+
+.error-boundary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.error-boundary-actions button,
+.error-boundary-actions a {
+  color: inherit;
+  font: inherit;
+}
+
+.error-boundary-actions button {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+}

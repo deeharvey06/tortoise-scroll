@@ -12,8 +12,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import * as strategyApi from '../../services/strategyService';
-import * as playbookApi from '../../services/playbookService';
+import * as strategyApi from '@/services/strategyService';
+import * as playbookApi from '@/services/playbookService';
 
 const ASSET_TYPES = ['equity', 'option', 'future', 'forex', 'crypto', 'other'];
 const SESSIONS = [

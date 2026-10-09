@@ -1,3 +1,6 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { routes, tradePath } from '@/config/routes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
@@ -34,10 +37,10 @@ import ViewColumnIcon from '@mui/icons-material/ViewColumnOutlined';
 import Tooltip from '@mui/material/Tooltip';
 import { format } from 'date-fns';
 
-import * as tradeApi from '../../services/tradeService';
-import useFilterStore, { resolveDateRange } from '../../store/useFilterStore';
-import TradeFormDialog from './TradeFormDialog';
-import PageHeader from '../../components/PageHeader';
+import * as tradeApi from '@/services/tradeService';
+import useFilterStore, { resolveDateRange } from '@/store/useFilterStore';
+import TradeFormDialog from '@/pages/Trades/TradeFormDialog';
+import PageHeader from '@/components/PageHeader';
 import {
   ConfirmationDialog,
   EmptyState,
@@ -49,12 +52,12 @@ import {
   SearchField,
   Tag,
   TradeDirection,
-} from '../../components/ui';
+} from '@/components/ui';
 
-import api from '../../services/api';
-import BulkEditDialog from './BulkEditDialog';
-import TableLayoutDialog from './TableLayoutDialog';
-import { snapshotFilters } from '../../components/SavedFilters';
+import api from '@/services/api';
+import BulkEditDialog from '@/pages/Trades/BulkEditDialog';
+import TableLayoutDialog from '@/pages/Trades/TableLayoutDialog';
+import { snapshotFilters } from '@/components/SavedFilters';
 
 const TRADE_COLUMNS = [
   { id: 'entryTime', label: 'Date', sortable: true, required: true },
@@ -106,6 +109,7 @@ export default function TradesPage() {
     totalPages: 1,
   });
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
 
   const [accounts, setAccounts] = useState([]);
@@ -321,20 +325,21 @@ export default function TradesPage() {
   }, []);
 
   useEffect(() => {
-    if (layoutLoading) return;
     loadAccounts();
-    loadTrades(1, 25, search);
-  }, [loadAccounts, loadTrades, search, layoutLoading]);
+  }, [loadAccounts]);
+
+  useEffect(() => {
+    if (layoutLoading) return;
+    loadTrades(1, pagination.limit, search);
+  }, [loadTrades, search, layoutLoading, pagination.limit]);
 
   // Debounce search input -> triggers a fresh server-side query
   useEffect(() => {
     const timer = setTimeout(() => {
       if (layoutLoading) return;
       setSearch(searchInput);
-      loadTrades(1, pagination.limit, searchInput);
     }, 350);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput, layoutLoading]);
 
   const handleCreateAccount = async () => {
@@ -470,7 +475,7 @@ export default function TradesPage() {
         ['INPUT', 'TEXTAREA'].includes(e.target.tagName) ||
         e.target.isContentEditable;
       if (isTypingTarget || anyDialogOpen) return;
-      if (e.key === '/') {
+      if (e.key === routes.dashboard) {
         e.preventDefault();
         searchInputRef.current?.focus();
       } else if (e.key === 'n' && hasAccounts) {
@@ -664,7 +669,9 @@ export default function TradesPage() {
             </Button>
           </Toolbar>
         )}
+        <RefreshStatus refreshing={loading && !initialLoading} />
         <TableContainer
+          aria-busy={loading}
           sx={{ maxHeight: { xs: 'none', lg: 'calc(100vh - 330px)' } }}
         >
           <Table
@@ -711,7 +718,7 @@ export default function TradesPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading && (
+              {initialLoading && (
                 <TableRow>
                   <TableCell
                     colSpan={visibleColumns.length + 2}
@@ -723,7 +730,7 @@ export default function TradesPage() {
                 </TableRow>
               )}
 
-              {!loading && trades.length === 0 && (
+              {!initialLoading && trades.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={visibleColumns.length + 2}
@@ -751,18 +758,18 @@ export default function TradesPage() {
                 </TableRow>
               )}
 
-              {!loading &&
+              {!initialLoading &&
                 trades.map((t) => (
                   <TableRow
                     key={t._id}
                     hover
                     selected={selected.includes(t._id)}
-                    onClick={() => navigate(`/trades/${t._id}`)}
+                    onClick={() => navigate(tradePath(t._id))}
                     onKeyDown={(event) => {
                       if (event.target !== event.currentTarget) return;
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        navigate(`/trades/${t._id}`);
+                        navigate(tradePath(t._id));
                       }
                     }}
                     tabIndex={0}
@@ -970,7 +977,11 @@ export default function TradesPage() {
             loadTrades(newPage + 1, pagination.limit, search)
           }
           onRowsPerPageChange={(e) =>
-            loadTrades(1, parseInt(e.target.value, 10), search)
+            setPagination((current) => ({
+              ...current,
+              page: 1,
+              limit: parseInt(e.target.value, 10),
+            }))
           }
         />
       </Panel>

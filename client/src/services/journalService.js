@@ -1,4 +1,4 @@
-import api from './api';
+import api from '@/services/api';
 
 export async function fetchEntries(params = {}) {
   const { data } = await api.get('/journal', { params });

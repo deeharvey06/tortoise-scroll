@@ -1,5 +1,9 @@
 import { createTheme } from '@mui/material/styles';
-import { getDesignTokens, radiusTokens, typographyTokens } from './tokens';
+import {
+  getDesignTokens,
+  radiusTokens,
+  typographyTokens,
+} from '@/theme/tokens';
 
 // Existing chart pages consume these aliases. CSS variables let them follow
 // the active theme without changing page behavior in the foundation phase.
@@ -74,9 +78,11 @@ export function createTortoiseTheme(mode = 'dark') {
   const tokens = getDesignTokens(mode);
   const { colors } = tokens;
   const shadows = Array(25).fill(tokens.shadows.none);
+
   shadows[1] = tokens.shadows.sm;
   for (let index = 2; index <= 8; index += 1)
     shadows[index] = tokens.shadows.md;
+
   for (let index = 9; index < shadows.length; index += 1)
     shadows[index] = tokens.shadows.lg;
 

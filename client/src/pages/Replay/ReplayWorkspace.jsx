@@ -18,12 +18,12 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
-import PageHeader from '../../components/PageHeader';
-import { EmptyState, Panel } from '../../components/ui';
-import * as api from '../../services/replayService';
-import { PlaybackController } from '../../replay/PlaybackController';
-import { captureChart } from '../../replay/captureChart';
-import CandlestickChart from './components/CandlestickChart';
+import PageHeader from '@/components/PageHeader';
+import { EmptyState, Panel } from '@/components/ui';
+import * as api from '@/services/replayService';
+import { PlaybackController } from '@/replay/PlaybackController';
+import { captureChart } from '@/replay/captureChart';
+import CandlestickChart from '@/pages/Replay/components/CandlestickChart';
 
 const message = (error) =>
   error.response?.data?.error?.message || error.message;

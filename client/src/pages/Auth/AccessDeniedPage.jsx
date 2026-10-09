@@ -1,7 +1,8 @@
+import { routes } from '@/config/routes';
 import { Link as RouterLink } from 'react-router-dom';
 import Button from '@mui/material/Button';
-import AuthLayout from '../../components/auth/AuthLayout';
-import useAuthStore from '../../store/useAuthStore';
+import AuthLayout from '@/components/auth/AuthLayout';
+import useAuthStore from '@/store/useAuthStore';
 
 export default function AccessDeniedPage() {
   const restoreAuthenticatedState = () => {
@@ -15,7 +16,7 @@ export default function AccessDeniedPage() {
     >
       <Button
         component={RouterLink}
-        to='/'
+        to={routes.dashboard}
         onClick={restoreAuthenticatedState}
         variant='contained'
       >

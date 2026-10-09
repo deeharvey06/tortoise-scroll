@@ -1,22 +1,22 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import { createTortoiseTheme } from '../../theme/theme';
-import useAuthStore from '../../store/useAuthStore';
-import * as securityApi from '../../services/accountSecurityService';
-import authService from '../../services/authService';
-import AccountSecurityPage from './AccountSecurityPage';
-import ForgotPasswordPage from '../Auth/ForgotPasswordPage';
-import ResetPasswordPage from '../Auth/ResetPasswordPage';
+import { createTortoiseTheme } from '@/theme/theme';
+import useAuthStore from '@/store/useAuthStore';
+import * as securityApi from '@/services/accountSecurityService';
+import authService from '@/services/authService';
+import AccountSecurityPage from '@/pages/Security/AccountSecurityPage';
+import ForgotPasswordPage from '@/pages/Auth/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/Auth/ResetPasswordPage';
 
-vi.mock('../../services/accountSecurityService', () => ({
+vi.mock('@/services/accountSecurityService', () => ({
   fetchSessions: vi.fn(),
   changePassword: vi.fn(),
   revokeSession: vi.fn(),
   logoutOtherSessions: vi.fn(),
 }));
-vi.mock('../../services/authService', () => ({
+vi.mock('@/services/authService', () => ({
   default: { forgotPassword: vi.fn(), resetPassword: vi.fn() },
 }));
 const user = {

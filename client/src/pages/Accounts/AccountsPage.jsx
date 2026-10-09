@@ -1,3 +1,5 @@
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import AddIcon from '@mui/icons-material/AddOutlined';
 import ArchiveIcon from '@mui/icons-material/ArchiveOutlined';
@@ -28,7 +30,7 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '@/components/PageHeader';
 import {
   ConfirmationDialog,
   EmptyState,
@@ -37,9 +39,9 @@ import {
   Panel,
   SectionHeader,
   StatusBadge,
-} from '../../components/ui';
-import * as accountApi from '../../services/accountService';
-import * as instrumentApi from '../../services/instrumentSpecificationService';
+} from '@/components/ui';
+import * as accountApi from '@/services/accountService';
+import * as instrumentApi from '@/services/instrumentSpecificationService';
 
 const ACCOUNT_TYPES = [
   'cash',
@@ -430,6 +432,7 @@ function AccountDetails({ account, refreshToken }) {
   const [performance, setPerformance] = useState(null);
   const [imports, setImports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading, account._id);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -460,7 +463,7 @@ function AccountDetails({ account, refreshToken }) {
     };
   }, [account._id, refreshToken]);
 
-  if (loading) {
+  if (initialLoading) {
     return <LoadingState label='Loading account details…' skeletonRows={3} />;
   }
   if (error) return <ErrorState compact message={error} />;
@@ -475,6 +478,7 @@ function AccountDetails({ account, refreshToken }) {
 
   return (
     <Box sx={{ py: 2 }}>
+      <RefreshStatus refreshing={loading && !initialLoading} />
       <Grid container spacing={2}>
         {metrics.map(([label, value]) => (
           <Grid item xs={6} md key={label}>
@@ -830,6 +834,7 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState([]);
   const [specs, setSpecs] = useState({ builtins: [], custom: [] });
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [accountDialog, setAccountDialog] = useState(null);
@@ -932,7 +937,7 @@ export default function AccountsPage() {
     }
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <LoadingState
         label='Loading accounts and instruments…'
@@ -946,6 +951,7 @@ export default function AccountsPage() {
 
   return (
     <Box>
+      <RefreshStatus refreshing={loading && !initialLoading} />
       <PageHeader
         eyebrow='Trading configuration'
         title='Accounts & Instruments'

@@ -22,6 +22,17 @@ export default [
       'react-hooks': reactHooks,
     },
     rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['./*', '../*'],
+              message: 'Use the @/ source alias for local imports.',
+            },
+          ],
+        },
+      ],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'no-unused-vars': [
@@ -29,6 +40,46 @@ export default [
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+  {
+    files: [
+      'src/pages/{Dashboard,Reports,Analytics}/**/*.jsx',
+      'src/pages/Knowledge/ContextAnalytics.jsx',
+      'src/components/{GlobalSearch,GlobalFilterBar}.jsx',
+      'src/layout/Topbar.jsx',
+    ],
+    ignores: ['**/*.test.jsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react',
+              importNames: ['useEffect'],
+              message:
+                'Keep external synchronization in a focused hook; derive UI values during render.',
+            },
+            {
+              name: 'recharts',
+              message:
+                'Use application chart wrappers from @/components/charts.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['./*', '../*'],
+              message: 'Use the @/ source alias for local imports.',
+            },
+            {
+              group: ['@/services/*', '@tanstack/react-query'],
+              message:
+                'Consume a domain hook instead of fetching or transforming server data in UI.',
+            },
+          ],
         },
       ],
     },

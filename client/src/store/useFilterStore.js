@@ -101,11 +101,13 @@ export const useFilterStore = create((set) => ({
 /** Converts current filter store state into the query params the API expects. */
 export function useFilterParams() {
   const state = useFilterStore();
+
   const { dateFrom, dateTo } = resolveDateRange(
     state.datePreset,
     state.customFrom,
     state.customTo
   );
+
   const params = {};
   if (state.followedPlan) params.followedPlan = state.followedPlan;
   if (state.outcome) params.outcome = state.outcome;
@@ -118,6 +120,7 @@ export function useFilterParams() {
   if (state.tags?.length) params.tags = state.tags;
   if (dateFrom) params.dateFrom = new Date(dateFrom).toISOString();
   if (dateTo) params.dateTo = new Date(dateTo).toISOString();
+
   return params;
 }
 

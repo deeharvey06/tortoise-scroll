@@ -1,7 +1,11 @@
+import { RootOnly } from '@/components/auth/RouteGuards';
+import useInitialLoading from '@/hooks/useInitialLoading';
+import RefreshStatus from '@/components/ui/RefreshStatus';
+import { tradePath } from '@/config/routes';
 import { useSearchParams } from 'react-router-dom';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import { MethodologyLinks } from '../Knowledge/shared';
+import { MethodologyLinks } from '@/pages/Knowledge/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
@@ -28,10 +32,10 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import * as strategyApi from '../../services/strategyService';
-import * as tradeApi from '../../services/tradeService';
-import KpiCard from '../../components/KpiCard';
-import PageHeader from '../../components/PageHeader';
+import * as strategyApi from '@/services/strategyService';
+import * as tradeApi from '@/services/tradeService';
+import KpiCard from '@/components/KpiCard';
+import PageHeader from '@/components/PageHeader';
 import {
   ConfirmationDialog,
   EmptyState,
@@ -43,7 +47,7 @@ import {
   SectionHeader,
   StatusBadge,
   TradeDirection,
-} from '../../components/ui';
+} from '@/components/ui';
 
 const FIELDS = [
   ['name', 'Name', false],
@@ -68,6 +72,7 @@ export default function StrategiesPage() {
   const navigate = useNavigate();
   const [strategies, setStrategies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoading = useInitialLoading(loading);
   const [error, setError] = useState(null);
   const [searchParams] = useSearchParams();
   const focusId = searchParams.get('focus');
@@ -236,7 +241,8 @@ export default function StrategiesPage() {
         />
       )}
 
-      {loading ? (
+      <RefreshStatus refreshing={loading && !initialLoading} />
+      {initialLoading ? (
         <LoadingState label='Loading strategies…' skeletonRows={5} />
       ) : strategies.length === 0 ? (
         <EmptyState
@@ -326,7 +332,9 @@ export default function StrategiesPage() {
                   </Box>
                 </Box>
 
-                <MethodologyLinks type='strategy' targetId={selected._id} />
+                <RootOnly>
+                  <MethodologyLinks type='strategy' targetId={selected._id} />
+                </RootOnly>
 
                 <SectionHeader
                   eyebrow='Performance'
@@ -595,7 +603,7 @@ export default function StrategiesPage() {
                             <TableRow
                               key={trade._id}
                               hover
-                              onClick={() => navigate(`/trades/${trade._id}`)}
+                              onClick={() => navigate(tradePath(trade._id))}
                               sx={{ cursor: 'pointer' }}
                             >
                               <TableCell className='mono-data'>

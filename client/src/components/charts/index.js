@@ -1,1 +1,1 @@
-export { default as ComparisonBarChart } from './ComparisonBarChart';
+export { default as ComparisonBarChart } from '@/components/charts/ComparisonBarChart';

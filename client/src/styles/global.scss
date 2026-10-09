@@ -19,6 +19,17 @@ body,
   margin: 0;
 }
 
+/* Keep the workspace/header width fixed when route loaders shorten the page. */
+html {
+  scrollbar-gutter: stable;
+}
+
+@supports not (scrollbar-gutter: stable) {
+  html {
+    overflow-y: scroll;
+  }
+}
+
 /* Numeric/data columns use the mono face so figures align in tables */
 .mono-data {
   font-family: var(--font-mono);

@@ -4,7 +4,7 @@ import {
   lightTokens,
   getDesignTokens,
   spacingTokens,
-} from './tokens';
+} from '@/theme/tokens';
 
 describe('Tortoise Scroll design tokens', () => {
   it('provides intentionally distinct dark and light themes', () => {
@@ -13,6 +13,7 @@ describe('Tortoise Scroll design tokens', () => {
     expect(darkTokens.colors.financial.positive).not.toBe(
       darkTokens.colors.brand.jade
     );
+
     expect(lightTokens.colors.financial.positive).not.toBe(
       lightTokens.colors.brand.jade
     );

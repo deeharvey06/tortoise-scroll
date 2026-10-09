@@ -1,3 +1,4 @@
+import { routes } from '@/config/routes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
@@ -12,8 +13,8 @@ import Typography from '@mui/material/Typography';
 import AdminPanelSettingsOutlined from '@mui/icons-material/AdminPanelSettingsOutlined';
 import LogoutOutlined from '@mui/icons-material/LogoutOutlined';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import authService from '../../services/authService';
-import useAuthStore from '../../store/useAuthStore';
+import authService from '@/services/authService';
+import useAuthStore from '@/store/useAuthStore';
 
 export default function CurrentUserMenu() {
   const [anchor, setAnchor] = useState(null);
@@ -36,7 +37,7 @@ export default function CurrentUserMenu() {
       await authService.logout();
     } finally {
       clearSession();
-      navigate('/login', { replace: true });
+      navigate(routes.login, { replace: true });
     }
   };
   return (
@@ -75,14 +76,14 @@ export default function CurrentUserMenu() {
           </Typography>
         </Box>
         <Divider />
-        <MenuItem onClick={() => go('/security')}>
+        <MenuItem onClick={() => go(routes.security)}>
           <ListItemIcon>
             <SettingsOutlined fontSize='small' />
           </ListItemIcon>
           Account & security
         </MenuItem>
         {['ADMIN', 'ROOT'].includes(user?.role) && (
-          <MenuItem onClick={() => go('/administration')}>
+          <MenuItem onClick={() => go(routes.administration)}>
             <ListItemIcon>
               <AdminPanelSettingsOutlined fontSize='small' />
             </ListItemIcon>

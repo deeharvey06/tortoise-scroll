@@ -1,7 +1,7 @@
-import api from './api';
+import api from '@/services/api';
 
-export async function fetchReport(category, params = {}) {
-  const { data } = await api.get(`/reports/${category}`, { params });
+export async function fetchReport(category, params = {}, signal) {
+  const { data } = await api.get(`/reports/${category}`, { params, signal });
   return data;
 }
 
