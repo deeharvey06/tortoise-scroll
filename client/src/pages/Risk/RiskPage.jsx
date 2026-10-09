@@ -88,6 +88,7 @@ function RiskDashboard({ accountId }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({});
   const [toast, setToast] = useState(null);
+  const [dismissedWarnings, setDismissedWarnings] = useState(() => new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,6 +114,10 @@ function RiskDashboard({ accountId }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    setDismissedWarnings(new Set());
+  }, [accountId]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -146,6 +151,9 @@ function RiskDashboard({ accountId }) {
       ? null
       : Math.max(0, Math.abs(dailyLimit) - dailyLossUsed);
   const hasWarnings = dashboard?.warnings?.length > 0;
+  const visibleWarnings = (dashboard?.warnings ?? []).filter(
+    (warning) => !dismissedWarnings.has(warning)
+  );
 
   return (
     <Box>
@@ -184,11 +192,20 @@ function RiskDashboard({ accountId }) {
         </Alert>
       )}
 
-      {dashboard?.warnings?.length > 0 && (
+      {visibleWarnings.length > 0 && (
         <Box sx={{ mb: 4 }}>
-          {dashboard.warnings.map((w, i) => (
-            <Alert severity='warning' key={i} sx={{ mb: 1 }}>
-              {w}
+          {visibleWarnings.map((warning, i) => (
+            <Alert
+              severity='warning'
+              key={`${warning}-${i}`}
+              onClose={() =>
+                setDismissedWarnings((dismissed) =>
+                  new Set(dismissed).add(warning)
+                )
+              }
+              sx={{ mb: 1 }}
+            >
+              {warning}
             </Alert>
           ))}
         </Box>
